@@ -5,6 +5,10 @@ This is a project supervised by the chair of neurorobotics at the University of 
 ## Roadmap
 - [ ] Read & Understand the paper
 - [ ] Gather first hands on experience with PYSC2
+  - [ ] play a game as human
+  - [ ] load random agent
+  - [ ] watch a replay
+  - [ ] watch a replay in rendered version (currently only works on windows, regular SC2 game required)
 - [ ] Write first rule based agent as a simple tutorial (refer to link below)
 - [ ] Replicate Minigame Results from the paper with the same or with own architectures
 - [ ] Test own simple agent on full game
