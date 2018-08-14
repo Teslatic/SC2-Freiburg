@@ -95,8 +95,9 @@ class BaseAgent(base_agent.BaseAgent):
         if pick=='random':
             action = self.get_action(obs, random.choice(SMART_ACTIONS), np.random.randint(0,83), np.random.randint(0,83))
         else:
-            action_q_values, x_coord_q_values, y_coord_q_values = \
-                self.net.forward(obs.observation["feature_screen"]["player_relative"].reshape((-1,1,84,84)))
+            with torch.no_grad():
+                action_q_values, x_coord_q_values, y_coord_q_values = \
+                    self.net((obs.observation["feature_screen"]["player_relative"].reshape((-1,1,84,84))))
             best_action = SMART_ACTIONS[torch.argmax(action_q_values)]
             best_x = torch.argmax(x_coord_q_values).numpy()
             best_y = torch.argmax(y_coord_q_values).numpy()
@@ -112,13 +113,13 @@ class BaseAgent(base_agent.BaseAgent):
         return action
 
 
-    def train(self, sample):
-        # if sample.step_type==StepType.LAST:
-        #     y = sample.reward
-        # else:
-        #     y = sample.reward + self.gamma * sample.action
-
-        print(sample.action)
+    # def train(self, sample):
+    #     # if sample.step_type==StepType.LAST:
+    #     #     y = sample.reward
+    #     # else:
+    #     #     y = sample.reward + self.gamma * sample.action
+    #
+    #     print(sample.action)
 
 
 

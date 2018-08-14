@@ -29,6 +29,7 @@ MINIMAP_DIM = 64
 GAMESTEPS = None # 0 = unlimited game time, None = map default
 STEP_MULTIPLIER = 8 # 16 = 1s game time
 VISUALIZE = True
+BATCH_SIZE = 32
 
 
 # Initalizing
@@ -37,11 +38,10 @@ replay_memory = []
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward', 'step_type'))
 
-
-
-
+'''
+helpers
+'''
 def setup_agent():
     agent = BaseAgent(screen_dim = SCREEN_DIM, minimap_dim = MINIMAP_DIM)
     # agent = scripted_agent.MoveToBeacon()
@@ -69,9 +69,13 @@ def setup_env(agent, players, agent_interface):
             visualize=VISUALIZE)
     return env
 
+
+'''
+main function
+'''
 def main(unused_argv):
     agent, players, agent_interface = setup_agent()
-    memory = ReplayBuffer(10)
+    memory = ReplayBuffer(1000)
 
     try:
         while True:
@@ -89,15 +93,16 @@ def main(unused_argv):
                     reward = timesteps[0].reward
                     next_state = timesteps[0].observation["feature_screen"]["player_relative"]
 
-                    transition = Transition(state, action, reward, next_state, timesteps[0].step_type)
-                    agent.train(transition)
+                    memory.push(state, action, reward, next_state, timesteps[0].step_type)
 
-                    
+                    if len(memory) >= BATCH_SIZE:
+                        batch = memory.sample(BATCH_SIZE)
+                        for idx, (s, a, r, n_s, step_type) in enumerate(batch):
+                            print(idx, r, step_type)
 
 
     except KeyboardInterrupt:
         pass
 
 if __name__ == "__main__":
-
     app.run(main)

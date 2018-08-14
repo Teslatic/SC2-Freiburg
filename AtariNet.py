@@ -33,7 +33,7 @@ Inputs:
 '''
 
 
-Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
+# Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward', 'step_type'))
 
 class ReplayBuffer(object):
     ''' Experience Replay Buffer Class '''
@@ -41,15 +41,16 @@ class ReplayBuffer(object):
         self.capacity = capacity
         self.memory = []
         self.position = 0
+        self.Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state', 'step_type'))
 
     def __len__(self):
         return len(self.memory)
 
-    def store_transition(self, *args):
+    def push(self, *args):
         ''' store transition in replay buffer '''
         if len(self.memory) < self.capacity:
             self.memory.append(None)
-        self.memory[self.position] = Transition(*args)
+        self.memory[self.position] = self.Transition(*args)
         self.position = (self.position +1) % self.capacity
 
     def sample(self, batch_size):
@@ -101,7 +102,7 @@ class DQN(nn.Module):
         # estimated y coordinates q values
         y_coord_q_values = self.x_coord_fc1(screen.view(screen.size(0), -1))
 
-    
+
         return action_q_values, x_coord_q_values, y_coord_q_values
 
 
