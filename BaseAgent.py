@@ -28,7 +28,7 @@ SMART_ACTIONS = [   actions.FUNCTIONS.Move_screen.id,
                 ]
 
 class BaseAgent(base_agent.BaseAgent):
-    def __init__(self, screen_dim, minimap_dim):
+    def __init__(self, screen_dim, minimap_dim, batch_size):
         super(BaseAgent, self).__init__()
         self.screen_dim = screen_dim - 1        # -1 for array indexing
         self.minimap_dim = minimap_dim - 1      # -1 for array indexing
@@ -39,6 +39,9 @@ class BaseAgent(base_agent.BaseAgent):
         self.steps_done = 0
         self.gamma = 0.9
         self.net, self.optimizer = self._build_model()
+
+        self.state_q_value = torch.zeros(batch_size, device="cpu", requires_grad=True)
+        self.td_target = torch.zeros(batch_size, device="cpu", requires_grad=True)
 
     def _build_model(self):
         net = DQN()
@@ -87,13 +90,25 @@ class BaseAgent(base_agent.BaseAgent):
         else:
             return actions.FUNCTIONS.no_op()
 
-    def choose_action(self, obs):
+    def epsilon_greedy(self):
+        '''
+        returns a string in order to determine if the next action choice is
+        going to be random or according to an decaying epsilon greeedy policy
+        '''
         self.epsilon = self.eps_end + (self.eps_start - self.eps_end) \
                         * np.exp(-1. * self.steps_done / self.eps_decay)
         self.steps_done += 1
-        pick = np.random.choice(['random','greedy'], p = [self.epsilon,1-self.epsilon])
-        if pick=='random':
-            action = self.get_action(obs, random.choice(SMART_ACTIONS), np.random.randint(0,83), np.random.randint(0,83))
+        choice = np.random.choice(['random','greedy'], p = [self.epsilon,1-self.epsilon])
+        return choice
+
+
+    def choose_action(self, obs):
+        '''
+        chooses an action according to the current policy
+        '''
+        choice = self.epsilon_greedy()
+        if choice=='random':
+            chosen_action = self.get_action(obs, random.choice(SMART_ACTIONS), np.random.randint(0,83), np.random.randint(0,83))
         else:
             with torch.no_grad():
                 action_q_values, x_coord_q_values, y_coord_q_values = \
@@ -101,25 +116,41 @@ class BaseAgent(base_agent.BaseAgent):
             best_action = SMART_ACTIONS[torch.argmax(action_q_values)]
             best_x = torch.argmax(x_coord_q_values).numpy()
             best_y = torch.argmax(y_coord_q_values).numpy()
-            action = self.get_action(obs, best_action, best_x, best_y)
+            chosen_action = self.get_action(obs, best_action, best_x, best_y)
 
-        return action
+        return chosen_action
 
 
     def step(self, obs):
+        '''
+        takes one step in the internal state machine
+        '''
         super(BaseAgent, self).step(obs)
         action = self.choose_action(obs)
 
         return action
 
 
-    # def train(self, sample):
-    #     # if sample.step_type==StepType.LAST:
-    #     #     y = sample.reward
-    #     # else:
-    #     #     y = sample.reward + self.gamma * sample.action
-    #
-    #     print(sample.action)
+    def train(self, batch):
+
+        with torch.no_grad():
+            for idx, (state, action, reward, next_state, step_type) in enumerate(batch):
+                tmp_q , _, _, =  self.net(state.reshape((-1,1,84,84)))
+                self.state_q_value[idx] = torch.tensor(torch.max(tmp_q),dtype=torch.float, requires_grad=True)
+                # state_q_value[idx] =state_q_value)
+
+                self.next_state_q_value, _, _ = self.net(next_state.reshape((-1,1,84,84)))
+                if step_type==StepType.LAST:
+                    # dtype casting necessary since network output is float32 and reward is int64
+                    self.td_target[idx] = torch.tensor(reward, dtype=torch.float, requires_grad=True)
+                else:
+                    # dtype casting necessary since network output is float32 and reward is int64
+                    self.td_target[idx] = torch.tensor((reward + self.gamma * torch.max(self.next_state_q_value)),dtype=torch.float, requires_grad=True)
+                    print(self.td_target[idx])
+
+            loss = F.mse_loss(self.state_q_value, self.td_target)
+        self.optimizer.zero_grad()
+        loss.backward()
 
 
 

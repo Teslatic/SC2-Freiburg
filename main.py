@@ -27,7 +27,7 @@ from collections import namedtuple
 SCREEN_DIM = 84
 MINIMAP_DIM = 64
 GAMESTEPS = None # 0 = unlimited game time, None = map default
-STEP_MULTIPLIER = 8 # 16 = 1s game time
+STEP_MULTIPLIER = 32 # 16 = 1s game time
 VISUALIZE = True
 BATCH_SIZE = 32
 
@@ -36,19 +36,19 @@ BATCH_SIZE = 32
 replay_memory_size = 10
 replay_memory = []
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+# device = "cpu"
 
 
 '''
 helpers
 '''
 def setup_agent():
-    agent = BaseAgent(screen_dim = SCREEN_DIM, minimap_dim = MINIMAP_DIM)
+    agent = BaseAgent(screen_dim = SCREEN_DIM, minimap_dim = MINIMAP_DIM, batch_size=BATCH_SIZE)
     # agent = scripted_agent.MoveToBeacon()
     # players = [ sc2_env.Agent(sc2_env.Race.terran),
     #             sc2_env.Bot(sc2_env.Race.random,
     #             sc2_env.Difficulty.very_easy)]
-    players = [ sc2_env.Agent(sc2_env.Race.terran)]
+    players = [sc2_env.Agent(sc2_env.Race.terran)]
     agent_interface = features.AgentInterfaceFormat(
             feature_dimensions=features.Dimensions(screen=SCREEN_DIM,
                                                     minimap=MINIMAP_DIM),
@@ -79,8 +79,7 @@ def main(unused_argv):
 
     try:
         while True:
-            sc2_env=setup_env(agent,players,agent_interface)
-            with  sc2_env as env:
+            with  setup_env(agent,players,agent_interface) as env:
                 agent.setup(env.observation_spec(), env.action_spec())
                 timesteps = env.reset()
                 agent.reset()
@@ -97,9 +96,7 @@ def main(unused_argv):
 
                     if len(memory) >= BATCH_SIZE:
                         batch = memory.sample(BATCH_SIZE)
-                        for idx, (s, a, r, n_s, step_type) in enumerate(batch):
-                            print(idx, r, step_type)
-
+                        agent.train(batch)
 
     except KeyboardInterrupt:
         pass
