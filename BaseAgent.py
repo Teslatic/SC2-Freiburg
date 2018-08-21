@@ -9,10 +9,10 @@ import random
 import numpy as np
 np.set_printoptions(suppress=True,linewidth=np.nan,threshold=np.nan) # only for terminal ouput visualization
 from absl import app
-
+from sklearn import preprocessing
 
 ### custom imports
-from AtariNet import DQN, ReplayBuffer
+from AtariNet import DQN
 
 
 ### torch imports
@@ -23,9 +23,11 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 
 # constants
-SMART_ACTIONS = [   actions.FUNCTIONS.Move_screen.id,
-                    actions.FUNCTIONS.select_army.id
+SMART_ACTIONS = [   actions.FUNCTIONS.no_op.id,
+                    actions.FUNCTIONS.select_army.id,
+                    actions.FUNCTIONS.Move_screen.id
                 ]
+
 
 class BaseAgent(base_agent.BaseAgent):
     def __init__(self, screen_dim, minimap_dim, batch_size):
@@ -38,16 +40,20 @@ class BaseAgent(base_agent.BaseAgent):
         self.eps_decay = 500
         self.steps_done = 0
         self.gamma = 0.9
-        self.net, self.optimizer = self._build_model()
 
+        self.net, self.target_net, self.optimizer = self._build_model()
+        print("Network: \n{}".format(self.net))
+        print("Optimizer: \n{}".format(self.optimizer))
+        print("Target Network: \n{}".format(self.target_net))
         self.state_q_value = torch.zeros(batch_size, device="cpu", requires_grad=True)
         self.td_target = torch.zeros(batch_size, device="cpu", requires_grad=True)
 
     def _build_model(self):
         net = DQN()
+        target_net = DQN()
         optimizer = optim.Adam(net.parameters(), lr=0.0001)
 
-        return net, optimizer
+        return net, target_net, optimizer
 
     def unit_type_is_selected(self, obs, unit_type):
         '''
@@ -87,6 +93,8 @@ class BaseAgent(base_agent.BaseAgent):
                 return actions.FUNCTIONS.Move_screen("now", (x,y))
             if action == actions.FUNCTIONS.select_army.id:
                 return actions.FUNCTIONS.select_army("select")
+            if action == actions.FUNCTIONS.no_op.id:
+                return actions.FUNCTIONS.no_op()
         else:
             return actions.FUNCTIONS.no_op()
 
@@ -105,54 +113,77 @@ class BaseAgent(base_agent.BaseAgent):
     def choose_action(self, obs):
         '''
         chooses an action according to the current policy
+        returns the chosen action id with x,y coordinates and the index of the action
+        with respect to the SMART_ACTIONS constant. The additional index is used for
+        the catergorical labeling of the actions as an "intermediate" solution for
+        a restricted action space.
         '''
         choice = self.epsilon_greedy()
         if choice=='random':
-            chosen_action = self.get_action(obs, random.choice(SMART_ACTIONS), np.random.randint(0,83), np.random.randint(0,83))
+            action_idx = np.random.randint(len(SMART_ACTIONS))
+            chosen_action = self.get_action(obs, SMART_ACTIONS[action_idx], torch.randint(83,(1,), dtype=torch.long), torch.randint(83,(1,), dtype=torch.long))
         else:
             with torch.no_grad():
+                net_input = torch.tensor((
+                    obs.observation["feature_screen"]["player_relative"].reshape((-1,1,84,84)))
+                    ,dtype=torch.float)
                 action_q_values, x_coord_q_values, y_coord_q_values = \
-                    self.net((obs.observation["feature_screen"]["player_relative"].reshape((-1,1,84,84))))
-            best_action = SMART_ACTIONS[torch.argmax(action_q_values)]
+                    self.net(net_input)
+            action_idx = torch.argmax(action_q_values)
+            best_action = SMART_ACTIONS[action_idx]
             best_x = torch.argmax(x_coord_q_values).numpy()
             best_y = torch.argmax(y_coord_q_values).numpy()
             chosen_action = self.get_action(obs, best_action, best_x, best_y)
 
-        return chosen_action
-
+        # square brackets needed for internal pysc2 state machine
+        return [chosen_action], torch.tensor([action_idx],dtype=torch.long)
 
     def step(self, obs):
         '''
         takes one step in the internal state machine
         '''
         super(BaseAgent, self).step(obs)
-        action = self.choose_action(obs)
+        action, action_idx = self.choose_action(obs)
 
-        return action
+        return action, action_idx
 
 
-    def train(self, batch):
+    def optimize(self, batch):
+        '''
+        optimizes the model. currently only trains the actions
+        # TODO: extend Q-Update function to the x and y coordinates
+       '''
 
-        with torch.no_grad():
-            for idx, (state, action, reward, next_state, step_type) in enumerate(batch):
-                tmp_q , _, _, =  self.net(state.reshape((-1,1,84,84)))
-                self.state_q_value[idx] = torch.tensor(torch.max(tmp_q),dtype=torch.float, requires_grad=True)
-                # state_q_value[idx] =state_q_value)
+        # get the batches from the transition tuple
+        state_batch = torch.cat(batch.state)
+        action_batch = torch.cat(batch.action).unsqueeze(1)
+        reward_batch = torch.cat(batch.reward)
+        step_type_batch = torch.cat(batch.step_type)
+        next_state_batch = torch.cat(batch.next_state)
 
-                self.next_state_q_value, _, _ = self.net(next_state.reshape((-1,1,84,84)))
-                if step_type==StepType.LAST:
-                    # dtype casting necessary since network output is float32 and reward is int64
-                    self.td_target[idx] = torch.tensor(reward, dtype=torch.float, requires_grad=True)
-                else:
-                    # dtype casting necessary since network output is float32 and reward is int64
-                    self.td_target[idx] = torch.tensor((reward + self.gamma * torch.max(self.next_state_q_value)),dtype=torch.float, requires_grad=True)
-                    print(self.td_target[idx])
+        # gather action values with respect to the chosen action
+        state_action_values = self.net(state_batch.reshape((-1,1,84,84)))[0].gather(1,action_batch)
 
-            loss = F.mse_loss(self.state_q_value, self.td_target)
+        # compute action values of the next state over all actions and take the max
+        next_state_values, _, _ = self.target_net(next_state_batch.reshape((-1,1,84,84)))
+        next_state_values = next_state_values.max(1)[0].detach()
+
+        # calculate td targets
+        td_target = torch.tensor((next_state_values * self.gamma) + reward_batch , dtype=torch.float)
+        td_target[np.where(step_type_batch==2)] = reward_batch[np.where(step_type_batch==2)]
+
+        # compute MSE loss
+        loss = F.mse_loss(state_action_values, td_target.unsqueeze(1))
+
+        # optimize model
         self.optimizer.zero_grad()
         loss.backward()
+        self.optimizer.step()
 
+        # update target weights
+        self.target_net.load_state_dict(self.net.state_dict())
 
+        return loss.item()
 
 
 if __name__ == '__main__':

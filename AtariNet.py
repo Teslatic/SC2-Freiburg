@@ -33,36 +33,12 @@ Inputs:
 '''
 
 
-# Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward', 'step_type'))
-
-class ReplayBuffer(object):
-    ''' Experience Replay Buffer Class '''
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.memory = []
-        self.position = 0
-        self.Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state', 'step_type'))
-
-    def __len__(self):
-        return len(self.memory)
-
-    def push(self, *args):
-        ''' store transition in replay buffer '''
-        if len(self.memory) < self.capacity:
-            self.memory.append(None)
-        self.memory[self.position] = self.Transition(*args)
-        self.position = (self.position +1) % self.capacity
-
-    def sample(self, batch_size):
-        ''' return random sample from ER '''
-        return random.sample(self.memory, batch_size)
-
 
 class DQN(nn.Module):
 
     def __init__(self):
         super(DQN, self).__init__()
-        self.num_actions = 2
+        self.num_actions = 3
         self.screen_dimension = 84
 
         # screen conv layers
@@ -87,7 +63,6 @@ class DQN(nn.Module):
 
 
     def forward(self, screen):
-        screen = torch.from_numpy(screen).float()
         screen = F.relu(self.screen_conv1(screen))
         screen = F.relu(self.screen_conv2(screen))
         screen = screen.view(-1, 32*9*9)
