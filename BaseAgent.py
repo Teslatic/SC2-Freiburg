@@ -30,8 +30,9 @@ SMART_ACTIONS = [   actions.FUNCTIONS.no_op.id,
 
 
 class BaseAgent(base_agent.BaseAgent):
-    def __init__(self, screen_dim, minimap_dim, batch_size):
+    def __init__(self, screen_dim, minimap_dim, batch_size, target_update_period):
         super(BaseAgent, self).__init__()
+        self.net, self.target_net, self.optimizer = self._build_model()
         self.screen_dim = screen_dim
         self.minimap_dim = minimap_dim
         self.epsilon = 1.0
@@ -41,8 +42,12 @@ class BaseAgent(base_agent.BaseAgent):
         self.steps_done = 0
         self.gamma = 0.9
         self.timesteps = 0
+        self.update_cnt = 0
+        self.target_update_period = target_update_period
+        self.update_status = None
 
-        self.net, self.target_net, self.optimizer = self._build_model()
+
+
         print("Network: \n{}".format(self.net))
         print("Optimizer: \n{}".format(self.optimizer))
         print("Target Network: \n{}".format(self.target_net))
@@ -107,9 +112,9 @@ class BaseAgent(base_agent.BaseAgent):
         self.epsilon = self.eps_end + (self.eps_start - self.eps_end) \
                         * np.exp(-1. * self.steps_done / self.eps_decay)
         self.steps_done += 1
-        choice = np.random.choice(['random','greedy'], p = [self.epsilon,1-self.epsilon])
-        print("Epsilon: {:.2f}\t| choice: {}".format(self.epsilon,choice))
-        return choice
+        self.choice = np.random.choice(['random','greedy'], p = [self.epsilon,1-self.epsilon])
+
+        return self.choice
 
 
     def choose_action(self, obs):
@@ -157,6 +162,19 @@ class BaseAgent(base_agent.BaseAgent):
     def reset(self):
         super(BaseAgent, self).reset()
         self.timesteps = 0
+        self.update_cnt = 0
+
+    def update_target_net(self):
+        '''
+        updates weights of the target network, i.e. copies model weights to it
+        '''
+        if (self.steps % self.target_update_period) == 0:
+            self.target_net.load_state_dict(self.net.state_dict())
+            self.update_cnt += 1
+            self.update_status = "Weights updated!"
+        else:
+            self.update_status = None
+
 
 
     def optimize(self, batch):
@@ -176,7 +194,7 @@ class BaseAgent(base_agent.BaseAgent):
 
         # forward pass
         state_action_values, x_q_values, y_q_values = self.net(state_batch.reshape((-1,1,84,84)))
-
+        # print("q values for actions: {}".format(state_action_values))
 
         # gather action values with respect to the chosen action
         state_action_values = state_action_values.gather(1,action_batch)
@@ -216,8 +234,7 @@ class BaseAgent(base_agent.BaseAgent):
         loss.backward()
         self.optimizer.step()
 
-        # update target weights
-        self.target_net.load_state_dict(self.net.state_dict())
+        self.update_target_net()
 
         return loss.item()
 

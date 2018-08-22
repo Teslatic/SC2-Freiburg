@@ -28,9 +28,11 @@ import numpy as np
 SCREEN_DIM = 84
 MINIMAP_DIM = 64
 GAMESTEPS = None # 0 = unlimited game time, None = map default
-STEP_MULTIPLIER = 32 # 16 = 1s game time
-VISUALIZE = True
-BATCH_SIZE = 5
+STEP_MULTIPLIER = None # 16 = 1s game time
+VISUALIZE = False
+BATCH_SIZE = 128
+# every n steps update target weights
+TARGET_UPDATE_PERIOD = 20
 
 
 
@@ -44,7 +46,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 helpers
 '''
 def setup_agent():
-    agent = BaseAgent(screen_dim = SCREEN_DIM, minimap_dim = MINIMAP_DIM, batch_size=BATCH_SIZE)
+    agent = BaseAgent(screen_dim = SCREEN_DIM, minimap_dim = MINIMAP_DIM,
+                    batch_size=BATCH_SIZE, target_update_period=TARGET_UPDATE_PERIOD)
     # agent = scripted_agent.MoveToBeacon()
     # players = [ sc2_env.Agent(sc2_env.Race.terran),
     #             sc2_env.Bot(sc2_env.Race.random,
@@ -110,16 +113,21 @@ def main(unused_argv):
                 while True:
                     state = torch.tensor([timesteps[0].observation["feature_screen"]["player_relative"]],dtype=torch.float)
                     action, action_idx, x_coord, y_coord = agent.step(timesteps[0])
-                    print("Episode {}\t| Step {}\t| Total Steps:".format(agent.episodes, agent.timesteps, agent.steps))
+                    print("Epsilon: {:.2f}\t| choice: {}".format(agent.epsilon,agent.choice))
+                    print("Episode {}\t| Step {}\t| Total Steps: {}".format(agent.episodes, agent.timesteps, agent.steps))
                     print("Chosen action: {}".format(action))
                     print("chosen x coordinate: {}\t type: {}".format(x_coord, type(x_coord)))
                     print("chosen y coordiante: {}\t type: {}".format(y_coord, type(y_coord)))
+                    print("Score: {}".format(agent.reward))
+                    print("{}".format(agent.update_status))
                     print("----------------------------------------------------------------")
                     if timesteps[0].last():
                         break
 
                     # timesteps contains all observations from the sc2.env
+
                     timesteps = env.step(action)
+
 
                     reward = torch.tensor([timesteps[0].reward], device=device,dtype=torch.float)
 
