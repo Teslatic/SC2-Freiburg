@@ -27,61 +27,61 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 '''
 AtariNet accordingly to the SC2-paper
 Inputs:
-    - non-spatial features
-    - screen
-    - minimap
+  - non-spatial features
+  - screen
+  - minimap
 '''
 
 
 
 class DQN(nn.Module):
 
-    def __init__(self):
-        super(DQN, self).__init__()
-        self.num_actions = 3
-        self.screen_dimension = 84
+  def __init__(self):
+    super(DQN, self).__init__()
+    self.num_actions = 3
+    self.screen_dimension = 84
 
-        # screen conv layers
-        self.screen_conv1 = nn.Conv2d(1, 16, kernel_size=8, padding=0, stride =4)
-        self.screen_conv2 = nn.Conv2d(16, 32, kernel_size=4, padding=0, stride=2)
+    # screen conv layers
+    self.screen_conv1 = nn.Conv2d(1, 16, kernel_size=8, padding=0, stride =4)
+    self.screen_conv2 = nn.Conv2d(16, 32, kernel_size=4, padding=0, stride=2)
 
-        # minimap conv layers
-        self.minimap_conv1 = nn.Conv2d(3, 16, kernel_size=8, padding=0, stride =4)
-        self.minimap_conv2 = nn.Conv2d(16, 32, kernel_size=4, padding=0, stride=2)
+    # minimap conv layers
+    self.minimap_conv1 = nn.Conv2d(3, 16, kernel_size=8, padding=0, stride =4)
+    self.minimap_conv2 = nn.Conv2d(16, 32, kernel_size=4, padding=0, stride=2)
 
-        # fully connected layers
-        self.screen_fc1 = nn.Linear(32*9*9,256)
+    # fully connected layers
+    self.screen_fc1 = nn.Linear(32*9*9,256)
 
-        # action policy output
-        self.action_fc1 = nn.Linear(256,self.num_actions)
+    # action policy output
+    self.action_fc1 = nn.Linear(256,self.num_actions)
 
-        # x coordinate output
-        self.x_coord_fc1 = nn.Linear(256,self.screen_dimension)
+    # x coordinate output
+    self.x_coord_fc1 = nn.Linear(256,self.screen_dimension)
 
-        # y coordinate output
-        self.y_coord_fc1 = nn.Linear(256,self.screen_dimension)
-
-
-    def forward(self, screen):
-        screen = F.relu(self.screen_conv1(screen))
-        screen = F.relu(self.screen_conv2(screen))
-        screen = screen.view(-1, 32*9*9)
-        screen = F.relu(self.screen_fc1(screen))
-
-        # estimated action q values
-        action_q_values = self.action_fc1(screen.view(screen.size(0), -1))
-
-        # estimated x coordinates q values
-        x_coord_q_values = self.x_coord_fc1(screen.view(screen.size(0), -1))
-
-        # estimated y coordinates q values
-        y_coord_q_values = self.x_coord_fc1(screen.view(screen.size(0), -1))
+    # y coordinate output
+    self.y_coord_fc1 = nn.Linear(256,self.screen_dimension)
 
 
-        return action_q_values, x_coord_q_values, y_coord_q_values
+  def forward(self, screen):
+    screen = F.relu(self.screen_conv1(screen))
+    screen = F.relu(self.screen_conv2(screen))
+    screen = screen.view(-1, 32*9*9)
+    screen = F.relu(self.screen_fc1(screen))
+
+    # estimated action q values
+    action_q_values = self.action_fc1(screen.view(screen.size(0), -1))
+
+    # estimated x coordinates q values
+    x_coord_q_values = self.x_coord_fc1(screen.view(screen.size(0), -1))
+
+    # estimated y coordinates q values
+    y_coord_q_values = self.x_coord_fc1(screen.view(screen.size(0), -1))
+
+
+    return action_q_values, x_coord_q_values, y_coord_q_values
 
 
 
 
 if __name__ == '__main__':
-    AtariNet = AtariNet()
+  AtariNet = AtariNet()
