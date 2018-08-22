@@ -35,7 +35,7 @@ BATCH_SIZE = 5
 
 
 # Initalizing
-Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state','step_type'))
+Transition = namedtuple('Transition', ('state', 'action', 'x_coord', 'y_coord', 'reward', 'next_state','step_type'))
 replay_memory_size = 100
 replay_memory = []
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -106,11 +106,18 @@ def main(unused_argv):
                 agent.setup(env.observation_spec(), env.action_spec())
                 timesteps = env.reset()
                 agent.reset()
+                print("----------------------------------------------------------------")
                 while True:
                     state = torch.tensor([timesteps[0].observation["feature_screen"]["player_relative"]],dtype=torch.float)
-                    action, action_idx = agent.step(timesteps[0])
+                    action, action_idx, x_coord, y_coord = agent.step(timesteps[0])
+                    print("Episode {}\t| Step {}\t| Total Steps:".format(agent.episodes, agent.timesteps, agent.steps))
+                    print("Chosen action: {}".format(action))
+                    print("chosen x coordinate: {}\t type: {}".format(x_coord, type(x_coord)))
+                    print("chosen y coordiante: {}\t type: {}".format(y_coord, type(y_coord)))
+                    print("----------------------------------------------------------------")
                     if timesteps[0].last():
                         break
+
                     # timesteps contains all observations from the sc2.env
                     timesteps = env.step(action)
 
@@ -122,7 +129,7 @@ def main(unused_argv):
                     step_type = torch.tensor([timesteps[0].step_type] , dtype=torch.int)
 
                     # save transition tuple to the memory buffer
-                    memory.push(state, action_idx, reward, next_state, step_type)
+                    memory.push(state, action_idx, x_coord, y_coord, reward, next_state, step_type)
 
                     if len(memory) >= BATCH_SIZE:
                         transitions = memory.sample(BATCH_SIZE)
@@ -131,7 +138,7 @@ def main(unused_argv):
 
                         # loss is not very expressive, but included just for sake of completeness
                         loss = agent.optimize(batch)
-                        print("MSE Loss: {}".format(loss))
+                        # print("MSE Loss: {}".format(loss))
 
     except KeyboardInterrupt:
         pass

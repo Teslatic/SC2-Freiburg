@@ -32,14 +32,15 @@ SMART_ACTIONS = [   actions.FUNCTIONS.no_op.id,
 class BaseAgent(base_agent.BaseAgent):
     def __init__(self, screen_dim, minimap_dim, batch_size):
         super(BaseAgent, self).__init__()
-        self.screen_dim = screen_dim - 1        # -1 for array indexing
-        self.minimap_dim = minimap_dim - 1      # -1 for array indexing
+        self.screen_dim = screen_dim
+        self.minimap_dim = minimap_dim
         self.epsilon = 1.0
         self.eps_start = 1.0
         self.eps_end = 0.05
-        self.eps_decay = 500
+        self.eps_decay = 2500
         self.steps_done = 0
         self.gamma = 0.9
+        self.timesteps = 0
 
         self.net, self.target_net, self.optimizer = self._build_model()
         print("Network: \n{}".format(self.net))
@@ -107,6 +108,7 @@ class BaseAgent(base_agent.BaseAgent):
                         * np.exp(-1. * self.steps_done / self.eps_decay)
         self.steps_done += 1
         choice = np.random.choice(['random','greedy'], p = [self.epsilon,1-self.epsilon])
+        print("Epsilon: {:.2f}\t| choice: {}".format(self.epsilon,choice))
         return choice
 
 
@@ -121,7 +123,9 @@ class BaseAgent(base_agent.BaseAgent):
         choice = self.epsilon_greedy()
         if choice=='random':
             action_idx = np.random.randint(len(SMART_ACTIONS))
-            chosen_action = self.get_action(obs, SMART_ACTIONS[action_idx], torch.randint(83,(1,), dtype=torch.long), torch.randint(83,(1,), dtype=torch.long))
+            x_coord = np.random.randint(self.screen_dim)
+            y_coord = np.random.randint(self.screen_dim)
+            chosen_action = self.get_action(obs, SMART_ACTIONS[action_idx], x_coord , y_coord)
         else:
             with torch.no_grad():
                 net_input = torch.tensor((
@@ -129,23 +133,30 @@ class BaseAgent(base_agent.BaseAgent):
                     ,dtype=torch.float)
                 action_q_values, x_coord_q_values, y_coord_q_values = \
                     self.net(net_input)
-            action_idx = torch.argmax(action_q_values)
+            action_idx = np.argmax(action_q_values)
             best_action = SMART_ACTIONS[action_idx]
-            best_x = torch.argmax(x_coord_q_values).numpy()
-            best_y = torch.argmax(y_coord_q_values).numpy()
-            chosen_action = self.get_action(obs, best_action, best_x, best_y)
+            x_coord = np.argmax(x_coord_q_values)
+            y_coord = np.argmax(y_coord_q_values)
+            chosen_action = self.get_action(obs, best_action, x_coord, y_coord)
+
 
         # square brackets needed for internal pysc2 state machine
-        return [chosen_action], torch.tensor([action_idx],dtype=torch.long)
+        return [chosen_action], torch.tensor([action_idx],dtype=torch.long), \
+                torch.tensor([x_coord],dtype=torch.long), \
+                torch.tensor([y_coord],dtype=torch.long)
 
     def step(self, obs):
         '''
         takes one step in the internal state machine
         '''
         super(BaseAgent, self).step(obs)
-        action, action_idx = self.choose_action(obs)
+        self.timesteps += 1
 
-        return action, action_idx
+        return self.choose_action(obs)
+
+    def reset(self):
+        super(BaseAgent, self).reset()
+        self.timesteps = 0
 
 
     def optimize(self, batch):
@@ -157,23 +168,48 @@ class BaseAgent(base_agent.BaseAgent):
         # get the batches from the transition tuple
         state_batch = torch.cat(batch.state)
         action_batch = torch.cat(batch.action).unsqueeze(1)
+        x_coord_batch = torch.cat(batch.x_coord).unsqueeze(1)
+        y_coord_batch = torch.cat(batch.y_coord).unsqueeze(1)
         reward_batch = torch.cat(batch.reward)
         step_type_batch = torch.cat(batch.step_type)
         next_state_batch = torch.cat(batch.next_state)
 
+        # forward pass
+        state_action_values, x_q_values, y_q_values = self.net(state_batch.reshape((-1,1,84,84)))
+
+
         # gather action values with respect to the chosen action
-        state_action_values = self.net(state_batch.reshape((-1,1,84,84)))[0].gather(1,action_batch)
+        state_action_values = state_action_values.gather(1,action_batch)
+        x_q_values = x_q_values.gather(1,x_coord_batch)
+        y_q_values = y_q_values.gather(1,y_coord_batch)
+
 
         # compute action values of the next state over all actions and take the max
-        next_state_values, _, _ = self.target_net(next_state_batch.reshape((-1,1,84,84)))
-        next_state_values = next_state_values.max(1)[0].detach()
+        next_state_values, next_x_q_values, next_y_q_values = self.target_net(next_state_batch.reshape((-1,1,84,84)))
 
-        # calculate td targets
-        td_target = torch.tensor((next_state_values * self.gamma) + reward_batch , dtype=torch.float)
-        td_target[np.where(step_type_batch==2)] = reward_batch[np.where(step_type_batch==2)]
+        next_state_values = next_state_values.max(1)[0].detach()
+        next_x_q_values = next_x_q_values.max(1)[0].detach()
+        next_y_q_values = next_y_q_values.max(1)[0].detach()
+
+
+        # calculate td targets of the actions
+        td_target_actions = torch.tensor((next_state_values * self.gamma) + reward_batch , dtype=torch.float)
+        td_target_actions[np.where(step_type_batch==2)] = reward_batch[np.where(step_type_batch==2)]
+
+        # calculate td targets of the x coord
+        td_target_x_coord = torch.tensor((next_x_q_values * self.gamma) + reward_batch , dtype=torch.float)
+        td_target_x_coord[np.where(step_type_batch==2)] = reward_batch[np.where(step_type_batch==2)]
+
+        # calculate td targets of the y coord
+        td_target_y_coord = torch.tensor((next_y_q_values * self.gamma) + reward_batch , dtype=torch.float)
+        td_target_y_coord[np.where(step_type_batch==2)] = reward_batch[np.where(step_type_batch==2)]
+
+        q_values_cat = torch.cat((state_action_values, x_q_values, y_q_values))
+        td_target_cat = torch.cat((td_target_actions, td_target_x_coord, td_target_y_coord))
 
         # compute MSE loss
-        loss = F.mse_loss(state_action_values, td_target.unsqueeze(1))
+        # loss = F.mse_loss(state_action_values, td_target.unsqueeze(1))
+        loss = F.mse_loss(q_values_cat, td_target_cat.unsqueeze(1))
 
         # optimize model
         self.optimizer.zero_grad()
