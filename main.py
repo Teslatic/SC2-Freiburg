@@ -118,8 +118,9 @@ def main(unused_argv):
                     print("Chosen action: {}".format(action))
                     print("chosen x coordinate: {}\t type: {}".format(x_coord, type(x_coord)))
                     print("chosen y coordiante: {}\t type: {}".format(y_coord, type(y_coord)))
-                    print("Score: {}".format(agent.reward))
-                    print("{}".format(agent.update_status))
+                    print("Current Episode Score: {}\t| Total Score: {}".format(env._last_score[0],agent.reward))
+                    if agent.update_status is not None:
+                        print("{}".format(agent.update_status))
                     print("----------------------------------------------------------------")
                     if timesteps[0].last():
                         break

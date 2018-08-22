@@ -38,7 +38,7 @@ class BaseAgent(base_agent.BaseAgent):
         self.epsilon = 1.0
         self.eps_start = 1.0
         self.eps_end = 0.05
-        self.eps_decay = 2500
+        self.eps_decay = 8000
         self.steps_done = 0
         self.gamma = 0.9
         self.timesteps = 0
@@ -112,9 +112,9 @@ class BaseAgent(base_agent.BaseAgent):
         self.epsilon = self.eps_end + (self.eps_start - self.eps_end) \
                         * np.exp(-1. * self.steps_done / self.eps_decay)
         self.steps_done += 1
-        self.choice = np.random.choice(['random','greedy'], p = [self.epsilon,1-self.epsilon])
+        choice = np.random.choice(['random','greedy'], p = [self.epsilon,1-self.epsilon])
 
-        return self.choice
+        return choice
 
 
     def choose_action(self, obs):
@@ -125,8 +125,9 @@ class BaseAgent(base_agent.BaseAgent):
         the catergorical labeling of the actions as an "intermediate" solution for
         a restricted action space.
         '''
-        choice = self.epsilon_greedy()
-        if choice=='random':
+        self.choice = self.epsilon_greedy()
+
+        if self.choice=='random':
             action_idx = np.random.randint(len(SMART_ACTIONS))
             x_coord = np.random.randint(self.screen_dim)
             y_coord = np.random.randint(self.screen_dim)
