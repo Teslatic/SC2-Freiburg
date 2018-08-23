@@ -14,7 +14,6 @@ from sklearn import preprocessing
 ### custom imports
 from AtariNet import DQN
 
-
 ### torch imports
 import torch
 import torch.nn as nn
@@ -23,28 +22,31 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 
 # constants
-SMART_ACTIONS = [   actions.FUNCTIONS.no_op.id,
+SMART_ACTIONS = [
           actions.FUNCTIONS.select_army.id,
           actions.FUNCTIONS.Move_screen.id
         ]
 
 
 class BaseAgent(base_agent.BaseAgent):
-  def __init__(self, screen_dim, minimap_dim, batch_size, target_update_period):
+  def __init__(self, screen_dim, minimap_dim, batch_size, target_update_period,
+                history_length):
     super(BaseAgent, self).__init__()
+    self.history_length = history_length
     self.net, self.target_net, self.optimizer = self._build_model()
+    self.map_dimensions = (84,64)
     self.screen_dim = screen_dim
     self.minimap_dim = minimap_dim
     self.epsilon = 1.0
     self.eps_start = 1.0
     self.eps_end = 0.1
-    self.eps_decay = 8000
+    self.eps_decay = 3000
     self.steps_done = 0
-    self.gamma = 0.9
+    self.gamma = 0.99
     self.timesteps = 0
     self.update_cnt = 0
     self.target_update_period = target_update_period
-    self.update_status = None
+    # self.update_status = None
     self.choice = None
 
 
@@ -56,8 +58,8 @@ class BaseAgent(base_agent.BaseAgent):
     self.td_target = torch.zeros(batch_size, device="cpu", requires_grad=True)
 
   def _build_model(self):
-    net = DQN()
-    target_net = DQN()
+    net = DQN(self.history_length)
+    target_net = DQN(self.history_length)
     optimizer = optim.Adam(net.parameters(), lr=0.0001)
 
     return net, target_net, optimizer
@@ -118,7 +120,7 @@ class BaseAgent(base_agent.BaseAgent):
     return choice
 
 
-  def choose_action(self, obs):
+  def choose_action(self, obs, history_tensor):
     '''
     chooses an action according to the current policy
     returns the chosen action id with x,y coordinates and the index of the action
@@ -129,16 +131,17 @@ class BaseAgent(base_agent.BaseAgent):
     self.choice = self.epsilon_greedy()
     if self.choice=='random':
       action_idx = np.random.randint(len(SMART_ACTIONS))
-      x_coord = np.random.randint(self.screen_dim)
-      y_coord = np.random.randint(self.screen_dim)
+      x_coord = np.random.randint(self.map_dimensions[0])
+      y_coord = np.random.randint(self.map_dimensions[1])
       chosen_action = self.get_action(obs, SMART_ACTIONS[action_idx], x_coord , y_coord)
     else:
       with torch.no_grad():
-        net_input = torch.tensor((
-          obs.observation["feature_screen"]["player_relative"].reshape((-1,1,84,84)))
-          ,dtype=torch.float)
+
+        # net_input = torch.tensor((
+        #   obs.observation["feature_screen"]["player_relative"].reshape((-1,4,self.x_map_dim, self.y_map_dim)))
+        #   ,dtype=torch.float)
         action_q_values, x_coord_q_values, y_coord_q_values = \
-          self.net(net_input)
+          self.net(history_tensor)
       action_idx = np.argmax(action_q_values)
       best_action = SMART_ACTIONS[action_idx]
       x_coord = np.argmax(x_coord_q_values)
@@ -150,12 +153,17 @@ class BaseAgent(base_agent.BaseAgent):
         torch.tensor([x_coord],dtype=torch.long), \
         torch.tensor([y_coord],dtype=torch.long)
 
-  def step(self, obs, env):
-    self.timesteps +1
+  def step(self, obs, env, history_tensor):
+    self.timesteps += 1
     self.steps += 1
 
-    action,  action_idx, x_coord,y_coord  =self.choose_action(obs)
+    # get dimensions from observation
+    self.x_map_dim, self.y_map_dim = obs.observation["feature_screen"]["player_relative"].shape
+
+
+    action,  action_idx, x_coord,y_coord  =self.choose_action(obs, history_tensor)
     next_state = env.step(action)
+    self.reward += obs.reward
 
     return next_state, action, action_idx, x_coord, y_coord
 
@@ -174,7 +182,8 @@ class BaseAgent(base_agent.BaseAgent):
       self.update_cnt += 1
       self.update_status = "Weights updated!"
     else:
-      self.update_status = None
+      self.update_status = " - "
+
 
 
 
@@ -186,9 +195,6 @@ class BaseAgent(base_agent.BaseAgent):
 
     # get the batches from the transition tuple
     state_batch = torch.cat(batch.state)
-
-    print(state_batch)
-
     action_batch = torch.cat(batch.action).unsqueeze(1)
     x_coord_batch = torch.cat(batch.x_coord).unsqueeze(1)
     y_coord_batch = torch.cat(batch.y_coord).unsqueeze(1)
@@ -196,23 +202,23 @@ class BaseAgent(base_agent.BaseAgent):
     step_type_batch = torch.cat(batch.step_type)
     next_state_batch = torch.cat(batch.next_state)
 
+    print(state_batch.size())
     # forward pass
-    state_action_values, x_q_values, y_q_values = self.net(state_batch.reshape((-1,1,84,84)))
-    # print("q values for actions: {}".format(state_action_values))
+    # state_action_values, x_q_values, y_q_values = self.net(state_batch.reshape((-1,self.history_length,self.x_map_dim, self.y_map_dim)))
+    state_action_values, x_q_values, y_q_values = self.net(state_batch)
 
     # gather action values with respect to the chosen action
     state_action_values = state_action_values.gather(1,action_batch)
     x_q_values = x_q_values.gather(1,x_coord_batch)
     y_q_values = y_q_values.gather(1,y_coord_batch)
 
-
     # compute action values of the next state over all actions and take the max
-    next_state_values, next_x_q_values, next_y_q_values = self.target_net(next_state_batch.reshape((-1,1,84,84)))
+    # next_state_values, next_x_q_values, next_y_q_values = self.target_net(next_state_batch.reshape((-1,self.history_length,self.x_map_dim,self.y_map_dim)))
+    next_state_values, next_x_q_values, next_y_q_values = self.target_net(next_state_batch)
 
     next_state_values = next_state_values.max(1)[0].detach()
     next_x_q_values = next_x_q_values.max(1)[0].detach()
     next_y_q_values = next_y_q_values.max(1)[0].detach()
-
 
     # calculate td targets of the actions
     td_target_actions = torch.tensor((next_state_values * self.gamma) + reward_batch , dtype=torch.float)
@@ -230,7 +236,6 @@ class BaseAgent(base_agent.BaseAgent):
     td_target_cat = torch.cat((td_target_actions, td_target_x_coord, td_target_y_coord))
 
     # compute MSE loss
-    # loss = F.mse_loss(state_action_values, td_target.unsqueeze(1))
     loss = F.mse_loss(q_values_cat, td_target_cat.unsqueeze(1))
 
     # optimize model

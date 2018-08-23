@@ -1,53 +1,12 @@
 #!/usr/bin/env python3
-# pysc2 modules
-from pysc2.agents import  random_agent, scripted_agent
-from pysc2.env import sc2_env
-from pysc2.lib import actions, features, units
-from absl import app
-
-### torch imports
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import torchvision.transforms as T
-
-
-
-# custom imports
-from BaseAgent import BaseAgent, SMART_ACTIONS
-from AtariNet import DQN
-
-# normal python modules
-import random
-import argparse
-from collections import namedtuple
-import numpy as np
-
-# CONSTANTS
-SCREEN_DIM = 84
-MINIMAP_DIM = 64
-GAMESTEPS = None # 0 = unlimited game time, None = map default
-STEP_MULTIPLIER = None # 16 = 1s game time, None = map default
-VISUALIZE = False
-BATCH_SIZE = 4
-# every n steps update target weights
-TARGET_UPDATE_PERIOD = 20
-TEST_PERIOD = 20
-
-
-# Initalizing
-Transition = namedtuple('Transition', ('state', 'action', 'x_coord', 'y_coord', 'reward', 'next_state','step_type'))
-replay_memory_size = 100
-replay_memory = []
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 '''
 helpers
 '''
 def setup_agent():
   agent = BaseAgent(screen_dim = SCREEN_DIM, minimap_dim = MINIMAP_DIM,
-          batch_size=BATCH_SIZE, target_update_period=TARGET_UPDATE_PERIOD)
+          batch_size=BATCH_SIZE, target_update_period=TARGET_UPDATE_PERIOD,
+          history_length=HIST_LENGTH)
   # agent = scripted_agent.MoveToBeacon()
   # players = [ sc2_env.Agent(sc2_env.Race.terran),
   #       sc2_env.Bot(sc2_env.Race.random,
@@ -70,9 +29,17 @@ def setup_env(agent, players, agent_interface):
       agent_interface_format=agent_interface,
       step_mul=STEP_MULTIPLIER,
       game_steps_per_episode=GAMESTEPS,
-      visualize=True)
+      visualize=VISUALIZE)
   return env
 
+def _xy_locs(mask):
+  """Mask should be a set of bools from comparison with a feature layer."""
+  y, x = mask.nonzero()
+  return list(zip(x, y))
+
+'''
+custom classes
+'''
 
 
 class ReplayBuffer(object):
@@ -85,6 +52,9 @@ class ReplayBuffer(object):
   def __len__(self):
     return len(self.memory)
 
+  def __getitem__(self, key):
+    return self.memory[key]
+
   def push(self, *args):
     ''' store transition in replay buffer '''
     if len(self.memory) < self.capacity:
@@ -96,7 +66,25 @@ class ReplayBuffer(object):
     ''' return random sample transition from ER '''
     return random.sample(self.memory, batch_size)
 
+class History(object):
+  '''
+ stacks frames as some kind of histor for the agent since training data is
+  not i.i.d
+  '''
+  def __init__(self, HIS_LENGTH):
+    # self.history = np.zeros((HIS_LENGTH, 84, 84))
+    self.history = np.zeros((1,HIS_LENGTH,84,84))
+    self.capacity = HIS_LENGTH
 
+  def __getitem__(self, key):
+    return self.history[key]
+
+  def stack(self, state):
+    tmp_state = state.unsqueeze(1).numpy()
+    self.history = np.delete(self.history,0,1)
+    self.history = np.append(self.history,tmp_state,1)
+
+    return torch.tensor(self.history,dtype=torch.float)
 
 '''
 main function
@@ -111,21 +99,19 @@ def main(unused_argv):
     print("Epsilon: {:.2f}\t| choice: {}".format(agent.epsilon,agent.choice))
     print("Episode {}\t| Step {}\t| Total Steps: {}".format(agent.episodes, agent.timesteps, agent.steps))
     print("Chosen action: {}".format(action))
-    print("chosen x coordinate: {}\t type: {}".format(x_coord, type(x_coord)))
-    print("chosen y coordiante: {}\t type: {}".format(y_coord, type(y_coord)))
+    print("chosen coordinates [x,y]: {}".format((x_coord, y_coord)))
+    print("Beacon center location [x,y]: {}".format(beacon_center))
     print("Current Episode Score: {}\t| Total Score: {}".format(env._last_score[0],agent.reward))
-    try:
-      print("Loss: {:.5f}".format(loss))
-    except:
-      pass
-    if agent.update_status is not None:
-      print("{}".format(agent.update_status))
+    print("Loss: {:.5f}".format(loss))
+    print("{}".format(agent.update_status))
     print("----------------------------------------------------------------")
 
     return
+  torch.set_printoptions(linewidth=750, profile="full")
 
   agent, players, agent_interface = setup_agent()
   memory = ReplayBuffer(1000000)
+  hist = History(HIST_LENGTH)
   try:
     while True:
       with  setup_env(agent,players,agent_interface) as env:
@@ -134,33 +120,48 @@ def main(unused_argv):
         agent.reset()
         print("----------------------------------------------------------------")
         while True:
-          # make one step
-          internal_next_state, action, action_idx, x_coord, y_coord = agent.step(internal_state[0], env)
+          # get beacon center for debug reference
+          beacon_center = np.mean(_xy_locs(internal_state[0].observation["feature_screen"]["player_relative"] == 3),axis=0).round()
 
           # print status
-          print(print_status(agent, env))
+          try:
+            print_status(agent, env)
+          except:
+            pass
 
           # extraction of the transition tuple we are interested in from the internal state machine
           state = torch.tensor([internal_state[0].observation["feature_screen"]["player_relative"]],dtype=torch.float)
+
+          # put current state on history stack
+          state_history_tensor = hist.stack(state)
+
+          # make one step
+          internal_next_state, action, action_idx, x_coord, y_coord = agent.step(internal_state[0], env, state_history_tensor)
+
+          # collect transition data
+          reward = torch.tensor([internal_state[0].reward], device=device,dtype=torch.float)
+          step_type = torch.tensor([internal_state[0].step_type], device=device,dtype=torch.int)
           next_state = torch.tensor([internal_next_state[0].observation["feature_screen"]["player_relative"]],dtype=torch.float)
-          reward = torch.tensor([internal_next_state[0].reward], device=device,dtype=torch.float)
-          step_type = torch.tensor([internal_next_state[0].step_type], device=device,dtype=torch.int)
 
-          # check if done, i.e. step_type==2
-          if step_type==2:
-            break
-
+          # push next state on next state history stack
+          next_state_history_tensor = hist.stack(next_state)
 
           # save transition tuple to the memory buffer
-          memory.push(state, action_idx, x_coord, y_coord, reward, next_state, step_type)
+          memory.push(state_history_tensor, action_idx, x_coord, y_coord, reward, next_state_history_tensor, step_type)
+
 
           if len(memory) >= BATCH_SIZE:
             transitions = memory.sample(BATCH_SIZE)
+
             # zipping necessary for reasons i dont really understand
             batch = Transition(*zip(*transitions))
 
             # loss is not very expressive, but included just for sake of completeness
             loss = agent.optimize(batch)
+
+          # check if done, i.e. step_type==2
+          if step_type==2:
+            break
 
           # s_t <- s_(t+1), i.e old state <- new state
           internal_state = internal_next_state
@@ -168,4 +169,45 @@ def main(unused_argv):
     pass
 
 if __name__ == "__main__":
+  # pysc2 modules
+  from pysc2.agents import  random_agent, scripted_agent
+  from pysc2.env import sc2_env
+  from pysc2.lib import actions, features, units
+  from absl import app
+
+  ### torch imports
+  import torch
+  import torch.nn as nn
+  import torch.optim as optim
+  import torch.nn.functional as F
+  import torchvision.transforms as T
+
+
+  # custom imports
+  from BaseAgent import BaseAgent, SMART_ACTIONS
+  from AtariNet import DQN
+
+  # normal python modules
+  import random
+  import argparse
+  from collections import namedtuple
+  import numpy as np
+
+  # CONSTANTS
+  SCREEN_DIM = 84
+  MINIMAP_DIM = 64
+  GAMESTEPS = None # 0 = unlimited game time, None = map default
+  STEP_MULTIPLIER = 16 # 16 = 1s game time, None = map default
+  BATCH_SIZE = 128
+  # every n steps update target weights
+  TARGET_UPDATE_PERIOD = 40
+  VISUALIZE = True
+  HIST_LENGTH = 10
+
+  # Initalizing
+  Transition = namedtuple('Transition', ('state', 'action', 'x_coord', 'y_coord', 'reward', 'next_state','step_type'))
+  replay_memory_size = 100
+  replay_memory = []
+  device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
   app.run(main)

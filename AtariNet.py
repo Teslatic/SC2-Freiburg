@@ -36,13 +36,15 @@ Inputs:
 
 class DQN(nn.Module):
 
-  def __init__(self):
+  def __init__(self, history_length):
     super(DQN, self).__init__()
-    self.num_actions = 3
-    self.screen_dimension = 84
+    self.num_actions = 2
+    self.map_dimensions = (84,64)
+    self.history_length = history_length
+
 
     # screen conv layers
-    self.screen_conv1 = nn.Conv2d(1, 16, kernel_size=8, padding=0, stride =4)
+    self.screen_conv1 = nn.Conv2d(self.history_length, 16, kernel_size=8, padding=0, stride =4)
     self.screen_conv2 = nn.Conv2d(16, 32, kernel_size=4, padding=0, stride=2)
 
     # minimap conv layers
@@ -56,10 +58,10 @@ class DQN(nn.Module):
     self.action_fc1 = nn.Linear(256,self.num_actions)
 
     # x coordinate output
-    self.x_coord_fc1 = nn.Linear(256,self.screen_dimension)
+    self.x_coord_fc1 = nn.Linear(256,self.map_dimensions[0])
 
     # y coordinate output
-    self.y_coord_fc1 = nn.Linear(256,self.screen_dimension)
+    self.y_coord_fc1 = nn.Linear(256,self.map_dimensions[1])
 
 
   def forward(self, screen):
@@ -75,10 +77,10 @@ class DQN(nn.Module):
     x_coord_q_values = self.x_coord_fc1(screen.view(screen.size(0), -1))
 
     # estimated y coordinates q values
-    y_coord_q_values = self.x_coord_fc1(screen.view(screen.size(0), -1))
+    y_coord_q_values = self.y_coord_fc1(screen.view(screen.size(0), -1))
 
 
-    return action_q_values, x_coord_q_values, y_coord_q_values
+    return action_q_values, x_coord_q_values,  y_coord_q_values
 
 
 
