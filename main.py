@@ -4,9 +4,13 @@
 helpers
 '''
 def setup_agent():
-  agent = BaseAgent(screen_dim = SCREEN_DIM, minimap_dim = MINIMAP_DIM,
+  # agent = BaseAgent(screen_dim = SCREEN_DIM, minimap_dim = MINIMAP_DIM,
+  #         batch_size=BATCH_SIZE, target_update_period=TARGET_UPDATE_PERIOD,
+  #         history_length=HIST_LENGTH)
+  agent = TripleAgent(screen_dim = SCREEN_DIM, minimap_dim = MINIMAP_DIM,
           batch_size=BATCH_SIZE, target_update_period=TARGET_UPDATE_PERIOD,
           history_length=HIST_LENGTH)
+
   # agent = scripted_agent.MoveToBeacon()
   # players = [ sc2_env.Agent(sc2_env.Race.terran),
   #       sc2_env.Bot(sc2_env.Race.random,
@@ -102,7 +106,7 @@ def main(unused_argv):
     print("chosen coordinates [x,y]: {}".format((x_coord, y_coord)))
     print("Beacon center location [x,y]: {}".format(beacon_center))
     print("Current Episode Score: {}\t| Total Score: {}".format(env._last_score[0],agent.reward))
-    print("Loss: {:.5f}".format(loss))
+    print("Action Loss: {:.5f}\t| X coord loss: {:.5f}\t| Y coord loss: {:.5f}".format(action_loss, x_coord_loss, y_coord_loss))
     print("{}".format(agent.update_status))
     print("----------------------------------------------------------------")
 
@@ -157,7 +161,16 @@ def main(unused_argv):
             batch = Transition(*zip(*transitions))
 
             # loss is not very expressive, but included just for sake of completeness
-            loss = agent.optimize(batch)
+            action_loss, x_coord_loss, y_coord_loss = agent.optimize(batch)
+
+
+                # update target nets
+            if agent.episodes % TARGET_UPDATE_PERIOD == 0:
+              agent.update_target_net(agent.action_net, agent.action_target_net)
+              agent.update_target_net(agent.x_coord_net, agent.x_coord_target_net)
+              agent.update_target_net(agent.y_coord_net, agent.y_coord_target_net)
+            else:
+              agent.update_status = " - "
 
           # check if done, i.e. step_type==2
           if step_type==2:
@@ -184,7 +197,7 @@ if __name__ == "__main__":
 
 
   # custom imports
-  from BaseAgent import BaseAgent, SMART_ACTIONS
+  from BaseAgent import BaseAgent, SMART_ACTIONS, TripleAgent
   from AtariNet import DQN
 
   # normal python modules
@@ -198,11 +211,12 @@ if __name__ == "__main__":
   MINIMAP_DIM = 64
   GAMESTEPS = None # 0 = unlimited game time, None = map default
   STEP_MULTIPLIER = 16 # 16 = 1s game time, None = map default
-  BATCH_SIZE = 128
-  # every n steps update target weights
-  TARGET_UPDATE_PERIOD = 40
-  VISUALIZE = True
-  HIST_LENGTH = 10
+  BATCH_SIZE = 32
+  # every n steps update target weights (BaseAgent)
+  # every n episodes update target weights (TripleAgent)
+  TARGET_UPDATE_PERIOD = 5
+  VISUALIZE = False
+  HIST_LENGTH = 4
 
   # Initalizing
   Transition = namedtuple('Transition', ('state', 'action', 'x_coord', 'y_coord', 'reward', 'next_state','step_type'))
