@@ -28,12 +28,20 @@ SMART_ACTIONS = [
         ]
 
 
-class BaseAgent(base_agent.BaseAgent):
+'''
+Alternative approach: use 3 networks, one for actions,x and y
+'''
+
+class TripleAgent(base_agent.BaseAgent):
   def __init__(self, screen_dim, minimap_dim, batch_size, target_update_period,
                 history_length):
-    super(BaseAgent, self).__init__()
+    super(TripleAgent, self).__init__()
     self.history_length = history_length
-    self.net, self.target_net, self.optimizer = self._build_model()
+
+    self.action_net, self.action_target_net, self.action_optimizer = self._build_model(2)
+    self.x_coord_net, self.x_coord_target_net, self.x_coord_optimizer = self._build_model(84)
+    self.y_coord_net, self.y_coord_target_net, self.y_coord_optimizer = self._build_model(64)
+
     self.map_dimensions = (84,64)
     self.screen_dim = screen_dim
     self.minimap_dim = minimap_dim
@@ -47,13 +55,10 @@ class BaseAgent(base_agent.BaseAgent):
     self.update_cnt = 0
     self.target_update_period = target_update_period
     self.choice = None
-    print("Network: \n{}".format(self.net))
-    print("Optimizer: \n{}".format(self.optimizer))
-    print("Target Network: \n{}".format(self.target_net))
 
-  def _build_model(self):
-    net = DQN(self.history_length)
-    target_net = DQN(self.history_length)
+  def _build_model(self, num_outputs):
+    net = SingleDQN(self.history_length, num_outputs)
+    target_net = SingleDQN(self.history_length, num_outputs)
     optimizer = optim.Adam(net.parameters(), lr=0.0001)
 
     return net, target_net, optimizer
@@ -132,7 +137,9 @@ class BaseAgent(base_agent.BaseAgent):
       chosen_action = self.get_action(available_actions, SMART_ACTIONS[action_idx], x_coord , y_coord)
     else:
       with torch.no_grad():
-        action_q_values, x_coord_q_values, y_coord_q_values = self.net(history_tensor)
+        action_q_values = self.action_net(history_tensor)
+        x_coord_q_values = self.x_coord_net(history_tensor)
+        y_coord_q_values = self.y_coord_net(history_tensor)
       action_idx = np.argmax(action_q_values)
       best_action = SMART_ACTIONS[action_idx]
       x_coord = np.argmax(x_coord_q_values)
@@ -159,7 +166,7 @@ class BaseAgent(base_agent.BaseAgent):
 
 
   def reset(self):
-    super(BaseAgent, self).reset()
+    super(TripleAgent, self).reset()
     self.timesteps = 0
     self.update_cnt = 0
 
@@ -179,6 +186,7 @@ class BaseAgent(base_agent.BaseAgent):
     optimizes the model. currently only trains the actions
     # TODO: extend Q-Update function to the x and y coordinates
      '''
+
     # get the batches from the transition tuple
     state_batch = torch.cat(batch.state)
     action_batch = torch.cat(batch.action).unsqueeze(1)
@@ -188,22 +196,21 @@ class BaseAgent(base_agent.BaseAgent):
     step_type_batch = torch.cat(batch.step_type)
     next_state_batch = torch.cat(batch.next_state)
 
-    # forward pass
-    state_action_values, x_q_values, y_q_values = self.net(state_batch)
 
-    # gather action values with respect to the chosen action
-    state_action_values = state_action_values.gather(1,action_batch)
-    x_q_values = x_q_values.gather(1,x_coord_batch)
-    y_q_values = y_q_values.gather(1,y_coord_batch)
+    # forward pass and gather action values with respect to the chosen action
+    state_action_values = self.action_net(state_batch).gather(1,action_batch)
+    x_q_values = self.x_coord_net(state_batch).gather(1,x_coord_batch)
+    y_q_values = self.y_coord_net(state_batch).gather(1,y_coord_batch)
+
+
     # compute action values of the next state over all actions and take the max
-    next_state_values, next_x_q_values, next_y_q_values = self.target_net(next_state_batch)
+    next_state_action_values = self.action_target_net(state_batch).max(1)[0].detach()
+    next_x_q_values = self.x_coord_target_net(state_batch).max(1)[0].detach()
+    next_y_q_values = self.y_coord_target_net(state_batch).max(1)[0].detach()
 
-    next_state_values = next_state_values.max(1)[0].detach()
-    next_x_q_values = next_x_q_values.max(1)[0].detach()
-    next_y_q_values = next_y_q_values.max(1)[0].detach()
 
     # calculate td targets of the actions
-    td_target_actions = torch.tensor((next_state_values * self.gamma) + reward_batch , dtype=torch.float)
+    td_target_actions = torch.tensor((next_state_action_values * self.gamma) + reward_batch , dtype=torch.float)
     td_target_actions[np.where(step_type_batch==2)] = reward_batch[np.where(step_type_batch==2)]
 
     # calculate td targets of the x coord
@@ -217,19 +224,23 @@ class BaseAgent(base_agent.BaseAgent):
     q_values_cat = torch.cat((state_action_values, x_q_values, y_q_values))
     td_target_cat = torch.cat((td_target_actions, td_target_x_coord, td_target_y_coord))
 
-    # compute MSE loss
-    loss = F.mse_loss(q_values_cat, td_target_cat.unsqueeze(1))
+    # compute MSE losses
+    action_loss = F.mse_loss(state_action_values, td_target_actions.unsqueeze(1))
+    x_coord_loss = F.mse_loss(x_q_values, td_target_x_coord.unsqueeze(1))
+    y_coord_loss = F.mse_loss(y_q_values, td_target_y_coord.unsqueeze(1))
 
-    # optimize model
-    self.optimizer.zero_grad()
-    loss.backward()
-    self.optimizer.step()
+    # optimize models
+    self.action_optimizer.zero_grad()
+    action_loss.backward()
+    self.action_optimizer.step()
+
+    self.x_coord_optimizer.zero_grad()
+    x_coord_loss.backward()
+    self.x_coord_optimizer.step()
+
+    self.x_coord_optimizer.zero_grad()
+    y_coord_loss.backward()
+    self.y_coord_optimizer.step()
 
 
-    return loss.item()
-
-
-
-
-if __name__ == '__main__':
-  BaseAgent = BaseAgent()
+    return action_loss.item(), x_coord_loss.item(), y_coord_loss.item()
