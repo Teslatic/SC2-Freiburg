@@ -40,9 +40,9 @@ class BaseAgent(base_agent.BaseAgent):
     self.epsilon = 1.0
     self.eps_start = 1.0
     self.eps_end = 0.1
-    self.eps_decay = 2800
+    self.eps_decay = 3500
     self.steps_done = 0
-    self.gamma = 0.99999999
+    self.gamma = 0.9
     self.timesteps = 0
     self.update_cnt = 0
     self.target_update_period = target_update_period

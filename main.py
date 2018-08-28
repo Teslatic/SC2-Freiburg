@@ -114,14 +114,15 @@ def main(unused_argv):
   torch.set_printoptions(linewidth=750, profile="full")
 
   agent, players, agent_interface = setup_agent()
-  memory = ReplayBuffer(1000000)
+  memory = ReplayBuffer(10000)
   hist = History(HIST_LENGTH)
   try:
-    while True:
-      with  setup_env(agent,players,agent_interface) as env:
-        agent.setup(env.observation_spec(), env.action_spec())
+    with  setup_env(agent,players,agent_interface) as env:
+      agent.setup(env.observation_spec(), env.action_spec())
+      while True:
         internal_state = env.reset()
-        agent.reset()
+        print(agent.episodes)
+        # agent.reset()
         print("----------------------------------------------------------------")
         while True:
           # get beacon center for debug reference
@@ -135,9 +136,11 @@ def main(unused_argv):
 
           # extraction of the transition tuple we are interested in from the internal state machine
           state = torch.tensor([internal_state[0].observation["feature_screen"]["player_relative"]],dtype=torch.float)
-
+          # print(internal_state[0].observation["feature_screen"]["player_relative"])
           # put current state on history stack
+
           state_history_tensor = hist.stack(state)
+          state_history_tensor = state.unsqueeze(1)
 
           # make one step
           internal_next_state, action, action_idx, x_coord, y_coord = agent.step(internal_state[0], env, state_history_tensor)
@@ -164,17 +167,19 @@ def main(unused_argv):
             loss = agent.optimize(batch)
 
 
-            # update target nets
-            if agent.episodes % TARGET_UPDATE_PERIOD == 0:
-              agent.update_target_net(agent.net, agent.target_net)
-            else:
-              agent.update_status = " - "
+
           # check if done, i.e. step_type==2
-          if step_type==2:
-            break
 
           # s_t <- s_(t+1), i.e old state <- new state
           internal_state = internal_next_state
+          agent.update_status = " - "
+          if step_type==2:
+            # update target nets
+            if agent.episodes % TARGET_UPDATE_PERIOD == 0 and agent.episodes != 0:
+              agent.update_target_net(agent.net, agent.target_net)
+
+            agent.reset()
+
   except KeyboardInterrupt:
     pass
 
@@ -212,9 +217,9 @@ if __name__ == "__main__":
   BATCH_SIZE = 32
   # every n steps update target weights (BaseAgent)
   # every n episodes update target weights (TripleAgent)
-  TARGET_UPDATE_PERIOD = 1
+  TARGET_UPDATE_PERIOD =  10
   VISUALIZE = False
-  HIST_LENGTH = 4
+  HIST_LENGTH = 1
 
   # Initalizing
   Transition = namedtuple('Transition', ('state', 'action', 'x_coord', 'y_coord', 'reward', 'next_state','step_type'))
