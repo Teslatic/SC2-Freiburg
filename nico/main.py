@@ -1,146 +1,80 @@
 #!/usr/bin/env python3
 
+def start_test(agent, test_env_file, agent_interface, ep):
+        print("Starting Test in episode {}".format(ep))
+        test_env, test_episodes = setup_env(test_env_file, agent_interface)
+        # Seed setzen?
+        for test_ep in range(test_episodes):  # Starting an episode
+            test_observation = test_env.reset()
+            actual_test_obs = test_observation[0]
+            # Setting flags and random seed. Clearing reward and history?
+            for steps in range(1920):  # Starting a timestep
+                # get beacon center and last_score for debug reference
+                last_score_test = test_env._last_score[0]  # Is this not contained in the reward structure?
+                # make one step
+                test_action = agent.step(actual_test_obs, last_score_test, 'test')
+                next_test_obs = test_env.step(test_action)
+                actual_test_obs = next_test_obs[0]
+        print("TEST HAS ENDED")
 
 def main(unused_argv):
+    # try:
+    # Setting up the torch, agent, agent interface and environment
+    print_ts("Performing calculations on {}".format(setup_torch()))
+    agent = BaseAgent(agent_file)
+    agent_interface = agent.setup_interface()
+    # except:
+        # print_ts("Problem while initializing agent or environment.")
+        # exit()
+    if True:
+        # With statement should be used to properly close the documents and maybe plot graphics in case of an error
+        env, episodes = setup_env(env_file, agent_interface)
+        agent.setup(env.observation_spec(), env.action_spec())  # Necessary? --> For each minigame
+        for ep in range(episodes):  # Starting an episode
+            print_ts("Starting episode {}".format(ep))
+            observation = env.reset()
+            actual_obs = observation[0]
+            # Setting flags and random seed. Clearing reward and history?
+            while True:  # Starting a timestep
+                # last_score for debug reference
+                last_score = env._last_score[0]  # Is this not contained in the reward structure?
 
-    # GLOBAL CONSTANTS
-
-    EPISODES = 10000
-
-    BASE_AGENT = 'base_agent'
-    SCREEN_DIM = 84
-    MINIMAP_DIM = 64
-    GAMMA = 0.99
-    OPTIM_LR = 0.0001
-    BATCH_SIZE = 32
-    TARGET_UPDATE_PERIOD = 10
-    HIST_LENGTH = 1
-    REPLAY_SIZE = 100000
-    DEVICE = 'cpu'
-
-    MAP = 'MoveToBeacon'
-    PLAYERS = [sc2_env.Agent(sc2_env.Race.terran)]
-    STEP_MULTIPLIER = 16  # 16 = 1s game time, None = map default
-    GAMESTEPS = None  # 0 = unlimited game time, None = map default
-    VISUALIZE = True
-
-    epsilon_file = {
-                    'EPSILON': 1.0,
-                    'EPS_START': 1.0,
-                    'EPS_END': 0.1,
-                    'EPS_DECAY': 20000
-                    }
-
-    agent_file = {
-                  'TYPE': BASE_AGENT,  # Standard: BASE_AGENT
-                  'SCREEN_DIM': SCREEN_DIM,  # Standard 84
-                  'MINIMAP_DIM': MINIMAP_DIM,  # Standard 64
-                  'GAMMA': GAMMA,  # Standard 0.99
-                  'OPTIM_LR': OPTIM_LR,  # Standard 0.0001
-                  'BATCH_SIZE': BATCH_SIZE,  # Standard 32
-                  'TARGET_UPDATE_PERIOD': TARGET_UPDATE_PERIOD,   # Standard 5
-                  'HIST_LENGTH': HIST_LENGTH,   # Standard 4
-                  'REPLAY_SIZE': REPLAY_SIZE,
-                  'DEVICE': DEVICE,
-                  'EPSILON_FILE': epsilon_file
-                  }
-
-    env_file = {
-                'MAP_NAME': MAP,
-                'PLAYERS': PLAYERS,
-                'STEP_MULTIPLIER': STEP_MULTIPLIER,  # Standard 16
-                'GAMESTEPS': GAMESTEPS,
-                'VISUALIZE': VISUALIZE
-                }
-
-    def setup_agent(agent_file):
-        """
-        Initializing right agent and agent_interface for the environment.
-        """
-        agent_type = agent_file["TYPE"]
-
-        if agent_type == 'base_agent':
-            print_ts("Using a Base Agent")
-            agent = BaseAgent(agent_file)
-        if agent_type == 'triple_agent':
-            agent = TripleAgent(agent_file)
-        else:
-            print_ts("The agent type {} is not known".format(agent_type))
-            exit()
-        return agent, agent.setup_interface()
-
-    def setup_env(env_file, agent_interface):
-        """
-        Refer to PYSC2 documentation.
-        """
-        print_ts("Initalizing environment")
-        env = sc2_env.SC2Env(
-            map_name=env_file['MAP_NAME'],
-            players=env_file['PLAYERS'],
-            agent_interface_format=agent_interface,
-            step_mul=env_file['STEP_MULTIPLIER'],
-            game_steps_per_episode=env_file['GAMESTEPS'],
-            visualize=env_file['VISUALIZE'])
-        return env
-
-    def _xy_locs(mask):
-        """
-        Mask should be a set of bools from comparison with a feature layer.
-        """
-        y, x = mask.nonzero()
-        return list(zip(x, y))
-
-    try:
-        # Initalizing
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        agent_file["DEVICE"] = device
-        print_ts("Performing calculations on {}".format(device))
-
-        torch.set_printoptions(linewidth=750, profile="full")
-
-        # Setting up the agent
-        agent = BaseAgent(agent_file)
-        agent_interface = agent.setup_interface()
-
-        # Setting up the environment
-        with setup_env(env_file, agent_interface) as env:
-            agent.setup(env.observation_spec(), env.action_spec())  # Necessary? --> For each minigame
-            for ep in range(EPISODES):  # Starting an episode
-                observation = env.reset()
-                actual_obs = observation[0]
-                # # FLAGS
-                # if ep != 0:  # No flags for the first episode
-                #     agent.set_episode_flags(ep)
-
-                # Setting flags and random seed. Clearing reward and history?
-                while True:  # Starting a timestep
-                    # get beacon center and last_score for debug reference
-                    beacon_center = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 3), axis=0).round()
-                    last_score = env._last_score[0]  # Is this not contained in the reward structure?
-
-                    # make one step
-                    action = agent.step(actual_obs, beacon_center, last_score)
-                    next_obs = env.step(action)
-                    actual_obs = next_obs[0]
-    except KeyboardInterrupt:
-        pass
+                # make one step
+                action = agent.step(actual_obs, last_score, 'learn')
+                next_obs = env.step(action)
+                actual_obs = next_obs[0]
+                #
+                if actual_obs.step_type == 2 and ep % 2 == 0:
+                    test_thread = Thread(target=start_test, args=(agent, test_env_file, agent_interface, ep))
+                    test_thread.start()
+    # except KeyboardInterrupt:
+    #     print_ts("Shutdown by user")
+    # except:
+    #     print_ts("Problem in the loop")
 
 if __name__ == "__main__":
-    print("Importing packages")
-    # normal python modules
-    import numpy as np
-    from pysc2.env import sc2_env
-    from absl import app
-    import torch
+    # try:
+    if True:
+        print("Importing packages")
+        # normal python modules
+        import numpy as np
+        from pysc2.env import sc2_env
+        from absl import app
+        from threading import Thread
+        import sys
+        if "../" not in sys.path:
+            sys.path.append("../")
 
-    # from os import path
-    import sys
-    if "../" not in sys.path:
-        sys.path.append("../")
+            # custom imports
+        from assets.agents.BaseAgent import BaseAgent
+        from assets.agents.TripleAgent import TripleAgent
+        from assets.helperFunctions.timestamps import print_timestamp as print_ts
+        from assets.helperFunctions.initializingHelpers import setup_torch
+        from assets.helperFunctions.initializingHelpers import setup_agent
+        from assets.helperFunctions.initializingHelpers import setup_env
+        from parameterfile import epsilon_file, agent_file, env_file, test_env_file
+        print_ts("Starting main")
+    # except:
+    #     print("Some packages might be missing.")
 
-    # custom imports
-    from assets.agents.BaseAgent import BaseAgent
-    from assets.agents.TripleAgent import TripleAgent
-    from assets.helperFunctions.timestamps import print_timestamp as print_ts
-    print_ts("Starting main")
     app.run(main)

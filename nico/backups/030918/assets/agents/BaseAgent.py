@@ -13,7 +13,6 @@ from assets.memory.ReplayBuffer import ReplayBuffer
 from assets.memory.History import History
 from assets.helperFunctions.flagHandling import set_flag_every, set_flag_from
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
-
 np.set_printoptions(suppress=True, linewidth=np.nan, threshold=np.nan)  # only for terminal output visualization
 
 
@@ -92,15 +91,20 @@ class BaseAgent(base_agent.BaseAgent):
     # Performing a step
     # ##########################################################################
 
-    def step(self, obs, last_score, agent_mode):
+    def step(self, obs, beacon_center, last_score):
         """
         Choosing an action
         """
-        # Set all variables at the start of a new timestep
-        self.initializing_timestep(obs, last_score)
+        self.reward += obs.reward
+        self.step_type = obs.step_type
+        self.available_actions = obs.observation.available_actions
+        self.initializing_timestep(beacon_center, last_score)
+        self.state = torch.tensor([obs.observation.feature_screen.player_relative], dtype=torch.float)
+        self.history_tensor = self.hist.stack(self.state)  # stack state on history
+        self.state_history_tensor = self.state.unsqueeze(1)
 
-        # Choose an action according to the policy
-        self.action, self.action_idx, self.x_coord, self.y_coord = self.choose_action(self.available_actions, agent_mode)
+        self.action, self.action_idx, self.x_coord, self.y_coord = self.choose_action(self.available_actions)
+        # self.print_status()
 
         # Saving the episode data. Pushing the information onto the memory.
         self.save_data(obs)
@@ -108,35 +112,15 @@ class BaseAgent(base_agent.BaseAgent):
         if len(self.memory) >= self.batch_size:
             self.loss = self.optimize(self.sample_batch())
 
-        # Print actual status information
-        self.print_status()
-
         # check if done, i.e. step_type==2
         if self.step_type == 2:
             # update target nets
-            if agent_mode is 'learn':
-                print_ts("About to update")
-                if self.episodes % self.target_update_period == 0 and self.episodes != 0:
-                    self.update_target_net(self.net, self.target_net)
-                self.reset()
+            print_ts("About to update")
+            if self.episodes % self.target_update_period == 0 and self.episodes != 0:
+                self.update_target_net(self.net, self.target_net)
+            self.reset()
+        # print(self.action)
         return self.action
-
-    def initializing_timestep(self, obs, last_score):
-        """
-        Initializing variables and flags
-        """
-        self.reward += obs.reward
-        self.step_type = obs.step_type
-        self.available_actions = obs.observation.available_actions
-        self.timesteps += 1
-        self.steps += 1
-        # self.actual_reward = obs.reward
-        self.last_score = last_score
-        self.feature_screen = obs.observation.feature_screen.player_relative
-        self.beacon_center = np.mean(self._xy_locs(self.feature_screen == 3), axis=0).round()
-        self.state = torch.tensor([self.feature_screen], dtype=torch.float)
-        self.history_tensor = self.hist.stack(self.state)  # stack state on history
-        self.state_history_tensor = self.state.unsqueeze(1)
 
     def print_status(self):
         """
@@ -213,7 +197,7 @@ class BaseAgent(base_agent.BaseAgent):
         self.steps_done += 1
         return np.random.choice(['random', 'greedy'], p=[self.epsilon, 1-self.epsilon])
 
-    def choose_action(self, available_actions, agent_mode):
+    def choose_action(self, available_actions):
         """
         chooses an action according to the current policy
         returns the chosen action id with x,y coordinates and the index of the action
@@ -222,7 +206,7 @@ class BaseAgent(base_agent.BaseAgent):
         a restricted action space.
         """
         self.choice = self.epsilon_greedy()
-        if self.choice == 'random' and agent_mode == 'learn':
+        if self.choice == 'random':
             action_idx = np.random.randint(len(SMART_ACTIONS))  # not clean
             x_coord = np.random.randint(self.x_map_dim)
             y_coord = np.random.randint(self.y_map_dim)
@@ -238,12 +222,15 @@ class BaseAgent(base_agent.BaseAgent):
         # square brackets arounc chosen_action needed for internal pysc2 state machine
         return [chosen_action], torch.tensor([action_idx], dtype=torch.long), torch.tensor([x_coord], dtype=torch.long), torch.tensor([y_coord], dtype=torch.long)
 
-    def _xy_locs(self, mask):
+    def initializing_timestep(self, beacon_center, last_score):
         """
-        Mask should be a set of bools from comparison with a feature layer.
+        Initializing variables and flags
         """
-        y, x = mask.nonzero()
-        return list(zip(x, y))
+        self.beacon_center = beacon_center
+        self.timesteps += 1
+        self.steps += 1
+        # self.actual_reward = obs.reward
+        self.last_score = last_score
 
     def sample_batch(self):
         """
@@ -298,6 +285,8 @@ class BaseAgent(base_agent.BaseAgent):
 
         # Calculate Q-values
         self.calculate_q_values()
+        print(self.x_q_values)
+        print(self.y_q_values)
 
         # calculate td targets of the actions, x&y coordinates
         self.td_target_actions = self.calculate_td_target(self.next_state_q_values_max)
