@@ -1,0 +1,753 @@
+Game has started.
+Sending ResponseJoinGame
+I0909 21:07:42.028685 139884183000896 sc2_env.py:306] Environment is ready on map: MoveToBeacon
+I0909 21:07:42.029307 139884183000896 sc2_env.py:433] Starting episode: 1
+First Step
+I0909 21:07:54.284252 139884183000896 sc2_env.py:510] Episode 1 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9989476157648283, Total score is at 0
+2018-09-09 21:07:54: About to update
+Game has started.
+I0909 21:07:54.326837 139884183000896 sc2_env.py:433] Starting episode: 2
+I0909 21:08:08.246043 139884183000896 sc2_env.py:510] Episode 2 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9978874831794619, Total score is at 0
+2018-09-09 21:08:08: About to update
+Game has started.
+I0909 21:08:08.278134 139884183000896 sc2_env.py:433] Starting episode: 3
+I0909 21:08:22.181073 139884183000896 sc2_env.py:510] Episode 3 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9968286008127721, Total score is at 1
+2018-09-09 21:08:22: About to update
+Game has started.
+I0909 21:08:22.215131 139884183000896 sc2_env.py:433] Starting episode: 4
+I0909 21:08:36.053979 139884183000896 sc2_env.py:510] Episode 4 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9957709671903711, Total score is at 1
+2018-09-09 21:08:36: About to update
+Game has started.
+I0909 21:08:36.083749 139884183000896 sc2_env.py:433] Starting episode: 5
+I0909 21:08:49.861505 139884183000896 sc2_env.py:510] Episode 5 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9947145808396094, Total score is at 1
+2018-09-09 21:08:49: About to update
+Game has started.
+I0909 21:08:49.889194 139884183000896 sc2_env.py:433] Starting episode: 6
+I0909 21:09:04.709467 139884183000896 sc2_env.py:510] Episode 6 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9936594402895746, Total score is at 1
+2018-09-09 21:09:04: About to update
+Game has started.
+I0909 21:09:04.737180 139884183000896 sc2_env.py:433] Starting episode: 7
+I0909 21:09:20.849812 139884183000896 sc2_env.py:510] Episode 7 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9926055440710889, Total score is at 1
+2018-09-09 21:09:20: About to update
+Game has started.
+I0909 21:09:20.882614 139884183000896 sc2_env.py:433] Starting episode: 8
+I0909 21:09:37.109419 139884183000896 sc2_env.py:510] Episode 8 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.991552890716707, Total score is at 1
+2018-09-09 21:09:37: About to update
+Game has started.
+I0909 21:09:37.137868 139884183000896 sc2_env.py:433] Starting episode: 9
+I0909 21:09:54.348562 139884183000896 sc2_env.py:510] Episode 9 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.990501478760714, Total score is at 2
+2018-09-09 21:09:54: About to update
+Game has started.
+I0909 21:09:54.385173 139884183000896 sc2_env.py:433] Starting episode: 10
+I0909 21:10:11.387454 139884183000896 sc2_env.py:510] Episode 10 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9894513067391242, Total score is at 2
+2018-09-09 21:10:11: About to update
+Game has started.
+I0909 21:10:11.423531 139884183000896 sc2_env.py:433] Starting episode: 11
+I0909 21:10:27.968994 139884183000896 sc2_env.py:510] Episode 11 finished after 1920 game steps. Outcome: [1], reward: [0], score: [2]
+Last step: epsilon is at 0.9884023731896774, Total score is at 4
+2018-09-09 21:10:27: About to update
+Game has started.
+I0909 21:10:28.004656 139884183000896 sc2_env.py:433] Starting episode: 12
+I0909 21:10:46.005493 139884183000896 sc2_env.py:510] Episode 12 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9873546766518386, Total score is at 5
+2018-09-09 21:10:46: About to update
+Game has started.
+I0909 21:10:46.038565 139884183000896 sc2_env.py:433] Starting episode: 13
+I0909 21:11:02.313718 139884183000896 sc2_env.py:510] Episode 13 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.986308215666795, Total score is at 5
+2018-09-09 21:11:02: About to update
+Game has started.
+I0909 21:11:02.340026 139884183000896 sc2_env.py:433] Starting episode: 14
+I0909 21:11:18.542348 139884183000896 sc2_env.py:510] Episode 14 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9852629887774541, Total score is at 5
+2018-09-09 21:11:18: About to update
+Game has started.
+I0909 21:11:18.575092 139884183000896 sc2_env.py:433] Starting episode: 15
+I0909 21:11:34.941059 139884183000896 sc2_env.py:510] Episode 15 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9842189945284417, Total score is at 6
+2018-09-09 21:11:34: About to update
+Game has started.
+I0909 21:11:34.972305 139884183000896 sc2_env.py:433] Starting episode: 16
+I0909 21:11:51.826907 139884183000896 sc2_env.py:510] Episode 16 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9831762314661002, Total score is at 7
+2018-09-09 21:11:51: About to update
+Game has started.
+I0909 21:11:51.859630 139884183000896 sc2_env.py:433] Starting episode: 17
+I0909 21:12:09.734565 139884183000896 sc2_env.py:510] Episode 17 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9821346981384861, Total score is at 7
+2018-09-09 21:12:09: About to update
+Game has started.
+I0909 21:12:09.764589 139884183000896 sc2_env.py:433] Starting episode: 18
+I0909 21:12:27.889277 139884183000896 sc2_env.py:510] Episode 18 finished after 1920 game steps. Outcome: [1], reward: [0], score: [2]
+Last step: epsilon is at 0.9810943930953682, Total score is at 9
+2018-09-09 21:12:27: About to update
+Game has started.
+I0909 21:12:27.921936 139884183000896 sc2_env.py:433] Starting episode: 19
+I0909 21:12:45.509325 139884183000896 sc2_env.py:510] Episode 19 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9800553148882255, Total score is at 9
+2018-09-09 21:12:45: About to update
+Game has started.
+I0909 21:12:45.533103 139884183000896 sc2_env.py:433] Starting episode: 20
+I0909 21:13:03.239782 139884183000896 sc2_env.py:510] Episode 20 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9790174620702455, Total score is at 10
+2018-09-09 21:13:03: About to update
+Game has started.
+I0909 21:13:03.269716 139884183000896 sc2_env.py:433] Starting episode: 21
+I0909 21:13:21.012403 139884183000896 sc2_env.py:510] Episode 21 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9779808331963219, Total score is at 10
+2018-09-09 21:13:21: About to update
+Game has started.
+I0909 21:13:21.047014 139884183000896 sc2_env.py:433] Starting episode: 22
+I0909 21:13:38.641205 139884183000896 sc2_env.py:510] Episode 22 finished after 1920 game steps. Outcome: [1], reward: [0], score: [2]
+Last step: epsilon is at 0.9769454268230521, Total score is at 12
+2018-09-09 21:13:38: About to update
+Game has started.
+I0909 21:13:38.671427 139884183000896 sc2_env.py:433] Starting episode: 23
+I0909 21:13:56.251108 139884183000896 sc2_env.py:510] Episode 23 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9759112415087363, Total score is at 13
+2018-09-09 21:13:56: About to update
+Game has started.
+I0909 21:13:56.277594 139884183000896 sc2_env.py:433] Starting episode: 24
+I0909 21:14:13.906170 139884183000896 sc2_env.py:510] Episode 24 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9748782758133746, Total score is at 13
+2018-09-09 21:14:13: About to update
+Game has started.
+I0909 21:14:13.932851 139884183000896 sc2_env.py:433] Starting episode: 25
+I0909 21:14:31.514433 139884183000896 sc2_env.py:510] Episode 25 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9738465282986656, Total score is at 13
+2018-09-09 21:14:31: About to update
+Game has started.
+I0909 21:14:31.547572 139884183000896 sc2_env.py:433] Starting episode: 26
+I0909 21:14:49.070234 139884183000896 sc2_env.py:510] Episode 26 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9728159975280039, Total score is at 13
+2018-09-09 21:14:49: About to update
+Game has started.
+I0909 21:14:49.100532 139884183000896 sc2_env.py:433] Starting episode: 27
+I0909 21:15:06.809275 139884183000896 sc2_env.py:510] Episode 27 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.971786682066478, Total score is at 13
+2018-09-09 21:15:06: About to update
+Game has started.
+I0909 21:15:06.839739 139884183000896 sc2_env.py:433] Starting episode: 28
+I0909 21:15:24.718948 139884183000896 sc2_env.py:510] Episode 28 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9707585804808692, Total score is at 13
+2018-09-09 21:15:24: About to update
+Game has started.
+I0909 21:15:24.749221 139884183000896 sc2_env.py:433] Starting episode: 29
+I0909 21:15:42.624112 139884183000896 sc2_env.py:510] Episode 29 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9697316913396483, Total score is at 13
+2018-09-09 21:15:42: About to update
+Game has started.
+I0909 21:15:42.651816 139884183000896 sc2_env.py:433] Starting episode: 30
+I0909 21:16:00.594452 139884183000896 sc2_env.py:510] Episode 30 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9687060132129751, Total score is at 14
+2018-09-09 21:16:00: About to update
+Game has started.
+I0909 21:16:00.621853 139884183000896 sc2_env.py:433] Starting episode: 31
+I0909 21:16:18.434044 139884183000896 sc2_env.py:510] Episode 31 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9676815446726952, Total score is at 14
+2018-09-09 21:16:18: About to update
+Game has started.
+I0909 21:16:18.465475 139884183000896 sc2_env.py:433] Starting episode: 32
+I0909 21:16:36.314610 139884183000896 sc2_env.py:510] Episode 32 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.966658284292338, Total score is at 14
+2018-09-09 21:16:36: About to update
+Game has started.
+I0909 21:16:36.341892 139884183000896 sc2_env.py:433] Starting episode: 33
+I0909 21:16:54.173970 139884183000896 sc2_env.py:510] Episode 33 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9656362306471161, Total score is at 14
+2018-09-09 21:16:54: About to update
+Game has started.
+I0909 21:16:54.200271 139884183000896 sc2_env.py:433] Starting episode: 34
+I0909 21:17:11.974968 139884183000896 sc2_env.py:510] Episode 34 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9646153823139215, Total score is at 15
+2018-09-09 21:17:11: About to update
+Game has started.
+I0909 21:17:12.007635 139884183000896 sc2_env.py:433] Starting episode: 35
+I0909 21:17:29.781525 139884183000896 sc2_env.py:510] Episode 35 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9635957378713249, Total score is at 15
+2018-09-09 21:17:29: About to update
+Game has started.
+I0909 21:17:29.808881 139884183000896 sc2_env.py:433] Starting episode: 36
+I0909 21:17:47.666791 139884183000896 sc2_env.py:510] Episode 36 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9625772958995733, Total score is at 15
+2018-09-09 21:17:47: About to update
+Game has started.
+I0909 21:17:47.697510 139884183000896 sc2_env.py:433] Starting episode: 37
+I0909 21:18:05.653680 139884183000896 sc2_env.py:510] Episode 37 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9615600549805878, Total score is at 15
+2018-09-09 21:18:05: About to update
+Game has started.
+I0909 21:18:05.679977 139884183000896 sc2_env.py:433] Starting episode: 38
+I0909 21:18:23.393962 139884183000896 sc2_env.py:510] Episode 38 finished after 1920 game steps. Outcome: [1], reward: [0], score: [2]
+Last step: epsilon is at 0.9605440136979622, Total score is at 17
+2018-09-09 21:18:23: About to update
+Game has started.
+I0909 21:18:23.427076 139884183000896 sc2_env.py:433] Starting episode: 39
+I0909 21:18:41.224815 139884183000896 sc2_env.py:510] Episode 39 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9595291706369602, Total score is at 18
+2018-09-09 21:18:41: About to update
+Game has started.
+I0909 21:18:41.257246 139884183000896 sc2_env.py:433] Starting episode: 40
+I0909 21:18:59.187025 139884183000896 sc2_env.py:510] Episode 40 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9585155243845143, Total score is at 18
+2018-09-09 21:18:59: About to update
+Game has started.
+I0909 21:18:59.215504 139884183000896 sc2_env.py:433] Starting episode: 41
+I0909 21:19:17.093959 139884183000896 sc2_env.py:510] Episode 41 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9575030735292231, Total score is at 19
+2018-09-09 21:19:17: About to update
+Game has started.
+I0909 21:19:17.124211 139884183000896 sc2_env.py:433] Starting episode: 42
+I0909 21:19:34.777279 139884183000896 sc2_env.py:510] Episode 42 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9564918166613503, Total score is at 19
+2018-09-09 21:19:34: About to update
+Game has started.
+I0909 21:19:34.808949 139884183000896 sc2_env.py:433] Starting episode: 43
+I0909 21:19:52.975638 139884183000896 sc2_env.py:510] Episode 43 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9554817523728213, Total score is at 20
+2018-09-09 21:19:52: About to update
+Game has started.
+I0909 21:19:53.010284 139884183000896 sc2_env.py:433] Starting episode: 44
+I0909 21:20:12.816031 139884183000896 sc2_env.py:510] Episode 44 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9544728792572225, Total score is at 20
+2018-09-09 21:20:12: About to update
+Game has started.
+I0909 21:20:12.866083 139884183000896 sc2_env.py:433] Starting episode: 45
+I0909 21:20:30.771998 139884183000896 sc2_env.py:510] Episode 45 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9534651959097987, Total score is at 21
+2018-09-09 21:20:30: About to update
+Game has started.
+I0909 21:20:30.804896 139884183000896 sc2_env.py:433] Starting episode: 46
+I0909 21:20:49.804424 139884183000896 sc2_env.py:510] Episode 46 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9524587009274518, Total score is at 21
+2018-09-09 21:20:49: About to update
+Game has started.
+I0909 21:20:49.833622 139884183000896 sc2_env.py:433] Starting episode: 47
+I0909 21:21:07.773967 139884183000896 sc2_env.py:510] Episode 47 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9514533929087376, Total score is at 21
+2018-09-09 21:21:07: About to update
+Game has started.
+I0909 21:21:07.803869 139884183000896 sc2_env.py:433] Starting episode: 48
+I0909 21:21:25.637655 139884183000896 sc2_env.py:510] Episode 48 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9504492704538653, Total score is at 21
+2018-09-09 21:21:25: About to update
+Game has started.
+I0909 21:21:25.667630 139884183000896 sc2_env.py:433] Starting episode: 49
+I0909 21:21:43.495305 139884183000896 sc2_env.py:510] Episode 49 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9494463321646947, Total score is at 22
+2018-09-09 21:21:43: About to update
+Game has started.
+I0909 21:21:43.525563 139884183000896 sc2_env.py:433] Starting episode: 50
+I0909 21:22:01.446959 139884183000896 sc2_env.py:510] Episode 50 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9484445766447341, Total score is at 23
+2018-09-09 21:22:01: About to update
+Game has started.
+I0909 21:22:01.475523 139884183000896 sc2_env.py:433] Starting episode: 51
+I0909 21:22:19.387698 139884183000896 sc2_env.py:510] Episode 51 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9474440024991392, Total score is at 24
+2018-09-09 21:22:19: About to update
+Game has started.
+I0909 21:22:19.421031 139884183000896 sc2_env.py:433] Starting episode: 52
+I0909 21:22:37.950608 139884183000896 sc2_env.py:510] Episode 52 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9464446083347102, Total score is at 25
+2018-09-09 21:22:37: About to update
+Game has started.
+I0909 21:22:37.979263 139884183000896 sc2_env.py:433] Starting episode: 53
+I0909 21:22:55.944844 139884183000896 sc2_env.py:510] Episode 53 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9454463927598907, Total score is at 25
+2018-09-09 21:22:55: About to update
+Game has started.
+I0909 21:22:55.970606 139884183000896 sc2_env.py:433] Starting episode: 54
+I0909 21:23:13.831470 139884183000896 sc2_env.py:510] Episode 54 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.944449354384765, Total score is at 26
+2018-09-09 21:23:13: About to update
+Game has started.
+I0909 21:23:13.856709 139884183000896 sc2_env.py:433] Starting episode: 55
+I0909 21:23:31.686156 139884183000896 sc2_env.py:510] Episode 55 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9434534918210569, Total score is at 26
+2018-09-09 21:23:31: About to update
+Game has started.
+I0909 21:23:31.712335 139884183000896 sc2_env.py:433] Starting episode: 56
+I0909 21:23:49.643722 139884183000896 sc2_env.py:510] Episode 56 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.942458803682127, Total score is at 27
+2018-09-09 21:23:49: About to update
+Game has started.
+I0909 21:23:49.673892 139884183000896 sc2_env.py:433] Starting episode: 57
+I0909 21:24:07.586567 139884183000896 sc2_env.py:510] Episode 57 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9414652885829714, Total score is at 27
+2018-09-09 21:24:07: About to update
+Game has started.
+I0909 21:24:07.617534 139884183000896 sc2_env.py:433] Starting episode: 58
+I0909 21:24:25.649704 139884183000896 sc2_env.py:510] Episode 58 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9404729451402197, Total score is at 27
+2018-09-09 21:24:25: About to update
+Game has started.
+I0909 21:24:25.680001 139884183000896 sc2_env.py:433] Starting episode: 59
+I0909 21:24:43.671801 139884183000896 sc2_env.py:510] Episode 59 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9394817719721326, Total score is at 27
+2018-09-09 21:24:43: About to update
+Game has started.
+I0909 21:24:43.698884 139884183000896 sc2_env.py:433] Starting episode: 60
+I0909 21:25:01.698396 139884183000896 sc2_env.py:510] Episode 60 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9384917676986003, Total score is at 28
+2018-09-09 21:25:01: About to update
+Game has started.
+I0909 21:25:01.728302 139884183000896 sc2_env.py:433] Starting episode: 61
+I0909 21:25:19.717733 139884183000896 sc2_env.py:510] Episode 61 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9375029309411408, Total score is at 29
+2018-09-09 21:25:19: About to update
+Game has started.
+I0909 21:25:19.751215 139884183000896 sc2_env.py:433] Starting episode: 62
+I0909 21:25:37.742066 139884183000896 sc2_env.py:510] Episode 62 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9365152603228978, Total score is at 30
+2018-09-09 21:25:37: About to update
+Game has started.
+I0909 21:25:37.772173 139884183000896 sc2_env.py:433] Starting episode: 63
+I0909 21:25:55.611272 139884183000896 sc2_env.py:510] Episode 63 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9355287544686384, Total score is at 31
+2018-09-09 21:25:55: About to update
+Game has started.
+I0909 21:25:55.639561 139884183000896 sc2_env.py:433] Starting episode: 64
+I0909 21:26:13.536615 139884183000896 sc2_env.py:510] Episode 64 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9345434120047516, Total score is at 32
+2018-09-09 21:26:13: About to update
+Game has started.
+I0909 21:26:13.564655 139884183000896 sc2_env.py:433] Starting episode: 65
+I0909 21:26:31.424084 139884183000896 sc2_env.py:510] Episode 65 finished after 1920 game steps. Outcome: [1], reward: [0], score: [3]
+Last step: epsilon is at 0.9335592315592466, Total score is at 35
+2018-09-09 21:26:31: About to update
+Game has started.
+I0909 21:26:31.454446 139884183000896 sc2_env.py:433] Starting episode: 66
+I0909 21:26:49.352682 139884183000896 sc2_env.py:510] Episode 66 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9325762117617503, Total score is at 35
+2018-09-09 21:26:49: About to update
+Game has started.
+I0909 21:26:49.380153 139884183000896 sc2_env.py:433] Starting episode: 67
+I0909 21:27:07.291213 139884183000896 sc2_env.py:510] Episode 67 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9315943512435056, Total score is at 35
+2018-09-09 21:27:07: About to update
+Game has started.
+I0909 21:27:07.317803 139884183000896 sc2_env.py:433] Starting episode: 68
+I0909 21:27:25.211598 139884183000896 sc2_env.py:510] Episode 68 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9306136486373702, Total score is at 35
+2018-09-09 21:27:25: About to update
+Game has started.
+I0909 21:27:25.238120 139884183000896 sc2_env.py:433] Starting episode: 69
+I0909 21:27:43.230433 139884183000896 sc2_env.py:510] Episode 69 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9296341025778132, Total score is at 35
+2018-09-09 21:27:43: About to update
+Game has started.
+I0909 21:27:43.257434 139884183000896 sc2_env.py:433] Starting episode: 70
+I0909 21:28:01.372233 139884183000896 sc2_env.py:510] Episode 70 finished after 1920 game steps. Outcome: [1], reward: [0], score: [2]
+Last step: epsilon is at 0.9286557117009148, Total score is at 37
+2018-09-09 21:28:01: About to update
+Game has started.
+I0909 21:28:01.404842 139884183000896 sc2_env.py:433] Starting episode: 71
+I0909 21:28:19.453764 139884183000896 sc2_env.py:510] Episode 71 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.927678474644363, Total score is at 37
+2018-09-09 21:28:19: About to update
+Game has started.
+I0909 21:28:19.487529 139884183000896 sc2_env.py:433] Starting episode: 72
+I0909 21:28:37.754945 139884183000896 sc2_env.py:510] Episode 72 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9267023900474533, Total score is at 37
+2018-09-09 21:28:37: About to update
+Game has started.
+I0909 21:28:37.785002 139884183000896 sc2_env.py:433] Starting episode: 73
+I0909 21:28:55.912836 139884183000896 sc2_env.py:510] Episode 73 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9257274565510849, Total score is at 38
+2018-09-09 21:28:55: About to update
+Game has started.
+I0909 21:28:55.939400 139884183000896 sc2_env.py:433] Starting episode: 74
+I0909 21:29:14.072194 139884183000896 sc2_env.py:510] Episode 74 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9247536727977604, Total score is at 39
+2018-09-09 21:29:14: About to update
+Game has started.
+I0909 21:29:14.100694 139884183000896 sc2_env.py:433] Starting episode: 75
+I0909 21:29:31.936376 139884183000896 sc2_env.py:510] Episode 75 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9237810374315832, Total score is at 39
+2018-09-09 21:29:31: About to update
+Game has started.
+I0909 21:29:31.966063 139884183000896 sc2_env.py:433] Starting episode: 76
+I0909 21:29:49.898248 139884183000896 sc2_env.py:510] Episode 76 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9228095490982556, Total score is at 39
+2018-09-09 21:29:49: About to update
+Game has started.
+I0909 21:29:49.930111 139884183000896 sc2_env.py:433] Starting episode: 77
+I0909 21:30:07.975461 139884183000896 sc2_env.py:510] Episode 77 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9218392064450772, Total score is at 39
+2018-09-09 21:30:07: About to update
+Game has started.
+I0909 21:30:08.007361 139884183000896 sc2_env.py:433] Starting episode: 78
+I0909 21:30:25.968484 139884183000896 sc2_env.py:510] Episode 78 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9208700081209426, Total score is at 39
+2018-09-09 21:30:25: About to update
+Game has started.
+I0909 21:30:25.998342 139884183000896 sc2_env.py:433] Starting episode: 79
+I0909 21:30:43.977184 139884183000896 sc2_env.py:510] Episode 79 finished after 1920 game steps. Outcome: [1], reward: [0], score: [2]
+Last step: epsilon is at 0.9199019527763399, Total score is at 41
+2018-09-09 21:30:43: About to update
+Game has started.
+I0909 21:30:44.001260 139884183000896 sc2_env.py:433] Starting episode: 80
+I0909 21:31:01.986911 139884183000896 sc2_env.py:510] Episode 80 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9189350390633486, Total score is at 41
+2018-09-09 21:31:01: About to update
+Game has started.
+I0909 21:31:02.017344 139884183000896 sc2_env.py:433] Starting episode: 81
+I0909 21:31:20.082866 139884183000896 sc2_env.py:510] Episode 81 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9179692656356382, Total score is at 41
+2018-09-09 21:31:20: About to update
+Game has started.
+I0909 21:31:20.114187 139884183000896 sc2_env.py:433] Starting episode: 82
+I0909 21:31:38.170764 139884183000896 sc2_env.py:510] Episode 82 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9170046311484652, Total score is at 41
+2018-09-09 21:31:38: About to update
+Game has started.
+I0909 21:31:38.197149 139884183000896 sc2_env.py:433] Starting episode: 83
+I0909 21:31:56.475409 139884183000896 sc2_env.py:510] Episode 83 finished after 1920 game steps. Outcome: [1], reward: [0], score: [2]
+Last step: epsilon is at 0.9160411342586728, Total score is at 43
+2018-09-09 21:31:56: About to update
+Game has started.
+I0909 21:31:56.507494 139884183000896 sc2_env.py:433] Starting episode: 84
+I0909 21:32:14.637267 139884183000896 sc2_env.py:510] Episode 84 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9150787736246875, Total score is at 44
+2018-09-09 21:32:14: About to update
+Game has started.
+I0909 21:32:14.664148 139884183000896 sc2_env.py:433] Starting episode: 85
+I0909 21:32:32.538646 139884183000896 sc2_env.py:510] Episode 85 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9141175479065183, Total score is at 44
+2018-09-09 21:32:32: About to update
+Game has started.
+I0909 21:32:32.570922 139884183000896 sc2_env.py:433] Starting episode: 86
+I0909 21:32:50.495748 139884183000896 sc2_env.py:510] Episode 86 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9131574557657544, Total score is at 44
+2018-09-09 21:32:50: About to update
+Game has started.
+I0909 21:32:50.526251 139884183000896 sc2_env.py:433] Starting episode: 87
+I0909 21:33:08.742845 139884183000896 sc2_env.py:510] Episode 87 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9121984958655632, Total score is at 45
+2018-09-09 21:33:08: About to update
+Game has started.
+I0909 21:33:08.774203 139884183000896 sc2_env.py:433] Starting episode: 88
+I0909 21:33:26.845514 139884183000896 sc2_env.py:510] Episode 88 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9112406668706889, Total score is at 45
+2018-09-09 21:33:26: About to update
+Game has started.
+I0909 21:33:26.872651 139884183000896 sc2_env.py:433] Starting episode: 89
+I0909 21:33:44.876697 139884183000896 sc2_env.py:510] Episode 89 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9102839674474502, Total score is at 46
+2018-09-09 21:33:44: About to update
+Game has started.
+I0909 21:33:44.903682 139884183000896 sc2_env.py:433] Starting episode: 90
+I0909 21:34:03.012726 139884183000896 sc2_env.py:510] Episode 90 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9093283962637387, Total score is at 47
+2018-09-09 21:34:03: About to update
+Game has started.
+I0909 21:34:03.043042 139884183000896 sc2_env.py:433] Starting episode: 91
+I0909 21:34:21.024517 139884183000896 sc2_env.py:510] Episode 91 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9083739519890169, Total score is at 47
+2018-09-09 21:34:21: About to update
+Game has started.
+I0909 21:34:21.054972 139884183000896 sc2_env.py:433] Starting episode: 92
+I0909 21:34:39.025226 139884183000896 sc2_env.py:510] Episode 92 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9074206332943165, Total score is at 48
+2018-09-09 21:34:39: About to update
+Game has started.
+I0909 21:34:39.057929 139884183000896 sc2_env.py:433] Starting episode: 93
+I0909 21:34:57.201862 139884183000896 sc2_env.py:510] Episode 93 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9064684388522364, Total score is at 49
+2018-09-09 21:34:57: About to update
+Game has started.
+I0909 21:34:57.230498 139884183000896 sc2_env.py:433] Starting episode: 94
+I0909 21:35:15.286044 139884183000896 sc2_env.py:510] Episode 94 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9055173673369408, Total score is at 49
+2018-09-09 21:35:15: About to update
+Game has started.
+I0909 21:35:15.315926 139884183000896 sc2_env.py:433] Starting episode: 95
+I0909 21:35:33.273315 139884183000896 sc2_env.py:510] Episode 95 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.9045674174241576, Total score is at 49
+2018-09-09 21:35:33: About to update
+Game has started.
+I0909 21:35:33.300242 139884183000896 sc2_env.py:433] Starting episode: 96
+I0909 21:35:51.350254 139884183000896 sc2_env.py:510] Episode 96 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9036185877911764, Total score is at 50
+2018-09-09 21:35:51: About to update
+Game has started.
+I0909 21:35:51.382007 139884183000896 sc2_env.py:433] Starting episode: 97
+I0909 21:36:09.607311 139884183000896 sc2_env.py:510] Episode 97 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9026708771168467, Total score is at 51
+2018-09-09 21:36:09: About to update
+Game has started.
+I0909 21:36:09.636724 139884183000896 sc2_env.py:433] Starting episode: 98
+I0909 21:36:27.749526 139884183000896 sc2_env.py:510] Episode 98 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.9017242840815759, Total score is at 52
+2018-09-09 21:36:27: About to update
+Game has started.
+I0909 21:36:27.778559 139884183000896 sc2_env.py:433] Starting episode: 99
+I0909 21:36:45.950280 139884183000896 sc2_env.py:510] Episode 99 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.900778807367328, Total score is at 52
+2018-09-09 21:36:45: About to update
+Game has started.
+I0909 21:36:45.980794 139884183000896 sc2_env.py:433] Starting episode: 100
+I0909 21:37:04.148597 139884183000896 sc2_env.py:510] Episode 100 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8998344456576206, Total score is at 52
+2018-09-09 21:37:04: About to update
+Game has started.
+I0909 21:37:04.177722 139884183000896 sc2_env.py:433] Starting episode: 101
+I0909 21:37:22.169896 139884183000896 sc2_env.py:510] Episode 101 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8988911976375247, Total score is at 53
+2018-09-09 21:37:22: About to update
+Game has started.
+I0909 21:37:22.201398 139884183000896 sc2_env.py:433] Starting episode: 102
+I0909 21:37:40.345077 139884183000896 sc2_env.py:510] Episode 102 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8979490619936614, Total score is at 53
+2018-09-09 21:37:40: About to update
+Game has started.
+I0909 21:37:40.379156 139884183000896 sc2_env.py:433] Starting episode: 103
+I0909 21:37:58.503916 139884183000896 sc2_env.py:510] Episode 103 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.897008037414201, Total score is at 54
+2018-09-09 21:37:58: About to update
+Game has started.
+I0909 21:37:58.530475 139884183000896 sc2_env.py:433] Starting episode: 104
+I0909 21:38:16.587301 139884183000896 sc2_env.py:510] Episode 104 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8960681225888606, Total score is at 55
+2018-09-09 21:38:16: About to update
+Game has started.
+I0909 21:38:16.613569 139884183000896 sc2_env.py:433] Starting episode: 105
+I0909 21:38:34.706325 139884183000896 sc2_env.py:510] Episode 105 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8951293162089028, Total score is at 55
+2018-09-09 21:38:34: About to update
+Game has started.
+I0909 21:38:34.735535 139884183000896 sc2_env.py:433] Starting episode: 106
+I0909 21:38:52.773176 139884183000896 sc2_env.py:510] Episode 106 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8941916169671333, Total score is at 55
+2018-09-09 21:38:52: About to update
+Game has started.
+I0909 21:38:52.802089 139884183000896 sc2_env.py:433] Starting episode: 107
+I0909 21:39:11.028682 139884183000896 sc2_env.py:510] Episode 107 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8932550235578995, Total score is at 56
+2018-09-09 21:39:11: About to update
+Game has started.
+I0909 21:39:11.058237 139884183000896 sc2_env.py:433] Starting episode: 108
+I0909 21:39:29.225769 139884183000896 sc2_env.py:510] Episode 108 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8923195346770888, Total score is at 56
+2018-09-09 21:39:29: About to update
+Game has started.
+I0909 21:39:29.259316 139884183000896 sc2_env.py:433] Starting episode: 109
+I0909 21:39:47.435050 139884183000896 sc2_env.py:510] Episode 109 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8913851490221262, Total score is at 56
+2018-09-09 21:39:47: About to update
+Game has started.
+I0909 21:39:47.465724 139884183000896 sc2_env.py:433] Starting episode: 110
+I0909 21:40:05.844976 139884183000896 sc2_env.py:510] Episode 110 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.890451865291973, Total score is at 57
+2018-09-09 21:40:05: About to update
+Game has started.
+I0909 21:40:05.873835 139884183000896 sc2_env.py:433] Starting episode: 111
+I0909 21:40:24.059427 139884183000896 sc2_env.py:510] Episode 111 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8895196821871245, Total score is at 58
+2018-09-09 21:40:24: About to update
+Game has started.
+I0909 21:40:24.090084 139884183000896 sc2_env.py:433] Starting episode: 112
+I0909 21:40:42.329535 139884183000896 sc2_env.py:510] Episode 112 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8885885984096092, Total score is at 59
+2018-09-09 21:40:42: About to update
+Game has started.
+I0909 21:40:42.358623 139884183000896 sc2_env.py:433] Starting episode: 113
+I0909 21:41:00.486436 139884183000896 sc2_env.py:510] Episode 113 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8876586126629856, Total score is at 60
+2018-09-09 21:41:00: About to update
+Game has started.
+I0909 21:41:00.515833 139884183000896 sc2_env.py:433] Starting episode: 114
+I0909 21:41:18.616005 139884183000896 sc2_env.py:510] Episode 114 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8867297236523418, Total score is at 61
+2018-09-09 21:41:18: About to update
+Game has started.
+I0909 21:41:18.643535 139884183000896 sc2_env.py:433] Starting episode: 115
+I0909 21:41:36.664926 139884183000896 sc2_env.py:510] Episode 115 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8858019300842921, Total score is at 61
+2018-09-09 21:41:36: About to update
+Game has started.
+I0909 21:41:36.693100 139884183000896 sc2_env.py:433] Starting episode: 116
+I0909 21:41:54.911870 139884183000896 sc2_env.py:510] Episode 116 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8848752306669769, Total score is at 61
+2018-09-09 21:41:54: About to update
+Game has started.
+I0909 21:41:54.943413 139884183000896 sc2_env.py:433] Starting episode: 117
+I0909 21:42:12.998974 139884183000896 sc2_env.py:510] Episode 117 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8839496241100596, Total score is at 61
+2018-09-09 21:42:12: About to update
+Game has started.
+I0909 21:42:13.028601 139884183000896 sc2_env.py:433] Starting episode: 118
+I0909 21:42:31.212383 139884183000896 sc2_env.py:510] Episode 118 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8830251091247258, Total score is at 61
+2018-09-09 21:42:31: About to update
+Game has started.
+I0909 21:42:31.239909 139884183000896 sc2_env.py:433] Starting episode: 119
+I0909 21:42:49.370346 139884183000896 sc2_env.py:510] Episode 119 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8821016844236801, Total score is at 61
+2018-09-09 21:42:49: About to update
+Game has started.
+I0909 21:42:49.400552 139884183000896 sc2_env.py:433] Starting episode: 120
+I0909 21:43:07.497711 139884183000896 sc2_env.py:510] Episode 120 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8811793487211464, Total score is at 61
+2018-09-09 21:43:07: About to update
+Game has started.
+I0909 21:43:07.525597 139884183000896 sc2_env.py:433] Starting episode: 121
+I0909 21:43:25.841873 139884183000896 sc2_env.py:510] Episode 121 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8802581007328639, Total score is at 61
+2018-09-09 21:43:25: About to update
+Game has started.
+I0909 21:43:25.872200 139884183000896 sc2_env.py:433] Starting episode: 122
+I0909 21:43:44.086072 139884183000896 sc2_env.py:510] Episode 122 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8793379391760872, Total score is at 61
+2018-09-09 21:43:44: About to update
+Game has started.
+I0909 21:43:44.114637 139884183000896 sc2_env.py:433] Starting episode: 123
+I0909 21:44:02.207046 139884183000896 sc2_env.py:510] Episode 123 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8784188627695826, Total score is at 61
+2018-09-09 21:44:02: About to update
+Game has started.
+I0909 21:44:02.237106 139884183000896 sc2_env.py:433] Starting episode: 124
+I0909 21:44:20.409979 139884183000896 sc2_env.py:510] Episode 124 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8775008702336284, Total score is at 61
+2018-09-09 21:44:20: About to update
+Game has started.
+I0909 21:44:20.439671 139884183000896 sc2_env.py:433] Starting episode: 125
+I0909 21:44:38.640250 139884183000896 sc2_env.py:510] Episode 125 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8765839602900116, Total score is at 61
+2018-09-09 21:44:38: About to update
+Game has started.
+I0909 21:44:38.670547 139884183000896 sc2_env.py:433] Starting episode: 126
+I0909 21:44:56.864568 139884183000896 sc2_env.py:510] Episode 126 finished after 1920 game steps. Outcome: [1], reward: [0], score: [2]
+Last step: epsilon is at 0.8756681316620266, Total score is at 63
+2018-09-09 21:44:56: About to update
+Game has started.
+I0909 21:44:56.890449 139884183000896 sc2_env.py:433] Starting episode: 127
+I0909 21:45:15.095519 139884183000896 sc2_env.py:510] Episode 127 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8747533830744734, Total score is at 63
+2018-09-09 21:45:15: About to update
+Game has started.
+I0909 21:45:15.122031 139884183000896 sc2_env.py:433] Starting episode: 128
+I0909 21:45:33.327206 139884183000896 sc2_env.py:510] Episode 128 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.873839713253656, Total score is at 63
+2018-09-09 21:45:33: About to update
+Game has started.
+I0909 21:45:33.355065 139884183000896 sc2_env.py:433] Starting episode: 129
+I0909 21:45:51.666329 139884183000896 sc2_env.py:510] Episode 129 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8729271209273802, Total score is at 63
+2018-09-09 21:45:51: About to update
+Game has started.
+I0909 21:45:51.694987 139884183000896 sc2_env.py:433] Starting episode: 130
+I0909 21:46:09.981647 139884183000896 sc2_env.py:510] Episode 130 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8720156048249527, Total score is at 64
+2018-09-09 21:46:09: About to update
+Game has started.
+I0909 21:46:10.007100 139884183000896 sc2_env.py:433] Starting episode: 131
+I0909 21:46:28.443893 139884183000896 sc2_env.py:510] Episode 131 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8711051636771779, Total score is at 64
+2018-09-09 21:46:28: About to update
+Game has started.
+I0909 21:46:28.472365 139884183000896 sc2_env.py:433] Starting episode: 132
+I0909 21:46:46.730856 139884183000896 sc2_env.py:510] Episode 132 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8701957962163577, Total score is at 64
+2018-09-09 21:46:46: About to update
+Game has started.
+I0909 21:46:46.759355 139884183000896 sc2_env.py:433] Starting episode: 133
+I0909 21:47:05.154618 139884183000896 sc2_env.py:510] Episode 133 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8692875011762885, Total score is at 65
+2018-09-09 21:47:05: About to update
+Game has started.
+I0909 21:47:05.182651 139884183000896 sc2_env.py:433] Starting episode: 134
+I0909 21:47:23.391359 139884183000896 sc2_env.py:510] Episode 134 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8683802772922603, Total score is at 66
+2018-09-09 21:47:23: About to update
+Game has started.
+I0909 21:47:23.417511 139884183000896 sc2_env.py:433] Starting episode: 135
+I0909 21:47:41.518261 139884183000896 sc2_env.py:510] Episode 135 finished after 1920 game steps. Outcome: [1], reward: [0], score: [2]
+Last step: epsilon is at 0.8674741233010542, Total score is at 68
+2018-09-09 21:47:41: About to update
+Game has started.
+I0909 21:47:41.553105 139884183000896 sc2_env.py:433] Starting episode: 136
+I0909 21:48:00.034114 139884183000896 sc2_env.py:510] Episode 136 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8665690379409415, Total score is at 69
+2018-09-09 21:48:00: About to update
+Game has started.
+I0909 21:48:00.067315 139884183000896 sc2_env.py:433] Starting episode: 137
+I0909 21:48:18.462418 139884183000896 sc2_env.py:510] Episode 137 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8656650199516811, Total score is at 69
+2018-09-09 21:48:18: About to update
+Unable to do fast restart because gameLoop 263176 >= restartGameLoop 262144
+Performing a full restart of the game.
+Launching next game.
+Next launch phase started: 2
+Next launch phase started: 3
+Next launch phase started: 4
+Next launch phase started: 5
+Next launch phase started: 6
+Next launch phase started: 7
+Next launch phase started: 8
+Game has started.
+I0909 21:48:21.089256 139884183000896 sc2_env.py:433] Starting episode: 138
+I0909 21:48:39.272180 139884183000896 sc2_env.py:510] Episode 138 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8647620680745183, Total score is at 69
+2018-09-09 21:48:39: About to update
+Game has started.
+I0909 21:48:39.297327 139884183000896 sc2_env.py:433] Starting episode: 139
+I0909 21:48:57.654898 139884183000896 sc2_env.py:510] Episode 139 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8638601810521824, Total score is at 69
+2018-09-09 21:48:57: About to update
+Game has started.
+I0909 21:48:57.684338 139884183000896 sc2_env.py:433] Starting episode: 140
+I0909 21:49:16.046088 139884183000896 sc2_env.py:510] Episode 140 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8629593576288861, Total score is at 69
+2018-09-09 21:49:16: About to update
+Game has started.
+I0909 21:49:16.076034 139884183000896 sc2_env.py:433] Starting episode: 141
+I0909 21:49:34.332428 139884183000896 sc2_env.py:510] Episode 141 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.8620595965503226, Total score is at 69
+2018-09-09 21:49:34: About to update
+Game has started.
+I0909 21:49:34.361848 139884183000896 sc2_env.py:433] Starting episode: 142
+I0909 21:49:52.537162 139884183000896 sc2_env.py:510] Episode 142 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8611608965636645, Total score is at 70
+2018-09-09 21:49:52: About to update
+Game has started.
+I0909 21:49:52.569115 139884183000896 sc2_env.py:433] Starting episode: 143
+I0909 21:50:10.799153 139884183000896 sc2_env.py:510] Episode 143 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8602632564175619, Total score is at 71
+2018-09-09 21:50:10: About to update
+Game has started.
+I0909 21:50:10.827181 139884183000896 sc2_env.py:433] Starting episode: 144
+I0909 21:50:29.171387 139884183000896 sc2_env.py:510] Episode 144 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8593666748621401, Total score is at 72
+2018-09-09 21:50:29: About to update
+Game has started.
+I0909 21:50:29.198890 139884183000896 sc2_env.py:433] Starting episode: 145
+I0909 21:50:47.528315 139884183000896 sc2_env.py:510] Episode 145 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.8584711506489993, Total score is at 73
+2018-09-09 21:50:47: About to update
+Game has started.
+I0909 21:50:47.559037 139884183000896 sc2_env.py:433] Starting episode: 146
+I0909 21:51:06.170129 139884183000896 sc2_env.py:510] Episode 146 finished after 1920 game steps. Outcome: [1], reward: [0], score: [0]
+Last step: epsilon is at 0.857576682531211, Total score is at 73
+2018-09-09 21:51:06: About to update
+Game has started.
+I0909 21:51:06.202939 139884183000896 sc2_env.py:433] Starting episode: 147
+I0909 21:51:25.689413 139884183000896 sc2_env.py:510] Episode 147 finished after 1920 game steps. Outcome: [1], reward: [0], score: [1]
+Last step: epsilon is at 0.856683269263318, Total score is at 74
+2018-09-09 21:51:25: About to update
+Game has started.
+I0909 21:51:25.720446 139884183000896 sc2_env.py:433] Starting episode: 148
+
+
+

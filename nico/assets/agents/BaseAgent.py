@@ -8,7 +8,7 @@ from pysc2.lib import actions, features
 from collections import namedtuple
 
 from AtariNet import DQN
-from assets.smart_actions import SMART_ACTIONS_MOVE2BEACON as SMART_ACTIONS
+from assets.smart_actions import SMART_ACTIONS_MOVE2BEACON_SIMPLE as SMART_ACTIONS
 from assets.memory.ReplayBuffer import ReplayBuffer
 from assets.memory.History import History
 from assets.helperFunctions.flagHandling import set_flag_every, set_flag_from
@@ -54,6 +54,7 @@ class BaseAgent(base_agent.BaseAgent):
         self.history_length = agent_file['HIST_LENGTH']
         self.size_replaybuffer = agent_file['REPLAY_SIZE']
         self.device = agent_file['DEVICE']
+        self.silentmode = agent_file['SILENTMODE']
 
         epsilon_file = agent_file['EPSILON_FILE']
         self.epsilon = epsilon_file['EPSILON']
@@ -103,23 +104,34 @@ class BaseAgent(base_agent.BaseAgent):
         self.action, self.action_idx, self.x_coord, self.y_coord = self.choose_action(self.available_actions, agent_mode)
 
         # Saving the episode data. Pushing the information onto the memory.
-        self.save_data(obs)
+        if agent_mode is 'learn':
+            self.save_data(obs)
 
-        if len(self.memory) >= self.batch_size:
-            self.loss = self.optimize(self.sample_batch())
+            if len(self.memory) >= self.batch_size:
+                self.loss = self.optimize(self.sample_batch())
 
-        # Print actual status information
-        self.print_status()
+                # Print actual status information
+                if not self.silentmode:
+                    self.print_status()
 
         # check if done, i.e. step_type==2
-        if self.step_type == 2:
-            # update target nets
-            if agent_mode is 'learn':
-                print_ts("About to update")
-                if self.episodes % self.target_update_period == 0 and self.episodes != 0:
-                    self.update_target_net(self.net, self.target_net)
-                self.reset()
+        # if self.step_type == 2:
+        #     # update target nets
+        #     if agent_mode is 'learn':
+        #         print_ts("About to update")
+        #         if self.episodes % self.target_update_period == 0 and self.episodes != 0:
+        #             self.update_target_net(self.net, self.target_net)
+        #         self.reset()
         return self.action
+
+    def end_episode(self, agent_mode):
+        """
+        """
+        if agent_mode is 'learn':
+            print_ts("About to update")
+            if self.episodes % self.target_update_period == 0 and self.episodes != 0:
+                self.update_target_net(self.net, self.target_net)
+            self.reset()
 
     def initializing_timestep(self, obs, last_score):
         """
@@ -197,8 +209,8 @@ class BaseAgent(base_agent.BaseAgent):
         if self.can_do(available_actions, action):
             if action == actions.FUNCTIONS.Move_screen.id:
                 return actions.FUNCTIONS.Move_screen("now", (x, y))
-            if action == actions.FUNCTIONS.select_army.id:
-                return actions.FUNCTIONS.select_army("select")
+            # if action == actions.FUNCTIONS.select_army.id:
+            #     return actions.FUNCTIONS.select_army("select")
             if action == actions.FUNCTIONS.no_op.id:
                 return actions.FUNCTIONS.no_op()
         else:
@@ -230,7 +242,8 @@ class BaseAgent(base_agent.BaseAgent):
         else:
             with torch.no_grad():
                 action_q_values, x_coord_q_values, y_coord_q_values = self.net(self.history_tensor)
-            action_idx = np.argmax(action_q_values)
+            # action_idx = np.argmax(action_q_values)
+            action_idx = 0
             best_action = SMART_ACTIONS[action_idx]
             x_coord = np.argmax(x_coord_q_values)
             y_coord = np.argmax(y_coord_q_values)
@@ -267,6 +280,18 @@ class BaseAgent(base_agent.BaseAgent):
         """
         target_net.load_state_dict(src_net.state_dict())
         self.update_cnt += 1
+
+    def get_net_weights(self):
+        return self.net.state_dict()
+
+    def set_net_weights(self, weights):
+        self.net.load_state_dict
+
+    def get_target_net_weights(self):
+        return self.target_net.state_dict()
+
+    def set_target_net_weights(self, weights):
+        self.target_net.load_state_dict
 
     def save_data(self, obs):
         """

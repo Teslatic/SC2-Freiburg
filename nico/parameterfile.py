@@ -1,7 +1,9 @@
 from pysc2.env import sc2_env
+from os import path
+import sys
 
 EPISODES = 10000
-TEST_EPISODES = 5
+TEST_EPISODES = 1
 BASE_AGENT = 'base_agent'
 SCREEN_DIM = 84
 MINIMAP_DIM = 64
@@ -11,19 +13,21 @@ BATCH_SIZE = 32
 TARGET_UPDATE_PERIOD = 10
 HIST_LENGTH = 1
 REPLAY_SIZE = 100000
-DEVICE = 'cpu'
+DEVICE = 'cpu' # will be overwritten by main
 
 MAP = 'MoveToBeacon'
 PLAYERS = [sc2_env.Agent(sc2_env.Race.terran)]
 STEP_MULTIPLIER = 16  # 16 = 1s game time, None = map default
-GAMESTEPS = None  # 0 = unlimited game time, None = map default
-VISUALIZE = False
+EPISODES = 0  # 0 = unlimited game time, None = map default
+EPISODES_TEST = 5  # 0 = unlimited game time, None = map default
+VISUALIZE = True
+SILENTMODE = True
 
 epsilon_file = {
                 'EPSILON': 1.0,
                 'EPS_START': 1.0,
                 'EPS_END': 0.1,
-                'EPS_DECAY': 20000
+                'EPS_DECAY': 100000
                 }
 
 agent_file = {
@@ -37,7 +41,8 @@ agent_file = {
               'HIST_LENGTH': HIST_LENGTH,   # Standard 4
               'REPLAY_SIZE': REPLAY_SIZE,
               'DEVICE': DEVICE,
-              'EPSILON_FILE': epsilon_file
+              'EPSILON_FILE': epsilon_file,
+              'SILENTMODE': SILENTMODE
               }
 
 env_file = {
@@ -45,8 +50,10 @@ env_file = {
             'MAP_NAME': MAP,
             'PLAYERS': PLAYERS,
             'STEP_MULTIPLIER': STEP_MULTIPLIER,  # Standard 16
-            'GAMESTEPS': GAMESTEPS,
-            'VISUALIZE': VISUALIZE
+            'GAMESTEPS': EPISODES,
+            'VISUALIZE': VISUALIZE,
+            'SAVE_REPLAY': False,
+            'REPLAY_DIR': None
             }
 
 test_env_file = {
@@ -54,6 +61,8 @@ test_env_file = {
             'MAP_NAME': MAP,
             'PLAYERS': PLAYERS,
             'STEP_MULTIPLIER': STEP_MULTIPLIER,  # Standard 16
-            'GAMESTEPS': GAMESTEPS,
-            'VISUALIZE': False
+            'GAMESTEPS': EPISODES_TEST,
+            'VISUALIZE': True,
+            'SAVE_REPLAY': True,
+            'REPLAY_DIR': path.dirname(path.abspath(sys.modules['__main__'].__file__))
             }
