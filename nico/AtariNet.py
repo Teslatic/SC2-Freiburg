@@ -51,7 +51,7 @@ class DQN(nn.Module):
         self.history_length = history_length
 
         # screen conv layers
-        self.screen_conv1 = nn.Conv2d(self.history_length, 16, kernel_size=8, padding=0, stride=4)
+        self.screen_conv1 = nn.Conv2d(1, 16, kernel_size=8, padding=0, stride=4)
         self.screen_conv2 = nn.Conv2d(16, 32, kernel_size=4, padding=0, stride=2)
         self.screen_conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1)
 

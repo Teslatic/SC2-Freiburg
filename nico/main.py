@@ -32,7 +32,8 @@ def main(unused_argv):
     exp_root_dir = create_experiment_at_main(experiment_name)
 
     # Setting up the torch, agent, agent interface and environment
-    print_ts("Performing calculations on {}".format(setup_torch()))
+    device = setup_torch()
+    print_ts("Performing calculations on {}".format(device))
     agent = BaseAgent(agent_file)
     agent_interface = agent.setup_interface()
     env = setup_env(env_file, agent_interface)

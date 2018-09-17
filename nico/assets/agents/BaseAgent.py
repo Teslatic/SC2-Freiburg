@@ -79,8 +79,8 @@ class BaseAgent(base_agent.BaseAgent):
         """
         Initializing 2 networks and an Adam optimizer.
         """
-        net = DQN(self.history_length)
-        target_net = DQN(self.history_length)
+        net = DQN(self.history_length).to(self.device)
+        target_net = DQN(self.history_length).to(self.device)
         optimizer = optim.Adam(net.parameters(), lr=self.optim_learning_rate)
         return net, target_net, optimizer
 
@@ -146,8 +146,10 @@ class BaseAgent(base_agent.BaseAgent):
         self.last_score = last_score
         self.feature_screen = obs.observation.feature_screen.player_relative
         self.beacon_center = np.mean(self._xy_locs(self.feature_screen == 3), axis=0).round()
-        self.state = torch.tensor([self.feature_screen], dtype=torch.float)
-        self.history_tensor = self.hist.stack(self.state)  # stack state on history
+        self.state = torch.tensor([self.feature_screen], dtype=torch.float, device=self.device, requires_grad = True)
+        # self.history_tensor = self.hist.stack(self.state)  # stack state on history
+        self.history_tensor = self.state
+        self.state_history_tensor = self.state
         self.state_history_tensor = self.state.unsqueeze(1)
 
     def print_status(self):
@@ -241,7 +243,7 @@ class BaseAgent(base_agent.BaseAgent):
             chosen_action = self.get_action(available_actions, SMART_ACTIONS[action_idx], x_coord, y_coord)
         else:
             with torch.no_grad():
-                action_q_values, x_coord_q_values, y_coord_q_values = self.net(self.history_tensor)
+                action_q_values, x_coord_q_values, y_coord_q_values = self.net(self.state_history_tensor)
             # action_idx = np.argmax(action_q_values)
             action_idx = 0
             best_action = SMART_ACTIONS[action_idx]
@@ -249,7 +251,7 @@ class BaseAgent(base_agent.BaseAgent):
             y_coord = np.argmax(y_coord_q_values)
             chosen_action = self.get_action(available_actions, best_action, x_coord, y_coord)
         # square brackets arounc chosen_action needed for internal pysc2 state machine
-        return [chosen_action], torch.tensor([action_idx], dtype=torch.long), torch.tensor([x_coord], dtype=torch.long), torch.tensor([y_coord], dtype=torch.long)
+        return [chosen_action], torch.tensor([action_idx], dtype=torch.long, device=self.device), torch.tensor([x_coord], dtype=torch.long, device=self.device), torch.tensor([y_coord], dtype=torch.long, device=self.device)
 
     def _xy_locs(self, mask):
         """
@@ -301,10 +303,11 @@ class BaseAgent(base_agent.BaseAgent):
         # collect transition data
         reward = torch.tensor([obs.reward], device=self.device, dtype=torch.float)
         step_type = torch.tensor([obs.step_type], device=self.device, dtype=torch.int)
-        next_state = torch.tensor([obs.observation.feature_screen.player_relative], dtype=torch.float)
+        next_state = torch.tensor([obs.observation.feature_screen.player_relative], dtype=torch.float, device=self.device, requires_grad = True)
 
         # push next state on next state history stack
-        next_state_history_tensor = self.hist.stack(next_state)
+        # next_state_history_tensor = self.hist.stack(next_state)
+        next_state_history_tensor = next_state
 
         # save transition tuple to the memory buffer
         self.memory.push(self.state_history_tensor, self.action_idx, self.x_coord, self.y_coord, reward, next_state_history_tensor, step_type)
@@ -347,7 +350,7 @@ class BaseAgent(base_agent.BaseAgent):
         self.y_coord_batch = torch.cat(batch.y_coord).unsqueeze(1)
         self.reward_batch = torch.cat(batch.reward)
         self.step_type_batch = torch.cat(batch.step_type)
-        self.next_state_batch = torch.cat(batch.next_state)
+        self.next_state_batch = torch.cat(batch.next_state).unsqueeze(1)
 
     def calculate_q_values(self):
         """
@@ -371,8 +374,8 @@ class BaseAgent(base_agent.BaseAgent):
         """
         Calculating the TD-target for given q-values.
         """
-        td_target = torch.tensor((q_values * self.gamma) + self.reward_batch, dtype=torch.float)
-        td_target[np.where(self.step_type_batch == 2)] = self.reward_batch[np.where(self.step_type_batch == 2)]
+        td_target = torch.tensor((q_values * self.gamma) + self.reward_batch, dtype=torch.float, device=self.device)
+        # td_target[np.where(self.step_type_batch == 2)] = self.reward_batch[np.where(self.step_type_batch == 2)]
         return td_target
 
     def compute_loss(self):
