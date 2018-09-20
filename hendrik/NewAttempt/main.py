@@ -18,6 +18,7 @@ import torchvision.transforms as T
 from absl import app
 import random
 import numpy as np
+import math
 from itertools import count
 from collections import namedtuple
 Transition = namedtuple('Transition', ('state', 'action', 'x_coord', 'y_coord', 'reward', 'next_state', 'step_type'))
@@ -312,7 +313,9 @@ def main(unused_argv):
       observation = env.reset()
       actual_obs = observation[0]
       beacon = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 3), axis=0).round()
+      marine = (float('nan'),float('nan'))
       cnt = 0
+
       if SILENTMODE:
         print("---------------------------------------------------------------------")
         print("Episode: {}\t Total reward: {}".format(e,total_reward))
@@ -336,7 +339,11 @@ def main(unused_argv):
 
 
         beacon = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 3), axis=0).round()
-        marine = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 1), axis=0).round()
+
+        # sometimes the position tuple returned by _xy_locs is NaN, don't know why yet
+        while math.isnan(marine[0])==True:
+          marine = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 1), axis=0).round()
+        print("Marine: {}".format(marine))
 
         b_x, b_y = beacon
         m_x, m_y = marine
@@ -350,12 +357,12 @@ def main(unused_argv):
         pseudo_reward = 1 - scaling(distance)
 
         reward = torch.tensor([pseudo_reward] , device=device, requires_grad=True, dtype=torch.float)
-        total_reward += reward
+        # total_reward += reward
 
 
         if not SILENTMODE:
           print("---------------------------------------------------------------------")
-          print("Episode: {}\t Total reward: {}".format(e,total_reward))
+          print("Episode: {}\t Total pysc2 reward: {}\t Pseudo Reward: {}".format(e,total_reward,pseudo_reward))
           print("Epsilon: {:.4f}".format(agent.epsilon))
           print("Beacon at {}".format(beacon))
           print(action)
@@ -365,7 +372,7 @@ def main(unused_argv):
         next_obs = env.step(action)
 
         # reward = torch.tensor([actual_obs.reward], device=device, requires_grad=True, dtype=torch.float)
-        # total_reward += actual_obs.reward
+        total_reward += actual_obs.reward
 
         if next_obs[0].last():
           next_state = None
