@@ -42,6 +42,10 @@ SMART_ACTIONS = [
 SILENTMODE = False
 
 
+
+
+
+
 def setup_agent():
   agent = BaseAgent(screen_dim = SCREEN_DIM, minimap_dim = MINIMAP_DIM,
           batch_size=BATCH_SIZE, TARGET_UPDATE=TARGET_UPDATE)
@@ -329,7 +333,25 @@ def main(unused_argv):
           y_coord = torch.tensor([0], device=device, dtype=torch.long)
         else:
           action, action_idx, x_coord, y_coord = agent.step(actual_obs)
+
+
         beacon = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 3), axis=0).round()
+        marine = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 1), axis=0).round()
+
+        b_x, b_y = beacon
+        m_x, m_y = marine
+
+        dx = m_x - b_x
+        dy = m_y - b_y
+
+        distance = np.sqrt(dx**2 + dy**2).round()
+        scaling = lambda x : (x - 0)/(100 - 0)
+
+        pseudo_reward = 1 - scaling(distance)
+
+        reward = torch.tensor([pseudo_reward] , device=device, requires_grad=True, dtype=torch.float)
+        total_reward += reward
+
 
         if not SILENTMODE:
           print("---------------------------------------------------------------------")
@@ -341,8 +363,9 @@ def main(unused_argv):
 
 
         next_obs = env.step(action)
-        reward = torch.tensor([actual_obs.reward], device=device, requires_grad=True, dtype=torch.float)
-        total_reward += actual_obs.reward
+
+        # reward = torch.tensor([actual_obs.reward], device=device, requires_grad=True, dtype=torch.float)
+        # total_reward += actual_obs.reward
 
         if next_obs[0].last():
           next_state = None
