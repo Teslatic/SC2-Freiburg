@@ -21,6 +21,9 @@ import numpy as np
 import math
 from itertools import count
 from collections import namedtuple
+numpy.set_printoptions(threshold=numpy.nan)
+
+
 Transition = namedtuple('Transition', ('state', 'action', 'x_coord', 'y_coord', 'reward', 'next_state', 'step_type'))
 
 
@@ -33,7 +36,7 @@ GAMESTEPS = None # 0 = unlimited game time, None = map default
 STEP_MULTIPLIER = 16 # 16 = 1s game time, None = map default
 BATCH_SIZE = 256
 TARGET_UPDATE =  10
-VISUALIZE = False
+VISUALIZE = True
 NUM_EPISODES = 100000
 MEMORY_SIZE = 10000
 SMART_ACTIONS = [
@@ -285,6 +288,11 @@ def main(unused_argv):
     q_x_next[non_final_mask] = non_final_next_x_q.max(1)[0].detach()
     q_y_next[non_final_mask] = non_final_next_y_q.max(1)[0].detach()
 
+    tmp = np.column_stack(q_x_next.numpy(), q_y_next.numpy() )
+    print(tmp)
+    exit()
+
+
     td_target_actions = (q_action_next * GAMMA) + reward_batch
     td_target_x = (q_x_next * GAMMA) + reward_batch
     td_target_y = (q_y_next * GAMMA) + reward_batch
@@ -341,6 +349,7 @@ def main(unused_argv):
         beacon = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 3), axis=0).round()
 
         # sometimes the position tuple returned by _xy_locs is NaN, don't know why yet
+        marine = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 1), axis=0).round()
         while math.isnan(marine[0])==True:
           marine = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 1), axis=0).round()
         print("Marine: {}".format(marine))
