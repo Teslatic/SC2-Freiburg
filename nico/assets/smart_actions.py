@@ -6,5 +6,6 @@ SMART_ACTIONS_MOVE2BEACON = [
         ]
 
 SMART_ACTIONS_MOVE2BEACON_SIMPLE = [
-          actions.FUNCTIONS.Move_screen.id
+          actions.FUNCTIONS.Move_screen.id,
+          actions.FUNCTIONS.no_op.id
         ]

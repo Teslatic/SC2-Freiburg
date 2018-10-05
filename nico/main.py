@@ -77,7 +77,7 @@ if __name__ == "__main__":
         print("Importing packages")
         # normal python modules
         from absl import app
-        from threading import Thread
+        # from threading import Thread
         from os import path
         import sys
         if "../" not in sys.path:

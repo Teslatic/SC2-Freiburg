@@ -8,27 +8,27 @@ BASE_AGENT = 'base_agent'
 SCREEN_DIM = 84
 MINIMAP_DIM = 64
 GAMMA = 0.99
-OPTIM_LR = 0.0005
-BATCH_SIZE = 512
+OPTIM_LR = 0.05
+BATCH_SIZE = 64
 TARGET_UPDATE_PERIOD = 10
 HIST_LENGTH = 1
-REPLAY_SIZE = 10000
-# DEVICE = 'cpu' # will be overwritten by main
-DEVICE = "cuda:0"
+REPLAY_SIZE = 100000
+DEVICE = 'cpu' # will be overwritten by main
+# DEVICE = "cuda:0"
 
 MAP = 'MoveToBeacon'
 PLAYERS = [sc2_env.Agent(sc2_env.Race.terran)]
 STEP_MULTIPLIER = 16  # 16 = 1s game time, None = map default
 EPISODES = 0  # 0 = unlimited game time, None = map default
 EPISODES_TEST = 5  # 0 = unlimited game time, None = map default
-VISUALIZE = False
+VISUALIZE = True
 SILENTMODE = True
 
 epsilon_file = {
                 'EPSILON': 1.0,
                 'EPS_START': 1.0,
-                'EPS_END': 0.1,
-                'EPS_DECAY': 50000
+                'EPS_END': 0.05,
+                'EPS_DECAY': 100000 # 50000
                 }
 
 agent_file = {
