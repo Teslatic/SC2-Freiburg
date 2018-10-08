@@ -21,7 +21,7 @@ import numpy as np
 import math
 from itertools import count
 from collections import namedtuple
-numpy.set_printoptions(threshold=numpy.nan)
+np.set_printoptions(threshold=np.nan)
 
 
 Transition = namedtuple('Transition', ('state', 'action', 'x_coord', 'y_coord', 'reward', 'next_state', 'step_type'))
@@ -29,25 +29,46 @@ Transition = namedtuple('Transition', ('state', 'action', 'x_coord', 'y_coord', 
 
 # CONSTANTS
 LEARNING_RATE = 0.01
-GAMMA = 1.0
+GAMMA = 0.9 
 SCREEN_DIM = 84
 MINIMAP_DIM = 64
 GAMESTEPS = None # 0 = unlimited game time, None = map default
-STEP_MULTIPLIER = 16 # 16 = 1s game time, None = map default
-BATCH_SIZE = 256
+STEP_MULTIPLIER = 0 # 16 = 1s game time, None = map default
+BATCH_SIZE = 32 
 TARGET_UPDATE =  10
-VISUALIZE = True
+VISUALIZE = False
 NUM_EPISODES = 100000
-MEMORY_SIZE = 10000
+MEMORY_SIZE = 1000
 SMART_ACTIONS = [
           # actions.FUNCTIONS.select_army.id,
           actions.FUNCTIONS.Move_screen.id
         ]
 SILENTMODE = False
 
+x_space = np.linspace(0, 83, 8, dtype = int)
+y_space = np.linspace(0, 63, 8, dtype = int)
+xy_space = np.transpose([np.tile(x_space, len(y_space)), np.repeat(y_space, len(x_space))])
 
 
+def get_marine_pos(obs):
+  # sometimes the position tuple returned by _xy_locs is NaN, don't know why yet
+  marine_pos_mask = obs.feature_screen.player_relative == 1 
+  # while not True in marine_pos_mask:
+    # marine_pos_mask = obs.feature_screen.player_relative == 1 
+    # print("I'm looping to ensure valid marine pos mask!")
+  # print("marine pos mask {}".format(marine_pos_mask))
+  marine = np.mean(_xy_locs(marine_pos_mask), axis=0).round()
+  # print("marine in get_marine_pos: {}".format(marine))
 
+  # while math.isnan(marine[0])==True:
+    # marine = np.mean(_xy_locs(obs.feature_screen.player_relative == 1), axis=0).round()
+  print("Marine: {}".format(marine))
+  try:
+    m_x, m_y = marine
+  except:
+    m_x = 84 / 2
+    m_y = 64 / 2
+  return m_x, m_y
 
 
 def setup_agent():
@@ -82,6 +103,7 @@ def setup_env(agent, players, agent_interface):
 def _xy_locs(mask):
   """Mask should be a set of bools from comparison with a feature layer."""
   y, x = mask.nonzero()
+  # print("x,y ind _xy_locs: {}{}".format(x,y))
   return list(zip(x, y))
 
 
@@ -113,19 +135,23 @@ class DQN(nn.Module):
 
   def __init__(self):
     super(DQN, self).__init__()
-    self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=2)
+    self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
     self.bn1 = nn.BatchNorm2d(16)
     self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=2)
     self.bn2 = nn.BatchNorm2d(32)
-    self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=2)
-    self.bn3 = nn.BatchNorm2d(64)
-    self.conv4 = nn.Conv2d(64, 128, kernel_size=3, stride=2)
-    self.bn4 = nn.BatchNorm2d(128)
-    self.conv5 = nn.Conv2d(128, 256, kernel_size=3, stride=2)
+    self.conv3 = nn.Conv2d(32, 32, kernel_size=3, stride=2)
+    self.bn3 = nn.BatchNorm2d(32)
+    self.conv4 = nn.Conv2d(32, 64, kernel_size=3, stride=2)
+    self.bn4 = nn.BatchNorm2d(64)
+    self.tmp_w = self._get_filter_dimension(84, 5 , 0 , 2)
+    self.tmp_w = self._get_filter_dimension(self.tmp_w, 3 , 0 , 2)
+    self.tmp_w = self._get_filter_dimension(self.tmp_w, 3 , 0 , 2)
+    self.tmp_w = self._get_filter_dimension(self.tmp_w, 3 , 0 , 2)
 
-    self.head_actions = nn.Linear(5184, 1)
-    self.head_x = nn.Linear(5184, 84)
-    self.head_y = nn.Linear(5184, 64)
+    self.fc1 = nn.Linear(64 * self.tmp_w * self.tmp_w, 512)
+
+    # actions are now just classes for going up, right, down, left
+    self.head_actions = nn.Linear(512, len(xy_space))
 
 
   def _get_filter_dimension(self,w,f,p,s):
@@ -136,20 +162,16 @@ class DQN(nn.Module):
     return int((w - f + 2*p) / s + 1)
 
   def forward(self, screen):
-    # screen = F.relu(self.bn1(self.conv1(screen)))
-    # screen = F.relu(self.bn2(self.conv2(screen)))
-    # screen = F.relu(self.bn3(self.conv3(screen)))
-    # screen = F.relu(self.bn4(self.conv4(screen)))
+    screen = F.relu(self.bn1(self.conv1(screen)))
+    screen = F.relu(self.bn2(self.conv2(screen)))
+    screen = F.relu(self.bn3(self.conv3(screen)))
+    screen = F.relu(self.bn4(self.conv4(screen)))
+    screen = screen.view(-1, 64 * self.tmp_w * self.tmp_w)
+    screen = F.relu(self.fc1(screen))
 
-    screen = F.relu(self.conv1(screen))
-    screen = F.relu(self.conv2(screen))
-    screen = F.relu(self.conv3(screen))
+    action_q = self.head_actions(screen)
 
-    return self.head_actions(screen.view(screen.size(0), -1)), \
-     self.head_x(screen.view(screen.size(0), -1)), \
-     self.head_y(screen.view(screen.size(0), -1))
-
-
+    return action_q
 
 class BaseAgent(base_agent.BaseAgent):
   def __init__(self, screen_dim, minimap_dim, batch_size, TARGET_UPDATE):
@@ -161,7 +183,7 @@ class BaseAgent(base_agent.BaseAgent):
     self.epsilon = 1.0
     self.eps_start = 1.0
     self.eps_end = 0.1
-    self.eps_decay = 30000
+    self.eps_decay = 40000
     self.steps_done = 0
     self.choice = None
     print("Network: \n{}".format(self.net))
@@ -210,26 +232,42 @@ class BaseAgent(base_agent.BaseAgent):
     self.beacon_center = np.mean(_xy_locs(self.feature_screen == 3), axis=0).round()
     self.state = torch.tensor([self.feature_screen], dtype=torch.float, device=device, requires_grad = True).unsqueeze(1)
 
-    action, action_idx, x_coord, y_coord = self.choose_action(self.available_actions, self.state)
+    action, action_idx, x_coord, y_coord = self.choose_action(self.available_actions, self.state, obs.observation)
 
     return action, action_idx, x_coord, y_coord
 
-  def choose_action(self, available_actions, state):
+  def choose_action(self, available_actions, state, obs):
       self.choice = self.epsilon_greedy()
       if self.choice == 'random':
-          action_idx = np.random.randint(len(SMART_ACTIONS))
-          x_coord = np.random.randint(self.x_map_dim)
-          y_coord = np.random.randint(self.y_map_dim)
-          chosen_action = self.get_action(self.available_actions, SMART_ACTIONS[action_idx], x_coord, y_coord)
+        action_idx = random.randint(0, len(xy_space) - 1)
+        action_xy = xy_space[action_idx]
       else:
           with torch.no_grad():
-            action_q_values, x_coord_q_values, y_coord_q_values = self.net(state)
-          # action_idx = np.argmax(action_q_values)
-          action_idx = 0
-          best_action = SMART_ACTIONS[action_idx]
-          x_coord = np.argmax(x_coord_q_values)
-          y_coord = np.argmax(y_coord_q_values)
-          chosen_action = self.get_action(self.available_actions, best_action, x_coord, y_coord)
+            action_q_values = self.net(state)
+            action_idx = np.argmax(action_q_values)
+            action_xy = xy_space[action_idx]
+      x_coord = action_xy[0]
+      y_coord = action_xy[1]
+      # m_x, m_y = get_marine_pos(obs)
+      # # action indices are now representig primitive moving directions
+      # # 0: up | 1: right | 2: down | 3: left
+      # delta = 10
+      # if action_idx == 0:
+      #   x_coord = m_x
+      #   y_coord = m_y - delta 
+      # if action_idx == 1:
+      #   x_coord = m_x + delta
+      #   y_coord = m_y
+      # if action_idx == 2:
+      #   x_coord = m_x
+      #   y_coord = m_y + delta
+      # if action_idx == 3:
+      #   x_coord = m_x - delta
+      #   y_coord = m_y
+      best_action = SMART_ACTIONS[0] 
+      # x_coord = min(max(0 , x_coord), 83)
+      # y_coord = min(max(0 , y_coord), 63)
+      chosen_action = self.get_action(self.available_actions, best_action, x_coord, y_coord)
       # square brackets arounc chosen_action needed for internal pysc2 state machine
       return [chosen_action], torch.tensor([action_idx], dtype=torch.long, device=device), \
        torch.tensor([x_coord], dtype=torch.long, device=device), \
@@ -269,48 +307,23 @@ def main(unused_argv):
     y_batch = torch.cat(batch.y_coord).unsqueeze(1)
     reward_batch = torch.cat(batch.reward)
 
-    q_action, q_x, q_y = agent.net(state_batch)
-    q_action = q_action.gather(1, action_batch)
-    q_x = q_x.gather(1, x_batch)
-    q_y = q_y.gather(1, y_batch)
+    # q_action = agent.net(state_batch)
+    q_action = agent.net(state_batch).gather(1, action_batch)
 
     q_action_next = torch.zeros(BATCH_SIZE, device=device)
-    q_x_next = torch.zeros(BATCH_SIZE, device=device)
-    q_y_next = torch.zeros(BATCH_SIZE, device=device)
-
-    # q_action_next = reward_batch.detach()
-    # q_x_next = reward_batch.detach()
-    # q_y_next = reward_batch.detach()
-
-    non_final_next_action_q ,non_final_next_x_q, non_final_next_y_q = agent.target_net(non_final_next_states)
+    non_final_next_action_q  = agent.target_net(non_final_next_states)
 
     q_action_next[non_final_mask] = non_final_next_action_q.max(1)[0].detach()
-    q_x_next[non_final_mask] = non_final_next_x_q.max(1)[0].detach()
-    q_y_next[non_final_mask] = non_final_next_y_q.max(1)[0].detach()
-
-    tmp = np.column_stack(q_x_next.numpy(), q_y_next.numpy() )
-    print(tmp)
-    exit()
-
 
     td_target_actions = (q_action_next * GAMMA) + reward_batch
-    td_target_x = (q_x_next * GAMMA) + reward_batch
-    td_target_y = (q_y_next * GAMMA) + reward_batch
 
-    loss_actions = F.mse_loss(q_action, td_target_actions.unsqueeze(1))
-    loss_x = F.mse_loss(q_x, td_target_x.unsqueeze(1))
-    loss_y = F.mse_loss(q_y, td_target_y.unsqueeze(1))
-
-    # print(loss_actions.item(), loss_x.item(), loss_y.item())
-
-    loss = loss_actions + loss_x + loss_y
-
+    loss = F.mse_loss(q_action, td_target_actions.unsqueeze(1))
 
     agent.optimizer.zero_grad()
     loss.backward()
     agent.optimizer.step()
 
-
+  # ______________________________________________________________________________
   total_reward = 0
 
   try:
@@ -322,6 +335,7 @@ def main(unused_argv):
       actual_obs = observation[0]
       beacon = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 3), axis=0).round()
       marine = (float('nan'),float('nan'))
+      # m_x, m_y = get_marine_pos(actual_obs.observation)
       cnt = 0
 
       if SILENTMODE:
@@ -336,7 +350,7 @@ def main(unused_argv):
         print("---------------------------------------------------------------------")
 
       while True:
-
+        m_x, m_y = get_marine_pos(actual_obs.observation)
         if actual_obs.first():
           action = [actions.FUNCTIONS.select_army("select")]
           action_idx = torch.tensor([0], device=device, dtype=torch.long)
@@ -344,18 +358,8 @@ def main(unused_argv):
           y_coord = torch.tensor([0], device=device, dtype=torch.long)
         else:
           action, action_idx, x_coord, y_coord = agent.step(actual_obs)
-
-
         beacon = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 3), axis=0).round()
-
-        # sometimes the position tuple returned by _xy_locs is NaN, don't know why yet
-        marine = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 1), axis=0).round()
-        while math.isnan(marine[0])==True:
-          marine = np.mean(_xy_locs(actual_obs.observation.feature_screen.player_relative == 1), axis=0).round()
-        print("Marine: {}".format(marine))
-
         b_x, b_y = beacon
-        m_x, m_y = marine
 
         dx = m_x - b_x
         dy = m_y - b_y
@@ -363,7 +367,7 @@ def main(unused_argv):
         distance = np.sqrt(dx**2 + dy**2).round()
         scaling = lambda x : (x - 0)/(100 - 0)
 
-        pseudo_reward = 1 - scaling(distance)
+        pseudo_reward = (1 - scaling(distance)).round(2)
 
         reward = torch.tensor([pseudo_reward] , device=device, requires_grad=True, dtype=torch.float)
         # total_reward += reward
