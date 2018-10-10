@@ -19,11 +19,29 @@ from collections import namedtuple
 # torch imports
 import torch
 
-np.set_printoptions(threshold=np.nan)
 
+# import architectures
 from Architectures import PytorchTutorialDQN
+
+# import Agent
 from Agency import BaseAgent
 
+## @package Main
+# #Main:
+# Reads in several flags to pass it to the running app (pysc2).
+# ##Flag Description
+# - learning_rate, float: learning for the optimizer
+# - gamma, float: Discount factor
+# - batch_size, unsigned int: Batch size of the samples durch experience replay
+# - target_update, unsigned int: Update Target network every N episodes
+# - epochs, unsigned int: amount of episodes to train
+# - memory_size, unsigned int: capacity of the replay buffer
+# - visualize, bool: set true for actual screen displaying
+# - architecture, string: specifiy architecture/network-model to use
+# - xy_grid, unsigned int: "discretizes" the action spaces into NxN [x,y]-pairs
+# - epsilon, unsigned int: the decay rate for the decaying epsilon greedy policy (epsilon ~ decayTime)
+# - map_name, string: map/scenario to play
+# - step_multiplier, unsigned int: how many game steps per agent step
 def main(argv):
     del argv
     print(100 * "=")
@@ -49,7 +67,6 @@ def main(argv):
 
 if __name__ == '__main__':
     FLAGS = flags.FLAGS
-
     flags.DEFINE_float("learning_rate", 0.0001, "Learning rate", short_name="lr")
     flags.DEFINE_float("gamma", 0.9 , "Gamma", short_name="g")
     flags.DEFINE_integer("batch_size", 32 , "Batch Size", short_name="b")

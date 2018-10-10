@@ -1,0 +1,58 @@
+\hypertarget{namespacemain}{}\section{main Namespace Reference}
+\label{namespacemain}\index{main@{main}}
+
+
+Documentation for the main file.  
+
+
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \mbox{\hyperlink{namespacemain_af3f5f1d2e9b06bf119f500dced42f536}{main}} (argv)
+\begin{DoxyCompactList}\small\item\em Reads in several flags to pass it to the running app (pysc2). \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{namespacemain_a9e54bf13f9d353cfeb8aa9a5623dcf87}\label{namespacemain_a9e54bf13f9d353cfeb8aa9a5623dcf87}} 
+\mbox{\hyperlink{namespacemain_a9e54bf13f9d353cfeb8aa9a5623dcf87}{F\+L\+A\+GS}} = flags.\+F\+L\+A\+GS
+\begin{DoxyCompactList}\small\item\em contains hyperparameter input \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Documentation for the main file. 
+
+\begin{DoxyVerb}__author__ = "Hendrik Vloet"
+__copyright__ = "Copyright (C) 2018 Hendrik Vloet"
+__license__ = "Public Domain"
+__version__ = "1.0"
+\end{DoxyVerb}
+
+
+The main file serves only to read in hyperparemeters, construct architecture \& agent objects and finally run the agent with the agent.\+play() method 
+
+\subsection{Function Documentation}
+\mbox{\Hypertarget{namespacemain_af3f5f1d2e9b06bf119f500dced42f536}\label{namespacemain_af3f5f1d2e9b06bf119f500dced42f536}} 
+\index{main@{main}!main@{main}}
+\index{main@{main}!main@{main}}
+\subsubsection{\texorpdfstring{main()}{main()}}
+{\footnotesize\ttfamily def main.\+main (\begin{DoxyParamCaption}\item[{}]{argv }\end{DoxyParamCaption})}
+
+
+
+Reads in several flags to pass it to the running app (pysc2). 
+
+Flag Description
+\begin{DoxyItemize}
+\item learning\+\_\+rate, float\+: learning for the optimizer
+\item gamma, float\+: Discount factor
+\item batch\+\_\+size, unsigned int\+: Batch size of the samples durch experience replay
+\item target\+\_\+update, unsigned int\+: Update Target network every N episodes
+\item epochs, unsigned int\+: amount of episodes to train
+\item memory\+\_\+size, unsigned int\+: capacity of the replay buffer
+\item visualize, bool\+: set true for actual screen displaying
+\item architecture, string\+: specifiy architecture/network-\/model to use
+\item xy\+\_\+grid, unsigned int\+: \char`\"{}discretizes\char`\"{} the action spaces into NxN \mbox{[}x,y\mbox{]}-\/pairs
+\item epsilon, unsigned int\+: the decay rate for the decaying epsilon greedy policy (epsilon $\sim$ decay\+Time)
+\item map\+\_\+name, string\+: map/scenario to play
+\item step\+\_\+multiplier, unsigned int\+: how many game steps per agent step 
+\end{DoxyItemize}
