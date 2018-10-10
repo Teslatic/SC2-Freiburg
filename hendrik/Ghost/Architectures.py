@@ -1,3 +1,9 @@
+"""
+Hendrik Vloet
+Copyright (C) 2018 Hendrik Vloet
+Public Domain
+"""
+# ______________________________________________________________________________
 # torch imports
 import torch
 import torch.nn as nn
@@ -9,49 +15,72 @@ import torchvision.transforms as T
 import numpy as np
 
 ## @package Architectures
-#  Documentation for Architectures.
+#  This file contains all Network/Architecture/Model Classes:
 #
-#  More details.
+#  - PytorchTutorialDQN (CNN with one output value)
 
 ## Documentation for PytorchTutorialDQN
 #
-#  More details.
+#  This Class contains the DQN network architecture according to
+#  https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
+#  but has slightly modified layer structure
 class PytorchTutorialDQN(nn.Module):
-
+  ## Constructor
   def __init__(self, FLAGS):
+    ## inherit from nn.Module (pytorch base class for networks)
     super(PytorchTutorialDQN, self).__init__()
-
     x_space = np.linspace(0, 83, FLAGS.xy_grid, dtype = int)
     y_space = np.linspace(0, 63, FLAGS.xy_grid, dtype = int)
-
+    ## @param xy_space pairs of x,y coordinates from which the agent may choose
     self.xy_space = np.transpose([np.tile(x_space, len(y_space)), np.repeat(y_space, len(x_space))])
-
+    ## @param conv1 Convultional Layer
     self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
+    ## @param bn1 Batch normalization
     self.bn1 = nn.BatchNorm2d(16)
+    ## @param conv2 Convultional Layer
     self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=2)
+    ## @param bn2 Batch normalization
     self.bn2 = nn.BatchNorm2d(32)
+    ## @param conv3 Convultional Layer
     self.conv3 = nn.Conv2d(32, 32, kernel_size=3, stride=2)
+    ## @param bn3 Batch normalization
     self.bn3 = nn.BatchNorm2d(32)
+    ## @param conv4 Convultional Layer
     self.conv4 = nn.Conv2d(32, 64, kernel_size=3, stride=2)
+    ## @param bn4 Batch normalization
     self.bn4 = nn.BatchNorm2d(64)
 
+    ## @param tmp_w helper variable to keep track of filter dimensons
     self.tmp_w = self._get_filter_dimension(84, 5 , 0 , 2)
     self.tmp_w = self._get_filter_dimension(self.tmp_w, 3 , 0 , 2)
     self.tmp_w = self._get_filter_dimension(self.tmp_w, 3 , 0 , 2)
     self.tmp_w = self._get_filter_dimension(self.tmp_w, 3 , 0 , 2)
 
+    ## @param fc1 first hidden fully connected layer
     self.fc1 = nn.Linear(64 * self.tmp_w * self.tmp_w, 512)
 
+    ## @param head_actions output fully connected layer
     self.head_actions = nn.Linear(512, len(self.xy_space))
 
 
-  def _get_filter_dimension(self,w,f,p,s):
-    '''
-    calculates filter dimension according to following formula:
-    (filter - width + 2*padding) / stride + 1
-    '''
+  ## Calculate filter Dimension
+  #
+  #  calculates filter dimension for the the flat array which is fed
+  #  into the hidden fully connected layers
+  #
+  #  Formula: (filter - width + 2*padding) / stride + 1
+  #  @param[out] w kernel width
+  #  @param[out] f filter size
+  #  @param[out] p padding
+  #  @param[out] s stride
+  def _get_filter_dimension(self, w, f, p, s):
     return int((w - f + 2*p) / s + 1)
 
+  ## Forward pass
+  #
+  #  passes the state information through the network and approximate
+  #  q values of the x,y pairs
+  #  @param[out] action_q approximated q values
   def forward(self, screen):
     screen = F.relu(self.bn1(self.conv1(screen)))
     screen = F.relu(self.bn2(self.conv2(screen)))

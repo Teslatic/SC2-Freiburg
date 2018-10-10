@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """
-__author__ = "Hendrik Vloet"
-__copyright__ = "Copyright (C) 2018 Hendrik Vloet"
-__license__ = "Public Domain"
-__version__ = "1.0"
+Hendrik Vloet
+Copyright (C) 2018 Hendrik Vloet
+Public Domain
 """
 # ______________________________________________________________________________
+
+## \mainpage StarCraft 2 Reinforcement Learning Project
+#  Albert Ludwigs Universität Freiburg  
+#  Project at the chair of Neurorobotics  
+#  Supervisor: Prof. Dr. J. Bödecker  
+#  Students: Nico Ott, Hendrik Vloet  
+
 
 # normal python imports
 from absl import app
@@ -62,16 +68,20 @@ def main(argv):
     logging.info("Chose map: {}".format(FLAGS.map_name))
     print(100 * "=")
 
+    ## device information: run on GPU if possible, else CPU
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if (FLAGS.architecture == "PytorchTutorialDQN"):
+        ## architecture objects: contains the pytorch network
         architecture = PytorchTutorialDQN(FLAGS)
+    ## agent object
     agent = BaseAgent(architecture, FLAGS, device)
     agent.play()
 
 if __name__ == '__main__':
     ## contains hyperparameter input
     FLAGS = flags.FLAGS
+
     flags.DEFINE_float("learning_rate", 0.0001, "Learning rate" )
     flags.DEFINE_float("gamma", 0.9 , "Gamma")
     flags.DEFINE_integer("batch_size", 32 , "Batch Size")
