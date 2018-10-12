@@ -330,21 +330,21 @@ class BaseAgent(base_agent.BaseAgent):
 
                     distance = np.sqrt(dx**2 + dy**2).round()
                     scaling = lambda x : (x - 0)/(100 - 0)
-                    self.pseudo_reward = (0.1 * (1 - scaling(distance))).round(2)
+                    self.pseudo_reward = (0.1 * (1 - scaling(distance))).round(4)
 
                     if self.next_obs[0].reward==1:
                         self.reward = torch.tensor([self.pseudo_reward + 10] , device=self._device,
-                                       requires_grad=True, dtype=torch.float)
+                                       requires_grad=False, dtype=torch.float)
                     else:
                         self.reward = torch.tensor([self.pseudo_reward] , device=self._device,
-                                                   requires_grad=True, dtype=torch.float)
+                                                   requires_grad=False, dtype=torch.float)
                 except:
                     pass
             else:
                 self.marine_x = -1
                 self.marine_y = -1
                 self.reward = torch.tensor([0] , device=self._device,
-                                       requires_grad=True, dtype=torch.float)
+                                       requires_grad=False, dtype=torch.float)
 
             self.total_reward += self.actual_obs.reward
 
@@ -374,7 +374,7 @@ class BaseAgent(base_agent.BaseAgent):
 
         state_batch = torch.cat(batch.state)
         action_batch = torch.cat(batch.action).unsqueeze(1)
-        reward_batch = torch.cat(batch.reward)
+        reward_batch = torch.cat(batch.reward).detach()
 
         q_action = self._net(state_batch).gather(1, action_batch)
 
@@ -385,7 +385,7 @@ class BaseAgent(base_agent.BaseAgent):
 
         td_target_actions = (q_action_next * self._gamma) + reward_batch
 
-        loss = F.mse_loss(q_action, td_target_actions.unsqueeze(1))
+        loss = F.smooth_l1_loss(q_action, td_target_actions.unsqueeze(1))
 
         self._optimizer.zero_grad()
         loss.backward()
@@ -423,7 +423,7 @@ class BaseAgent(base_agent.BaseAgent):
                 while (True):
                     ## state tensor
                     self.state = torch.tensor([self.actual_obs.observation.feature_screen.player_relative],
-                                      dtype=torch.float, device=self._device, requires_grad = True).unsqueeze(1)
+                                              dtype=torch.float, device=self._device, requires_grad = False).unsqueeze(1)
 
                     # agent deterines action to take
                     self.step()
@@ -439,7 +439,7 @@ class BaseAgent(base_agent.BaseAgent):
                     else:
                         self.next_state = torch.tensor([self.next_obs[0].observation.feature_screen.player_relative],\
                                                        dtype=torch.float, device=self._device,
-                                                       requires_grad = True).unsqueeze(1)
+                                                       requires_grad = False).unsqueeze(1)
 
                     # save transition
                     self.memory.push(self.state, self.action_idx, self.reward , self.next_state,
