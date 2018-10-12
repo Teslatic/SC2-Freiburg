@@ -22,6 +22,7 @@ import numpy as np
 import math
 from itertools import count
 from collections import namedtuple
+import os
 
 # torch imports
 import torch
@@ -66,6 +67,8 @@ def main(argv):
     logging.info("Amount of xy coordinate pairs: {}".format(FLAGS.xy_grid**2))
     logging.info("Epsilon Decay value: {}".format(FLAGS.epsilon))
     logging.info("Chose map: {}".format(FLAGS.map_name))
+    logging.info("Working directory {}".format(FLAGS.path))
+    logging.info("Experiment name {}".format(FLAGS.name))
     print(100 * "=")
 
     ## device information: run on GPU if possible, else CPU
@@ -81,7 +84,7 @@ def main(argv):
 if __name__ == '__main__':
     ## contains hyperparameter input
     FLAGS = flags.FLAGS
-
+    cwd = os.getcwd()
     flags.DEFINE_float("learning_rate", 0.0001, "Learning rate" )
     flags.DEFINE_float("gamma", 0.9 , "Gamma")
     flags.DEFINE_integer("batch_size", 32 , "Batch Size")
@@ -94,5 +97,7 @@ if __name__ == '__main__':
     flags.DEFINE_integer("epsilon", 20000 , "epsilon epsilon decay")
     flags.DEFINE_string("map_name", "MoveToBeacon" , "Name of the map")
     flags.DEFINE_integer("step_multiplier", 0 , "specifiy step multiplier. 16 = ~1s game time")
+    flags.DEFINE_string("path",cwd , "specify working directory for saving models and csv logs")
+    flags.DEFINE_string("name", "default", "specify name for experiment")
 
     app.run(main)

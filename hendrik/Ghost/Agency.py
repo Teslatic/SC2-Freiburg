@@ -20,6 +20,9 @@ import numpy as np
 import math
 from itertools import count
 from collections import namedtuple
+import os
+import pandas as pd
+from pathlib import Path
 
 # torch imports
 import torch
@@ -86,6 +89,10 @@ class BaseAgent(base_agent.BaseAgent):
     def __init__(self,architecture, FLAGS, device="cpu"):
         ## inherit base_agent baseclass from pytorch
         super(BaseAgent, self).__init__()
+        ## name of the experiment
+        self._name = FLAGS.name
+        ## where to save model and reward csv
+        self._path = FLAGS.path
         ## Learning rate for the optimizer
         self._lr = FLAGS.learning_rate
         ## Discount factor
@@ -120,6 +127,10 @@ class BaseAgent(base_agent.BaseAgent):
         self._choice = None
         ## total reward achieved in training (pysc2 reward)
         self.total_reward = 0
+        ## array to kreep track of the reward per epoch
+        self.r_per_epoch = []
+        ## list to keep track of the cumulative score
+        self.list_score_cumulative = []
         ## actions available to the agent, chosen by design
         self._SMART_ACTIONS = [
             actions.FUNCTIONS.select_army.id,
@@ -198,14 +209,39 @@ class BaseAgent(base_agent.BaseAgent):
         return list(zip(x, y))
 
 
+    ## saves the pytorch model
+    def _save_model(self):
+        save_path = self._path + "/experiment/" + self._name + "/model/model.pt"
+        # if not os.path.isdir(self._path + "/experiment/" + self._name + "/model"):
+        Path((self._path + "/experiment/" + self._name + "/model")).mkdir(parents=True, exist_ok=True)
+        torch.save(self._net.state_dict(), save_path)
+
+
+    ## logs rewards per epochs and cumulative reward in a csv file
+    def log_reward(self):
+        r_per_epoch_save_path = self._path  + "/experiment/" + self._name + "/csv/reward_per_epoch.csv"
+        Path((self._path + "/experiment/" + self._name + "/csv")).mkdir(parents=True, exist_ok=True)
+        # create empty csv file if not existing
+
+        d = {"reward per epoch" : self.r_per_epoch,
+             "cumulative reward": self.list_score_cumulative}
+        df = pd.DataFrame(data=d)
+        with open(r_per_epoch_save_path, "a") as f:
+            df.to_csv(f, header=True)
+
+
+
+
     ## determins if the next action is goint to be random or greedy
     def decide(self):
-        self.epsilon = self._EPS_END + (self._EPS_START - self._EPS_END) \
-            * np.exp(-1. * self._steps_done / self._eps_decay)
-        self._steps_done += 1
-        self.choice = np.random.choice(['random', 'greedy'],
-                                       p=[self.epsilon, 1-self.epsilon])
-
+        if len(self.memory) >= self._batch_size:
+            self.epsilon = self._EPS_END + (self._EPS_START - self._EPS_END) \
+                * np.exp(-1. * self._steps_done / self._eps_decay)
+            self._steps_done += 1
+            self.choice = np.random.choice(['random', 'greedy'],
+                                           p=[self.epsilon, 1-self.epsilon])
+        else:
+            self.choice = 'random'
 
     ## chooses the next action
     #
@@ -297,7 +333,7 @@ class BaseAgent(base_agent.BaseAgent):
 
                     distance = np.sqrt(dx**2 + dy**2).round()
                     scaling = lambda x : (x - 0)/(100 - 0)
-
+                    
                     self.pseudo_reward = (0.1 * (1 - scaling(distance))).round(2)
 
                     if self.next_obs[0].reward==1:
@@ -423,9 +459,15 @@ class BaseAgent(base_agent.BaseAgent):
                 self.print_status()
 
                 # update target network weights every _target_update epochs
+                # also save the model state dictionary
                 if self.e % self._target_update == 0:
                     self._target_net.load_state_dict(self._net.state_dict())
+                    self._save_model()
+                    self.log_reward()
 
                 # if in terminal state, break
                 if self.next_obs[0].last()==True:
                     break
+
+            self.r_per_epoch.append(self.actual_obs.observation["score_cumulative"][0])
+            self.list_score_cumulative.append(self.total_reward)
