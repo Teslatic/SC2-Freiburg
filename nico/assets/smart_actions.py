@@ -9,3 +9,10 @@ SMART_ACTIONS_MOVE2BEACON_SIMPLE = [
           actions.FUNCTIONS.Move_screen.id,
           actions.FUNCTIONS.no_op.id
         ]
+
+SMART_ACTIONS_SIMPLE_NAVIGATION = [
+          'left',
+          'up',
+          'right',
+          'down'
+        ]

@@ -28,7 +28,6 @@ def main(unused_argv):
 
     # Create a new experiment
     experiment_name = input("Please enter your experiment name: ")
-    # experiment_name = 'Multiplot'
     exp_root_dir = create_experiment_at_main(experiment_name)
 
     # Setting up the torch, agent, agent interface and environment
@@ -40,62 +39,64 @@ def main(unused_argv):
     agent.setup(env.observation_spec(), env.action_spec())  # Necessary? --> For each minigame
     observation = env.reset()
     actual_obs = observation[0]
-    # try:
-    # With statement should be used to properly close the documents and maybe plot graphics in case of an error
+
     while True:  # Starting a timestep
         # last_score for debug reference
-        last_score = env._last_score[0]  # Is this not contained in the reward structure?
+
+        # Set all variables at the start of a new timestep
+        agent.initializing_timestep(actual_obs, env._last_score[0])
+
+        # Selecting action
         action = [actions.FUNCTIONS.select_army("select")]
-        if actual_obs.first():
-            # Select Army in first step
-            print("First Step")
+
+        if actual_obs.first():  # Select Army in first step
             action = [actions.FUNCTIONS.select_army("select")]
-        if actual_obs.last():
+        if actual_obs.last():  # End episode in last step
             print("Last step: epsilon is at {}, Total score is at {}".format(agent.epsilon, agent.reward))
-            agent.end_episode('learn')
+            agent.update_target_network()
             env.reset()
-
-            # Setting flags and random seed. Clearing reward and history?
-            # if d agent flag risen
-            #     test_thread = Thread(target=start_test, args=(test_env_file, agent.get_net_weights(), agent.get_target_net_weights()))
-            #     test_thread.start()
-            # Count new episode. If last episode --> Break
+            # action = [actions.FUNCTIONS.no_op.id]
         if not actual_obs.first() and not actual_obs.last():  # make one step
-            action = agent.step(actual_obs, last_score, 'learn')
+            action = agent.step(actual_obs, 'learn')
 
+        # Peforming action
         next_obs = env.step(action)
+
+        if not actual_obs.first() and not actual_obs.last():  # make one step
+            # Saving the episode data. Pushing the information onto the memory.
+            agent.store_transition(next_obs[0])
+
+            # Optimize the agent
+            if len(agent.memory) >= 1000:
+                agent.optimize()
+
+                # Print actual status information
+                if not agent.silentmode:
+                    agent.print_status()
+
         actual_obs = next_obs[0]
 
-    # except KeyboardInterrupt:
-    #     print_ts("Shutdown by user")
-    # except:
-    #     print_ts("Problem in the loop")
-
 if __name__ == "__main__":
-    # try:
-    if True:
+    try:
+    # if True:
         print("Importing packages")
         # normal python modules
         from absl import app
-        # from threading import Thread
         from os import path
         import sys
         if "../" not in sys.path:
             sys.path.append("../")
-
-
         from pysc2.lib import actions
+
             # custom imports
         from assets.agents.BaseAgent import BaseAgent
-        # from assets.agents.TripleAgent import TripleAgent
         from assets.helperFunctions.timestamps import print_timestamp as print_ts
         from assets.helperFunctions.initializingHelpers import setup_torch
         from assets.helperFunctions.FileManager import *
-        # from assets.helperFunctions.initializingHelpers import setup_agent
         from assets.helperFunctions.initializingHelpers import setup_env
         from parameterfile import agent_file, env_file, test_env_file
         print_ts("Starting main")
-    # except:
-    #     print("Some packages might be missing.")
+    except:
+        print_ts("Some packages might be missing.")
 
     app.run(main)
