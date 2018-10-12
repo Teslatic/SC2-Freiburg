@@ -423,7 +423,7 @@ class BaseAgent(base_agent.BaseAgent):
                 while (True):
                     ## state tensor
                     self.state = torch.tensor([self.actual_obs.observation.feature_screen.player_relative],
-                                              dtype=torch.float, device=self._device, requires_grad = False).unsqueeze(1)
+                                              dtype=torch.float, device=self._device, requires_grad = True).unsqueeze(1)
 
                     # agent deterines action to take
                     self.step()
@@ -439,7 +439,7 @@ class BaseAgent(base_agent.BaseAgent):
                     else:
                         self.next_state = torch.tensor([self.next_obs[0].observation.feature_screen.player_relative],\
                                                        dtype=torch.float, device=self._device,
-                                                       requires_grad = False).unsqueeze(1)
+                                                       requires_grad = True).unsqueeze(1)
 
                     # save transition
                     self.memory.push(self.state, self.action_idx, self.reward , self.next_state,
