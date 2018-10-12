@@ -1,0 +1,11 @@
+- Let the agent run longer (adapt eps-greedy)
+- Modify the loss s.t. the coordinate loss / Investigate general dependencies
+- DDQN statt DQN
+- Test epsiodes
+- Loss functions
+- Learning rate/Gamma anpassen
+- Testing architecture with OpenAI env
+- Model saver
+- Prioritized replay buffer/ in general
+- Select army manually in first step, else move_screen only with x, y.
+- E-mail
