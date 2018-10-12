@@ -87,7 +87,6 @@ class ReplayBuffer(object):
 class BaseAgent(base_agent.BaseAgent):
     ## Constructor
     def __init__(self,architecture, FLAGS, device="cpu"):
-        ## inherit base_agent baseclass from pytorch
         super(BaseAgent, self).__init__()
         ## name of the experiment
         self._name = FLAGS.name
@@ -123,7 +122,7 @@ class BaseAgent(base_agent.BaseAgent):
         self._EPS_END = 0.1
         ## step counter for epsilon calculation
         self._steps_done = 0
-        ## displays choice: random or greed, init. with None
+        ## displays choice: random or greed, init with None
         self._choice = None
         ## total reward achieved in training (pysc2 reward)
         self.total_reward = 0
@@ -212,7 +211,6 @@ class BaseAgent(base_agent.BaseAgent):
     ## saves the pytorch model
     def _save_model(self):
         save_path = self._path + "/experiment/" + self._name + "/model/model.pt"
-        # if not os.path.isdir(self._path + "/experiment/" + self._name + "/model"):
         Path((self._path + "/experiment/" + self._name + "/model")).mkdir(parents=True, exist_ok=True)
         torch.save(self._net.state_dict(), save_path)
 
@@ -221,13 +219,12 @@ class BaseAgent(base_agent.BaseAgent):
     def log_reward(self):
         r_per_epoch_save_path = self._path  + "/experiment/" + self._name + "/csv/reward_per_epoch.csv"
         Path((self._path + "/experiment/" + self._name + "/csv")).mkdir(parents=True, exist_ok=True)
-        # create empty csv file if not existing
 
         d = {"reward per epoch" : self.r_per_epoch,
              "cumulative reward": self.list_score_cumulative}
         df = pd.DataFrame(data=d)
-        with open(r_per_epoch_save_path, "a") as f:
-            df.to_csv(f, header=True)
+        with open(r_per_epoch_save_path, "w") as f:
+            df.to_csv(f, header=True, index=False)
 
 
 
@@ -333,7 +330,6 @@ class BaseAgent(base_agent.BaseAgent):
 
                     distance = np.sqrt(dx**2 + dy**2).round()
                     scaling = lambda x : (x - 0)/(100 - 0)
-                    
                     self.pseudo_reward = (0.1 * (1 - scaling(distance))).round(2)
 
                     if self.next_obs[0].reward==1:
@@ -419,44 +415,52 @@ class BaseAgent(base_agent.BaseAgent):
     ## @param reward: tensor, containting the current reward
     def play(self):
         for self.e in range(1, self._epochs):
-            # get first observation
-            observation = self._env.reset()
-            ## verbose state observation
-            self.actual_obs = observation[0]
-            while (True):
-
-                ## state tensor
-                self.state = torch.tensor([self.actual_obs.observation.feature_screen.player_relative],
+            try:
+                # get first observation
+                observation = self._env.reset()
+                ## verbose state observation
+                self.actual_obs = observation[0]
+                while (True):
+                    ## state tensor
+                    self.state = torch.tensor([self.actual_obs.observation.feature_screen.player_relative],
                                       dtype=torch.float, device=self._device, requires_grad = True).unsqueeze(1)
 
-                # agent deterines action to take
-                self.step()
-                ## next_obs is the next state but densely encoded by the pysc2 engine
-                self.next_obs = self._env.step(self.action)
-                # get pseudo reward
-                self.calc_pseudo_reward()
+                    # agent deterines action to take
+                    self.step()
+                    ## next_obs is the next state but densely encoded by the pysc2 engine
+                    self.next_obs = self._env.step(self.action)
+                    # get pseudo reward
+                    self.calc_pseudo_reward()
 
-                # if in last step, write only None in next state
-                if self.next_obs[0].last():
-                    ## next_state is the more verbose version of next_obs and also used by the network
-                    self.next_state = None
-                else:
-                    self.next_state = torch.tensor([self.next_obs[0].observation.feature_screen.player_relative],\
-                                          dtype=torch.float, device=self._device,
-                                               requires_grad = True).unsqueeze(1)
+                    # if in last step, write only None in next state
+                    if self.next_obs[0].last():
+                        ## next_state is the more verbose version of next_obs and also used by the network
+                        self.next_state = None
+                    else:
+                        self.next_state = torch.tensor([self.next_obs[0].observation.feature_screen.player_relative],\
+                                                       dtype=torch.float, device=self._device,
+                                                       requires_grad = True).unsqueeze(1)
 
-                # save transition
-                self.memory.push(self.state, self.action_idx, self.reward , self.next_state,
-                        self.next_obs[0].step_type.value)
+                    # save transition
+                    self.memory.push(self.state, self.action_idx, self.reward , self.next_state,
+                                     self.next_obs[0].step_type.value)
 
-                # state <- next state
-                self.actual_obs = self.next_obs[0]
+                    # state <- next state
+                    self.actual_obs = self.next_obs[0]
 
-                # train/optimize
-                self.loss = self.optimize()
+                    # train/optimize
+                    self.loss = self.optimize()
 
-                # print status message
-                self.print_status()
+                    # print status message
+                    self.print_status()
+
+                    # if in terminal state, break
+                    if self.next_obs[0].last()==True:
+                        break
+
+                # reward book keeping
+                self.r_per_epoch.append(self.actual_obs.observation["score_cumulative"][0])
+                self.list_score_cumulative.append(self.total_reward)
 
                 # update target network weights every _target_update epochs
                 # also save the model state dictionary
@@ -464,10 +468,8 @@ class BaseAgent(base_agent.BaseAgent):
                     self._target_net.load_state_dict(self._net.state_dict())
                     self._save_model()
                     self.log_reward()
-
-                # if in terminal state, break
-                if self.next_obs[0].last()==True:
-                    break
-
-            self.r_per_epoch.append(self.actual_obs.observation["score_cumulative"][0])
-            self.list_score_cumulative.append(self.total_reward)
+            except KeyboardInterrupt:
+                print("KeyboardInterrupt detected, saving model and data!")
+                self._save_model()
+                self.log_reward()
+                break
