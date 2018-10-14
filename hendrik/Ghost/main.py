@@ -69,6 +69,7 @@ def main(argv):
     logging.info("Chose map: {}".format(FLAGS.map_name))
     logging.info("Working directory {}".format(FLAGS.path))
     logging.info("Experiment name {}".format(FLAGS.name))
+    logging.info("Imitation length {}".format(FLAGS.imitation_length))
     print(100 * "=")
 
     ## device information: run on GPU if possible, else CPU
@@ -99,5 +100,5 @@ if __name__ == '__main__':
     flags.DEFINE_integer("step_multiplier", 0 , "specifiy step multiplier. 16 = ~1s game time")
     flags.DEFINE_string("path",cwd , "specify working directory for saving models and csv logs")
     flags.DEFINE_string("name", "default", "specify name for experiment")
-
+    flags.DEFINE_integer("imitation_length", 20 , "specifiy length of perfect phase to fill buffer with good memories")
     app.run(main)

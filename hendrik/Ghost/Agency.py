@@ -143,6 +143,9 @@ class BaseAgent(base_agent.BaseAgent):
         self._env = self._build_env()
         ## initializing the x,y coordinate pairs available to the agent
         self._xy_pairs = self._discretize_xy_grid(FLAGS.xy_grid)
+        ## imitation phase length
+        self._imitation_phase_length = FLAGS.imitation_length
+        self._imitation_phase = True
 
         print("Network: \n{}".format(self._net))
         print("Optimizer: \n{}".format(self._optimizer))
@@ -248,21 +251,47 @@ class BaseAgent(base_agent.BaseAgent):
     #  - greedy: current state is feedforwarded through the network and a x,y pair
     #  is picked according to the max q value
     def choose_action(self):
-        self.decide()
-        if self.choice == 'random':
-            ## the index of the x,y pair that is chosen
-            self.action_idx = torch.tensor([random.randint(0, len(self._xy_pairs) - 1)],
+        if self.e % self._imitation_phase_length == 0:
+            self._imitation_phase = False
+
+        if self._imitation_phase==False:
+            self.decide()
+            if self.choice == 'random':
+                ## the index of the x,y pair that is chosen
+                self.action_idx = torch.tensor([random.randint(0, len(self._xy_pairs) - 1)],
                                            dtype=torch.long, device=self._device)
-            ## the actual x,y pair which will be used in the next action
-            self.action_xy = self._xy_pairs[self.action_idx]
-        else:
-            with torch.no_grad():
-                self.action_q_values = self._net(self.state)
-                self.action_idx = torch.tensor([np.argmax(self.action_q_values)],
-                                           dtype=torch.long, device=self._device)
+                ## the actual x,y pair which will be used in the next action
                 self.action_xy = self._xy_pairs[self.action_idx]
-        self.x_coord = self.action_xy[0]
-        self.y_coord = self.action_xy[1]
+            else:
+                with torch.no_grad():
+                    self.action_q_values = self._net(self.state)
+                    self.action_idx = torch.tensor([np.argmax(self.action_q_values)],
+                                           dtype=torch.long, device=self._device)
+                    self.action_xy = self._xy_pairs[self.action_idx]
+            self.x_coord = self.action_xy[0]
+            self.y_coord = self.action_xy[1]
+        else:
+            self.beacon = np.mean(self._xy_locs(
+                self.actual_obs.observation.feature_screen.player_relative == 3),
+                             axis=0).round()
+
+            self.x_coord = self.beacon[0]
+            self.y_coord = self.beacon[1]
+
+            # print("Beacon target: {},{}".format(self.x_coord, self.y_coord))
+            # print("xy space: {}".format(self._xy_pairs))
+
+            distances = []
+            for xy_pair in self._xy_pairs:
+                dx = np.abs(xy_pair[0] - self.beacon[0])
+                dy = np.abs(xy_pair[1] - self.beacon[1])
+                distances.append(np.sqrt(dx**2 + dy**2).round())
+
+            closest_pair = np.argmin(distances)
+            # print("Closes pair: {}".format(closest_pair))
+            self.action_idx = torch.tensor([closest_pair],
+                                           dtype=torch.long, device=self._device)
+
 
         # first action is always to select the army
         if self.actual_obs.first()==True:
@@ -402,7 +431,10 @@ class BaseAgent(base_agent.BaseAgent):
         print("Epsilon: {:.4f}".format(self.epsilon))
         print("Beacon at {}".format(self.beacon))
         print("Marine at {}".format((self.marine_x, self.marine_y)))
-        print("Loss: {}".format(self.loss))
+        try:
+            print("Loss: {}".format(self.loss))
+        except:
+             pass
         print(self.action)
         print(100 * "=")
 
@@ -425,7 +457,7 @@ class BaseAgent(base_agent.BaseAgent):
                     self.state = torch.tensor([self.actual_obs.observation.feature_screen.player_relative],
                                               dtype=torch.float, device=self._device, requires_grad = True).unsqueeze(1)
 
-                    # agent deterines action to take
+                    # agent determines action to take
                     self.step()
                     ## next_obs is the next state but densely encoded by the pysc2 engine
                     self.next_obs = self._env.step(self.action)
@@ -449,7 +481,8 @@ class BaseAgent(base_agent.BaseAgent):
                     self.actual_obs = self.next_obs[0]
 
                     # train/optimize
-                    self.loss = self.optimize()
+                    if self._imitation_phase==False:
+                        self.loss = self.optimize()
 
                     # print status message
                     self.print_status()
@@ -459,6 +492,7 @@ class BaseAgent(base_agent.BaseAgent):
                         break
 
                 # reward book keeping
+                # if self._imitation_phase==False:
                 self.r_per_epoch.append(self.actual_obs.observation["score_cumulative"][0])
                 self.list_score_cumulative.append(self.total_reward)
 
