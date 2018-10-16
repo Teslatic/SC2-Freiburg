@@ -30,6 +30,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.transforms as T
+from torchviz import make_dot, make_dot_from_trace
 
 ## @package Agency
 #  The agency file contains all agents and tools the agents use in order to play
@@ -150,7 +151,8 @@ class BaseAgent(base_agent.BaseAgent):
         print("Network: \n{}".format(self._net))
         print("Optimizer: \n{}".format(self._optimizer))
         print("Target Network: \n{}".format(self._target_net))
-
+        pytorch_total_params = sum(p.numel() for p in self._net.parameters())
+        print("Total parameters: {}".format(pytorch_total_params))
 
     ## construct the network, the target network and the optimizer
     #
@@ -357,23 +359,24 @@ class BaseAgent(base_agent.BaseAgent):
                     dx = self.marine_x - b_x
                     dy = self.marine_y - b_y
 
-                    distance = np.sqrt(dx**2 + dy**2).round()
+                    distance = np.sqrt(dx**2 + dy**2).round(4)
                     scaling = lambda x : (x - 0)/(100 - 0)
-                    self.pseudo_reward = (0.1 * (1 - scaling(distance))).round(4)
+                    # self.pseudo_reward = (0.1 * (1 - scaling(distance))).round(3)
+                    self.pseudo_reward = -1 * scaling(distance).round(4)
 
                     if self.next_obs[0].reward==1:
-                        self.reward = torch.tensor([self.pseudo_reward + 10] , device=self._device,
-                                       requires_grad=False, dtype=torch.float)
+                        self.reward = torch.tensor([10] , device=self._device,
+                                       requires_grad=True, dtype=torch.float)
                     else:
                         self.reward = torch.tensor([self.pseudo_reward] , device=self._device,
-                                                   requires_grad=False, dtype=torch.float)
+                                                   requires_grad=True, dtype=torch.float)
                 except:
                     pass
             else:
                 self.marine_x = -1
                 self.marine_y = -1
                 self.reward = torch.tensor([0] , device=self._device,
-                                       requires_grad=False, dtype=torch.float)
+                                       requires_grad=True, dtype=torch.float)
 
             self.total_reward += self.actual_obs.reward
 
@@ -414,11 +417,17 @@ class BaseAgent(base_agent.BaseAgent):
 
         td_target_actions = (q_action_next * self._gamma) + reward_batch
 
-        loss = F.smooth_l1_loss(q_action, td_target_actions.unsqueeze(1))
+        loss = F.mse_loss(q_action, td_target_actions.unsqueeze(1))
 
         self._optimizer.zero_grad()
         loss.backward()
         self._optimizer.step()
+        # print(loss.grad_fn)  # MSELoss
+        # print(loss.grad_fn.next_functions[0][0])  # Linear
+        # print(loss.grad_fn.next_functions[0][0].next_functions[0][0])  # ReLU
+        # print(loss.grad_fn.next_functions[0][0].next_functions[0][0].next_functions[0][0])  # ReLU
+        # print(loss.grad_fn.next_functions[0][0].next_functions[0][0].next_functions[0][0].next_functions[0][0])  # ReLU
+        # print(loss.grad_fn.next_functions[0][0].next_functions[0][0].next_functions[0][0].next_functions[0][0].next_functions[0][0])  # ReLU
 
         return loss
 

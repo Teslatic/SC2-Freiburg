@@ -23,13 +23,15 @@ import math
 from itertools import count
 from collections import namedtuple
 import os
+from pathlib import Path
+import csv
 
 # torch imports
 import torch
 
 
 # import architectures
-from Architectures import PytorchTutorialDQN
+from Architectures import PytorchTutorialDQN, ConvNet, FullyConv
 
 # import Agent
 from Agency import BaseAgent
@@ -72,12 +74,39 @@ def main(argv):
     logging.info("Imitation length {}".format(FLAGS.imitation_length))
     print(100 * "=")
 
+    flag_info = {
+        "learning_rate" : FLAGS.learning_rate,
+        "gamma": FLAGS.gamma,
+        "batch_size" : FLAGS.batch_size,
+        "Target Update Rate" :FLAGS.target_update,
+        "num_episodes" : FLAGS.epochs,
+        "memory_size" : FLAGS.memory_size,
+        "architecture" : FLAGS.architecture,
+        "xy_factor" : FLAGS.xy_grid**2,
+        "epsilon_decay" : FLAGS.epsilon,
+        "map" : FLAGS.map_name,
+        "imitation_length" : FLAGS.imitation_length
+        }
+
+
+    # save hyper parameter in csv
+    hyper_path = FLAGS.path + "/experiment/" + FLAGS.name + "/"+ "hyper.csv"
+    Path((FLAGS.path + "/experiment/" + FLAGS.name)).mkdir(parents=True, exist_ok=True)
+    with open(hyper_path, "w") as f:
+        writer = csv.writer(f)
+        for key,value in flag_info.items():
+            writer.writerow([key, value])
+
+
     ## device information: run on GPU if possible, else CPU
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if (FLAGS.architecture == "PytorchTutorialDQN"):
-        ## architecture objects: contains the pytorch network
         architecture = PytorchTutorialDQN(FLAGS)
+    if (FLAGS.architecture == "ConvNet"):
+        architecture = ConvNet(FLAGS)
+    if (FLAGS.architecture == "FullyConv"):
+        architecture = FullyConv(FLAGS)
     ## agent object
     agent = BaseAgent(architecture, FLAGS, device)
     agent.play()
@@ -100,5 +129,5 @@ if __name__ == '__main__':
     flags.DEFINE_integer("step_multiplier", 0 , "specifiy step multiplier. 16 = ~1s game time")
     flags.DEFINE_string("path",cwd , "specify working directory for saving models and csv logs")
     flags.DEFINE_string("name", "default", "specify name for experiment")
-    flags.DEFINE_integer("imitation_length", 20 , "specifiy length of perfect phase to fill buffer with good memories")
+    flags.DEFINE_integer("imitation_length", 5, "specifiy length of perfect phase to fill buffer with good memories")
     app.run(main)
