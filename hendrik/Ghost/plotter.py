@@ -18,30 +18,33 @@ import matplotlib.pyplot as plt
 from matplotlib import colors as mcolors
 import argparse
 
-## parser object to gather the path
 parser = argparse.ArgumentParser(description="specify patho to csv file")
-parser.add_argument("--path", type=str, help="path to csv file")
+parser.add_argument("--path", type=str, help="path to csv directory")
 
-## parsing objects to args
+
 args = parser.parse_args()
-## extracting path
-path = args.path
+reward_csv_path = args.path + "reward_per_epoch.csv"
+coordinates_csv_path = args.path + "coordinates.csv"
 
-## pandas dataframe
-df = pd.read_csv(path)
 
-## plotting setup
+""" Plot rewards """
+
+df = pd.read_csv(reward_csv_path)
 fig, axes = plt.subplots(nrows=1, ncols=len(df.columns))
-
-## colortable for multiple subplots
 colors = list(dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS).keys())
-
 for idx,column, in enumerate(df):
     df[column].plot(ax=axes[idx], color=colors[idx], title='Reward progression').set_title(column)
-
 fig.text(0.04, 0.5, 'Reward', va='center', rotation='vertical')
 fig.text(0.5, 0.04, 'Epoch', ha='center')
+plt.savefig(reward_csv_path.replace(".csv", "_progression.png"), dpi = 1200)
 
-plt.savefig(path.replace(".csv", "_progression.png"))
 
+""" Plot chosen coordinates heatmap """
 
+df = pd.read_csv(coordinates_csv_path)
+fig, _  = plt.subplots()
+ax = df.plot.hexbin('x', 'y', gridsize=25, cmap="Blues")
+plt.title("Heatmap of chosen (x,y) pairs", pad = 30)
+plt.gca().invert_yaxis()
+ax.xaxis.tick_top()
+plt.savefig(coordinates_csv_path.replace(".csv", "_heatmap.png"), dpi = 1200)

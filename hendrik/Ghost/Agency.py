@@ -147,6 +147,10 @@ class BaseAgent(base_agent.BaseAgent):
         ## imitation phase length
         self._imitation_phase_length = FLAGS.imitation_length
         self._imitation_phase = True
+        ## list of chosen x coordinates
+        self.list_x = []
+        ## list of chosen y coordinates
+        self.list_y = []
 
         print("Network: \n{}".format(self._net))
         print("Optimizer: \n{}".format(self._optimizer))
@@ -232,6 +236,14 @@ class BaseAgent(base_agent.BaseAgent):
             df.to_csv(f, header=True, index=False)
 
 
+    def log_coordinates(self):
+        save_path = self._path + "/experiment/" + self._name + "/csv/coordinates.csv"
+        Path((self._path + "/experiment/" + self._name + "/csv")).mkdir(parents=True, exist_ok=True)
+        d = {"x" : self.list_x,
+             "y":  self.list_y}
+        df = pd.DataFrame(data=d)
+        with open(save_path, "w") as f:
+            df.to_csv(f, header=True, index=False)
 
 
     ## determins if the next action is goint to be random or greedy
@@ -272,6 +284,8 @@ class BaseAgent(base_agent.BaseAgent):
                     self.action_xy = self._xy_pairs[self.action_idx]
             self.x_coord = self.action_xy[0]
             self.y_coord = self.action_xy[1]
+            self.list_x.append(self.x_coord)
+            self.list_y.append(self.y_coord)
         else:
             self.beacon = np.mean(self._xy_locs(
                 self.actual_obs.observation.feature_screen.player_relative == 3),
@@ -511,6 +525,7 @@ class BaseAgent(base_agent.BaseAgent):
                     self._target_net.load_state_dict(self._net.state_dict())
                     self._save_model()
                     self.log_reward()
+                    self.log_coordinates()
             except KeyboardInterrupt:
                 print("KeyboardInterrupt detected, saving model and data!")
                 self._save_model()
