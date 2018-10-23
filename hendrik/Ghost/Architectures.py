@@ -25,6 +25,7 @@ import numpy as np
 #  https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 #  but has slightly modified layer structureclass PytorchTutorialDQN(nn.Module):
   ## Constructor
+class PytorchTutorialDQN(nn.Module):
   def __init__(self, FLAGS):
     super(PytorchTutorialDQN, self).__init__()
     x_space = np.linspace(0, 83, FLAGS.xy_grid, dtype = int)
@@ -164,11 +165,11 @@ class FullyConv(nn.Module):
     ## xy_space pairs of x,y coordinates from which the agent may choose
     self.xy_space = np.transpose([np.tile(x_space, len(y_space)), np.repeat(y_space, len(x_space))])
 
-    self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2, padding=2)
-    self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
+    self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2, padding=0)
+    self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=0)
 
-    self.tmp_w = self._get_filter_dimension(84, 5 , 2 , 2)
-    self.tmp_w = self._get_filter_dimension(self.tmp_w, 3 , 1 , 1)
+    self.tmp_w = self._get_filter_dimension(84, 5 , 0 , 2)
+    self.tmp_w = self._get_filter_dimension(self.tmp_w, 3 , 0 , 2)
 
     self.fc1 = nn.Linear(32* self.tmp_w * self.tmp_w, 512)
 

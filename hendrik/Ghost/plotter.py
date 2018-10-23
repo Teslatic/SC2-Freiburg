@@ -38,13 +38,15 @@ fig.text(0.04, 0.5, 'Reward', va='center', rotation='vertical')
 fig.text(0.5, 0.04, 'Epoch', ha='center')
 plt.savefig(reward_csv_path.replace(".csv", "_progression.png"), dpi = 1200)
 
+try:
+    """ Plot chosen coordinates heatmap """
 
-""" Plot chosen coordinates heatmap """
-
-df = pd.read_csv(coordinates_csv_path)
-fig, _  = plt.subplots()
-ax = df.plot.hexbin('x', 'y', gridsize=25, cmap="Blues")
-plt.title("Heatmap of chosen (x,y) pairs", pad = 30)
-plt.gca().invert_yaxis()
-ax.xaxis.tick_top()
-plt.savefig(coordinates_csv_path.replace(".csv", "_heatmap.png"), dpi = 1200)
+    df = pd.read_csv(coordinates_csv_path)
+    fig, _  = plt.subplots()
+    ax = df.plot.hexbin('x', 'y', gridsize=25, cmap="Blues")
+    plt.title("Heatmap of chosen (x,y) pairs", pad = 30)
+    plt.gca().invert_yaxis()
+    ax.xaxis.tick_top()
+    plt.savefig(coordinates_csv_path.replace(".csv", "_heatmap.png"), dpi = 1200)
+except:
+    pass
