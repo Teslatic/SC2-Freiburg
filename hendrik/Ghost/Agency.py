@@ -595,6 +595,7 @@ class TestAgent(base_agent.BaseAgent):
             players = players,
             agent_interface_format = interface,
             step_mul = self._step_multiplier,
+            realtime = True,
             game_steps_per_episode = 0,
             visualize = self._visualize)
 
