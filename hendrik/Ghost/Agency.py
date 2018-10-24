@@ -377,7 +377,7 @@ class BaseAgent(base_agent.BaseAgent):
                     # self.pseudo_reward = (0.1 * (1 - scaling(distance))).round(3)
                     self.pseudo_reward = -1 * scaling(distance).round(4)
 
-                    if self.next_obs[0].reward==1:
+                    if self.actual_obs.reward==1:
                         self.reward = torch.tensor([10] , device=self._device,
                                        requires_grad=True, dtype=torch.float)
                     else:
@@ -453,6 +453,7 @@ class BaseAgent(base_agent.BaseAgent):
         print("Epsilon: {:.4f}".format(self.epsilon))
         print("Beacon at {}".format(self.beacon))
         print("Marine at {}".format((self.marine_x, self.marine_y)))
+        print("Memory length: {}".format(len(self.memory)))
         try:
             print("Loss: {}".format(self.loss))
         except:

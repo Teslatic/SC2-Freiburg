@@ -72,6 +72,7 @@ def main(argv):
     logging.info("Working directory {}".format(FLAGS.path))
     logging.info("Experiment name {}".format(FLAGS.name))
     logging.info("Imitation length {}".format(FLAGS.imitation_length))
+    logging.info("Step multiplier {}".format(FLAGS.step_multiplier))
     print(100 * "=")
 
     flag_info = {
