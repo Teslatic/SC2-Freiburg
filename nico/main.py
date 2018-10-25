@@ -2,6 +2,9 @@
 
 
 def start_test(test_env_file, net_weights, target_net_weights):
+    """
+    Used to start an intermediate test with only exploiting actions.
+    """
     # print("Starting Test in episode {}".format(ep))
     test_agent = BaseAgent(agent_file)
     test_agent_interface = test_agent.setup_interface()
@@ -45,7 +48,7 @@ def main(unused_argv):
 
         # Set all variables at the start of a new timestep
         agent.initializing_timestep(actual_obs, env._last_score[0])
-
+        # print(agent.timesteps)
         # Selecting action
         action = [actions.FUNCTIONS.select_army("select")]
 

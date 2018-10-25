@@ -61,6 +61,7 @@ class BaseAgent(base_agent.BaseAgent):
         self.size_replaybuffer = agent_file['REPLAY_SIZE']
         self.device = agent_file['DEVICE']
         self.silentmode = agent_file['SILENTMODE']
+        self.supervised_episodes = agent_file['SUPERVISED_EPISODES']
 
         epsilon_file = agent_file['EPSILON_FILE']
         self.epsilon = epsilon_file['EPSILON']
@@ -118,18 +119,6 @@ class BaseAgent(base_agent.BaseAgent):
         self.history_tensor = self.state
         self.state_history_tensor = self.state.unsqueeze(1)
 
-    def step(self, obs, agent_mode):
-        """
-        Choosing an action
-        """
-        # For the first n episodes learn on forced actions.
-        if self.episodes < 20:
-            self.action, self.action_idx = self.force_action()
-        else:
-            # Choose an action according to the policy
-            self.action, self.action_idx = self.choose_action(agent_mode)
-        return self.action
-
     def calculate_center(self):
         """
         Calculates the euclidean distance between beacon and marine.
@@ -140,6 +129,18 @@ class BaseAgent(base_agent.BaseAgent):
             self.player_center = self.beacon_center
         self.distance = math.hypot(self.beacon_center[0] - self.player_center[0], self.beacon_center[1] - self.player_center[1])
         self.reward_shaped = - self.distance
+
+    def step(self, obs, agent_mode):
+        """
+        Choosing an action
+        """
+        # For the first n episodes learn on forced actions.
+        if self.episodes < self.supervised_episodes:
+            self.action, self.action_idx = self.force_action()
+        else:
+            # Choose an action according to the policy
+            self.action, self.action_idx = self.choose_action(agent_mode)
+        return self.action
 
     def force_action(self):
         """
@@ -330,9 +331,6 @@ class BaseAgent(base_agent.BaseAgent):
         step_type = torch.tensor([obs.step_type], device=self.device, dtype=torch.int)
         next_state = torch.tensor([obs.observation.feature_screen.player_relative], dtype=torch.float, device=self.device)
 
-        # if self.reward == 1:
-        #     print(next_state)
-
         # push next state on next state history stack
         next_state_history_tensor = next_state
 
@@ -409,9 +407,12 @@ class BaseAgent(base_agent.BaseAgent):
         """
         # forward pass
         state_q_values = self.net(self.state_batch)
+
+        # Debugging
         _, _, _, _, _, max_action = self.q_value_analysis(state_q_values)
-        print(max_action)
-        print(self.action_batch)
+        print(self.timesteps, max_action)
+        # print(self.action_batch.detach().numpy())
+
         # gather action values with respect to the chosen action
         self.state_q_values = state_q_values.gather(1, self.action_batch)
         # compute action values of the next state over all actions and take the max
@@ -457,8 +458,8 @@ class BaseAgent(base_agent.BaseAgent):
         # print("Q_VALUES: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(td_max, td_min, td_span, td_mean, td_var, td_argmax))
         # compute MSE loss
         self.loss = F.mse_loss(self.state_q_values, self.td_target.unsqueeze(1))
-        print(self.loss)
-        print("----------------------------------------------------------------------------")
+        # print(self.loss)
+        # print("----------------------------------------------------------------------------")
 
     def optimize_model(self):
         """
