@@ -86,7 +86,8 @@ def main(argv):
         "xy_factor" : FLAGS.xy_grid**2,
         "epsilon_decay" : FLAGS.epsilon,
         "map" : FLAGS.map_name,
-        "imitation_length" : FLAGS.imitation_length
+        "imitation_length" : FLAGS.imitation_length,
+        "step_multiplier" : FLAGS.step_multiplier
         }
 
 
@@ -117,7 +118,7 @@ if __name__ == '__main__':
     FLAGS = flags.FLAGS
     cwd = os.getcwd()
     flags.DEFINE_float("learning_rate", 0.0001, "Learning rate" )
-    flags.DEFINE_float("gamma", 0.9 , "Gamma")
+    flags.DEFINE_float("gamma", 0.99 , "Gamma")
     flags.DEFINE_integer("batch_size", 32 , "Batch Size")
     flags.DEFINE_integer("target_update", 5 , "Update Target Network every N episodes")
     flags.DEFINE_integer("epochs", 10000 , "Amount of episodes")
@@ -127,7 +128,7 @@ if __name__ == '__main__':
     flags.DEFINE_integer("xy_grid", 5 , "shrink possible xy coordinates to N x N possible pairs")
     flags.DEFINE_integer("epsilon", 20000 , "epsilon epsilon decay")
     flags.DEFINE_string("map_name", "MoveToBeacon" , "Name of the map")
-    flags.DEFINE_integer("step_multiplier", 0 , "specifiy step multiplier. 16 = ~1s game time")
+    flags.DEFINE_integer("step_multiplier", 1 , "specifiy step multiplier. 16 = ~1s game time")
     flags.DEFINE_string("path",cwd , "specify working directory for saving models and csv logs")
     flags.DEFINE_string("name", "default", "specify name for experiment")
     flags.DEFINE_integer("imitation_length", 5, "specifiy length of perfect phase to fill buffer with good memories")

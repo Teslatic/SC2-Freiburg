@@ -30,7 +30,7 @@ coordinates_csv_path = args.path + "coordinates.csv"
 """ Plot rewards """
 
 df = pd.read_csv(reward_csv_path)
-fig, axes = plt.subplots(nrows=1, ncols=len(df.columns))
+fig, axes = plt.subplots(ncols=1, nrows=len(df.columns))
 colors = list(dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS).keys())
 for idx,column, in enumerate(df):
     df[column].plot(ax=axes[idx], color=colors[idx], title='Reward progression').set_title(column)

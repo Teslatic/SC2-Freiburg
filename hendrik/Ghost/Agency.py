@@ -130,6 +130,8 @@ class BaseAgent(base_agent.BaseAgent):
         self.r_per_epoch = []
         ## list to keep track of the cumulative score
         self.list_score_cumulative = []
+        ## list to keep track of the pseudo reward per epoch
+        self.list_pseudo_reward_per_epoch = []
         ## actions available to the agent, chosen by design
         self._SMART_ACTIONS = [
             actions.FUNCTIONS.select_army.id,
@@ -185,6 +187,7 @@ class BaseAgent(base_agent.BaseAgent):
             players = players,
             agent_interface_format = interface,
             step_mul = self._step_multiplier,
+            realtime = False,
             game_steps_per_episode = 0,
             visualize = self._visualize)
 
@@ -229,7 +232,8 @@ class BaseAgent(base_agent.BaseAgent):
         Path((self._path + "/experiment/" + self._name + "/csv")).mkdir(parents=True, exist_ok=True)
 
         d = {"reward per epoch" : self.r_per_epoch,
-             "cumulative reward": self.list_score_cumulative}
+             "cumulative reward": self.list_score_cumulative,
+             "pseudo reward per epoch" : self.list_pseudo_reward_per_epoch }
         df = pd.DataFrame(data=d)
         with open(r_per_epoch_save_path, "w") as f:
             df.to_csv(f, header=True, index=False)
@@ -380,6 +384,7 @@ class BaseAgent(base_agent.BaseAgent):
                     if self.actual_obs.reward==1:
                         self.reward = torch.tensor([10] , device=self._device,
                                        requires_grad=True, dtype=torch.float)
+                        self.pseudo_reward = 10
                     else:
                         self.reward = torch.tensor([self.pseudo_reward] , device=self._device,
                                                    requires_grad=True, dtype=torch.float)
@@ -390,7 +395,9 @@ class BaseAgent(base_agent.BaseAgent):
                 self.marine_y = -1
                 self.reward = torch.tensor([0] , device=self._device,
                                        requires_grad=True, dtype=torch.float)
-
+                self.pseudo_reward = 0
+ 
+            self.pseudo_reward_per_epoch += self.pseudo_reward
             self.total_reward += self.actual_obs.reward
 
 
@@ -470,6 +477,7 @@ class BaseAgent(base_agent.BaseAgent):
     ## @param reward: tensor, containting the current reward
     def play(self):
         for self.e in range(1, self._epochs):
+            self.pseudo_reward_per_epoch = 0
             try:
                 # get first observation
                 observation = self._env.reset()
@@ -508,7 +516,7 @@ class BaseAgent(base_agent.BaseAgent):
                         self.loss = self.optimize()
 
                     # print status message
-                    self.print_status()
+                    # self.print_status()
 
                     # if in terminal state, break
                     if self.next_obs[0].last()==True:
@@ -518,7 +526,8 @@ class BaseAgent(base_agent.BaseAgent):
                 # if self._imitation_phase==False:
                 self.r_per_epoch.append(self.actual_obs.observation["score_cumulative"][0])
                 self.list_score_cumulative.append(self.total_reward)
-
+                self.list_pseudo_reward_per_epoch.append(self.pseudo_reward_per_epoch)
+                self.print_status()
                 # update target network weights every _target_update epochs
                 # also save the model state dictionary
                 if self.e % self._target_update == 0:
@@ -531,6 +540,13 @@ class BaseAgent(base_agent.BaseAgent):
                 self._save_model()
                 self.log_reward()
                 break
+
+
+
+################################################################################
+# TEST AGENT! 
+#
+################################################################################
 
 class TestAgent(base_agent.BaseAgent):
     ## Constructor
