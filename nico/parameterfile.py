@@ -10,16 +10,16 @@ MINIMAP_DIM = 64
 GAMMA = 0.99
 OPTIM_LR = 0.0001
 BATCH_SIZE = 32
-TARGET_UPDATE_PERIOD = 2
+TARGET_UPDATE_PERIOD = 5
 HIST_LENGTH = 1
-REPLAY_SIZE = 100000
-SUPERVISED_EPISODES = 10
+REPLAY_SIZE = 1000000
+SUPERVISED_EPISODES = 100
 DEVICE = 'cpu' # will be overwritten by main
 # DEVICE = "cuda:0"
 
 MAP = 'MoveToBeacon'
 PLAYERS = [sc2_env.Agent(sc2_env.Race.terran)]
-STEP_MULTIPLIER = 16  # 16 = 1s game time, None = map default
+STEP_MULTIPLIER = 1  # 16 = 1s game time, None = map default
 EPISODES = 0  # 0 = unlimited game time, None = map default
 EPISODES_TEST = 5  # 0 = unlimited game time, None = map default
 VISUALIZE = True
