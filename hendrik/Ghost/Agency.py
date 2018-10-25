@@ -431,9 +431,10 @@ class BaseAgent(base_agent.BaseAgent):
         q_action = self._net(state_batch).gather(1, action_batch)
 
         q_action_next = torch.zeros(self._batch_size, device=self._device)
-        non_final_next_action_q  = self._target_net(non_final_next_states)
+        q_action_next[non_final_mask] = self._target_net(non_final_next_states).max(1)[0].detach()
 
-        q_action_next[non_final_mask] = non_final_next_action_q.max(1)[0].detach()
+        # non_final_next_action_q  = non_final_next_action_q.max(1)[0].detach()
+
 
         td_target_actions = (q_action_next * self._gamma) + reward_batch
 
@@ -442,12 +443,6 @@ class BaseAgent(base_agent.BaseAgent):
         self._optimizer.zero_grad()
         loss.backward()
         self._optimizer.step()
-        # print(loss.grad_fn)  # MSELoss
-        # print(loss.grad_fn.next_functions[0][0])  # Linear
-        # print(loss.grad_fn.next_functions[0][0].next_functions[0][0])  # ReLU
-        # print(loss.grad_fn.next_functions[0][0].next_functions[0][0].next_functions[0][0])  # ReLU
-        # print(loss.grad_fn.next_functions[0][0].next_functions[0][0].next_functions[0][0].next_functions[0][0])  # ReLU
-        # print(loss.grad_fn.next_functions[0][0].next_functions[0][0].next_functions[0][0].next_functions[0][0].next_functions[0][0])  # ReLU
 
         return loss
 
@@ -540,6 +535,9 @@ class BaseAgent(base_agent.BaseAgent):
                 self._save_model()
                 self.log_reward()
                 break
+
+    # def pendulum_poc(self):
+
 
 
 
