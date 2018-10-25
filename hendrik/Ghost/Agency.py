@@ -231,8 +231,8 @@ class BaseAgent(base_agent.BaseAgent):
         r_per_epoch_save_path = self._path  + "/experiment/" + self._name + "/csv/reward_per_epoch.csv"
         Path((self._path + "/experiment/" + self._name + "/csv")).mkdir(parents=True, exist_ok=True)
 
-        d = {"reward per epoch" : self.r_per_epoch,
-             "cumulative reward": self.list_score_cumulative,
+        d = {"sparse reward per epoch" : self.r_per_epoch,
+             "sparse cumulative reward": self.list_score_cumulative,
              "pseudo reward per epoch" : self.list_pseudo_reward_per_epoch }
         df = pd.DataFrame(data=d)
         with open(r_per_epoch_save_path, "w") as f:

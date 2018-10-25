@@ -34,6 +34,7 @@ fig, axes = plt.subplots(ncols=1, nrows=len(df.columns))
 colors = list(dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS).keys())
 for idx,column, in enumerate(df):
     df[column].plot(ax=axes[idx], color=colors[idx], title='Reward progression').set_title(column)
+    plt.subplots_adjust(hspace = 0.5)
 fig.text(0.04, 0.5, 'Reward', va='center', rotation='vertical')
 fig.text(0.5, 0.04, 'Epoch', ha='center')
 plt.savefig(reward_csv_path.replace(".csv", "_progression.png"), dpi = 1200)
