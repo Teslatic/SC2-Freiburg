@@ -410,7 +410,10 @@ class BaseAgent(base_agent.BaseAgent):
 
         # Debugging
         _, _, _, _, _, max_action = self.q_value_analysis(state_q_values)
-        print(self.timesteps, max_action)
+
+
+        # print(self.timesteps, max_action)
+
         # print(self.action_batch.detach().numpy())
 
         # gather action values with respect to the chosen action
@@ -453,9 +456,10 @@ class BaseAgent(base_agent.BaseAgent):
         """
         q_max, q_min, q_mean, q_var, q_span, q_argmax = self.q_value_analysis(self.state_q_values)
         td_max, td_min, td_mean, td_var, td_span, td_argmax = self.q_value_analysis(self.td_target.unsqueeze(1))
-
-        # print("Q_VALUES: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(q_max, q_min, q_span, q_mean, q_var, q_argmax))
-        # print("Q_VALUES: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(td_max, td_min, td_span, td_mean, td_var, td_argmax))
+        print("Q_VALUES: {}".format(self.state_q_values))
+        print("TD_TARGET: {}".format(self.td_target.unsqueeze(1)))
+        print("Q_VALUES: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(q_max, q_min, q_span, q_mean, q_var, q_argmax))
+        print("TD_TARGET: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(td_max, td_min, td_span, td_mean, td_var, td_argmax))
         # compute MSE loss
         self.loss = F.mse_loss(self.state_q_values, self.td_target.unsqueeze(1))
         # print(self.loss)
