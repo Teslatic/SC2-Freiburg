@@ -381,7 +381,8 @@ class BaseAgent(base_agent.BaseAgent):
                     # self.pseudo_reward = (0.1 * (1 - scaling(distance))).round(3)
                     self.pseudo_reward = -1 * scaling(distance).round(4)
 
-                    if self.actual_obs.reward==1:
+                    #if self.actual_obs.reward==1:
+                    if self.next_obs[0].reward == 1:		
                         self.reward = torch.tensor([10] , device=self._device,
                                        requires_grad=True, dtype=torch.float)
                         self.pseudo_reward = 10
@@ -511,7 +512,7 @@ class BaseAgent(base_agent.BaseAgent):
                         self.loss = self.optimize()
 
                     # print status message
-                    # self.print_status()
+                    self.print_status()
 
                     # if in terminal state, break
                     if self.next_obs[0].last()==True:
@@ -522,7 +523,7 @@ class BaseAgent(base_agent.BaseAgent):
                 self.r_per_epoch.append(self.actual_obs.observation["score_cumulative"][0])
                 self.list_score_cumulative.append(self.total_reward)
                 self.list_pseudo_reward_per_epoch.append(self.pseudo_reward_per_epoch)
-                self.print_status()
+                # self.print_status()
                 # update target network weights every _target_update epochs
                 # also save the model state dictionary
                 if self.e % self._target_update == 0:
