@@ -57,7 +57,6 @@ def main(unused_argv):
             env.reset()
         if not actual_obs.first() and not actual_obs.last():
             action = agent.step('learn')
-            print(agent.action_idx, SASN[agent.action_idx], agent.action)
 
         # Peforming action
         next_obs = env.step(action)
@@ -90,7 +89,6 @@ if __name__ == "__main__":
 
             # custom imports
         from assets.agents.BaseAgent import BaseAgent
-        from assets.smart_actions import SMART_ACTIONS_SIMPLE_NAVIGATION as SASN
         from assets.helperFunctions.timestamps import print_timestamp as print_ts
         from assets.helperFunctions.initializingHelpers import setup_torch
         from assets.helperFunctions.FileManager import *

@@ -8,7 +8,7 @@ BASE_AGENT = 'base_agent'
 SCREEN_DIM = 84
 MINIMAP_DIM = 64
 GAMMA = 0.99
-OPTIM_LR = 0.0001
+OPTIM_LR = 0.001
 BATCH_SIZE = 32
 TARGET_UPDATE_PERIOD = 5
 HIST_LENGTH = 1
@@ -23,7 +23,7 @@ STEP_MULTIPLIER = 2  # 16 = 1s game time, None = map default
 EPISODES = 0  # 0 = unlimited game time, None = map default
 EPISODES_TEST = 5  # 0 = unlimited game time, None = map default
 VISUALIZE = True
-SILENTMODE = True # True: Just a minimum of console output
+SILENTMODE = False # True: Just a minimum of console output
 
 epsilon_file = {
                 'EPSILON': 0.20,

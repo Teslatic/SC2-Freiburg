@@ -50,7 +50,7 @@ class BaseAgent(base_agent.BaseAgent):
         self.screen_dim = agent_file['SCREEN_DIM']
         self.minimap_dim = agent_file['MINIMAP_DIM']
         self.x_map_dim = 84  # magic number
-        self.y_map_dim = 84  # magic number
+        self.y_map_dim = 64  # magic number
         self.action_dim = len(SMART_ACTIONS)
         self.map_dimensions = (self.x_map_dim, self.y_map_dim)
         self.gamma = agent_file['GAMMA']
@@ -362,9 +362,10 @@ class BaseAgent(base_agent.BaseAgent):
             # print("environment reward: {:.2f}, step penalty: {:.2f}, reward total: {:.2f}".format(obs.reward, self.reward_shaped, self.reward_combined))
             # print("Q_VALUES: {}".format(self.state_q_values))
             # print("TD_TARGET: {}".format(self.td_target.unsqueeze(1)))
+            print_ts("action: {}, idx: {}, Smart action: {}".format(self.action, self.action_idx, SMART_ACTIONS[self.action_idx]))
             print_ts("Q_VALUES: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(q_max, q_min, q_span, q_mean, q_var, q_argmax))
             print_ts("TD_TARGET: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(td_max, td_min, td_span, td_mean, td_var, td_argmax))
-
+            print_ts("MEMORY SIZE: {}".format(len(self.memory)))
             print_ts("Epsilon: {:.2f}\t| choice: {}".format(self.epsilon, self.choice))
             print_ts("Episode {}\t| Step {}\t| Total Steps: {}".format(self.episodes, self.timesteps, self.steps))
             print_ts("Chosen action: {}".format(self.action))
@@ -377,8 +378,7 @@ class BaseAgent(base_agent.BaseAgent):
             print_ts("Action Loss: {:.5f}".format(self.loss))
             print_ts("----------------------------------------------------------------")
         else:
-            pass
-            # print(self.feature_screen)
+            print(self.feature_screen)
 
     # ##########################################################################
     # Optimizing the network
