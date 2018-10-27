@@ -29,8 +29,7 @@ import torch
 from Architectures import PytorchTutorialDQN, ConvNet, FullyConv
 
 # import Agent
-from Agency import BaseAgent, TestAgent
-
+from TestAgency import TestAgent
 
 
 def main(argv):
