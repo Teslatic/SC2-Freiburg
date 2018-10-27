@@ -413,7 +413,7 @@ class BaseAgent(base_agent.BaseAgent):
         state_q_values = self.net(self.state_batch)
 
         # Debugging
-        _, _, _, _, _, max_action = self.q_value_analysis(state_q_values)
+        _, _, _, _, _, max_action = self.q_value_analysis_on_batch(state_q_values)
 
 
         # print(self.timesteps, max_action)
@@ -443,7 +443,7 @@ class BaseAgent(base_agent.BaseAgent):
         # td_target[np.where(self.step_type_batch == 2)] = self.reward_batch[np.where(self.step_type_batch == 2)]
         return td_target
 
-    def q_value_analysis(self, q_value_tensor):
+    def q_value_analysis_on_batch(self, q_value_tensor):
         """
         """
         q_max = q_value_tensor.detach().numpy().max(axis=1).mean()
@@ -451,6 +451,17 @@ class BaseAgent(base_agent.BaseAgent):
         q_mean = q_value_tensor.detach().numpy().mean(axis=1).mean()
         q_var = q_value_tensor.detach().numpy().var(axis=1).mean()
         q_argmax = q_value_tensor.detach().numpy().argmax(axis=1)
+        q_span = q_max - q_min
+        return q_max, q_min, q_mean, q_var, q_span, q_argmax
+
+    def q_value_analysis(self, q_value_tensor):
+        """
+        """
+        q_max = q_value_tensor.detach().numpy().max()
+        q_min = q_value_tensor.detach().numpy().min()
+        q_mean = q_value_tensor.detach().numpy().mean()
+        q_var = q_value_tensor.detach().numpy().var()
+        q_argmax = q_value_tensor.detach().numpy().argmax()
         q_span = q_max - q_min
         return q_max, q_min, q_mean, q_var, q_span, q_argmax
 
