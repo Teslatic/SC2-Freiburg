@@ -22,8 +22,8 @@ PLAYERS = [sc2_env.Agent(sc2_env.Race.terran)]
 STEP_MULTIPLIER = 2  # 16 = 1s game time, None = map default
 EPISODES = 0  # 0 = unlimited game time, None = map default
 EPISODES_TEST = 5  # 0 = unlimited game time, None = map default
-VISUALIZE = False
-SILENTMODE = False # True: Just a minimum of console output
+VISUALIZE = True
+SILENTMODE = True # True: Just a minimum of console output
 
 epsilon_file = {
                 'EPSILON': 0.20,

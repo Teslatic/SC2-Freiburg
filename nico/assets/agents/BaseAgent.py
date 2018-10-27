@@ -50,7 +50,7 @@ class BaseAgent(base_agent.BaseAgent):
         self.screen_dim = agent_file['SCREEN_DIM']
         self.minimap_dim = agent_file['MINIMAP_DIM']
         self.x_map_dim = 84  # magic number
-        self.y_map_dim = 64  # magic number
+        self.y_map_dim = 84  # magic number
         self.action_dim = len(SMART_ACTIONS)
         self.map_dimensions = (self.x_map_dim, self.y_map_dim)
         self.gamma = agent_file['GAMMA']
@@ -377,7 +377,8 @@ class BaseAgent(base_agent.BaseAgent):
             print_ts("Action Loss: {:.5f}".format(self.loss))
             print_ts("----------------------------------------------------------------")
         else:
-            print(self.feature_screen)
+            pass
+            # print(self.feature_screen)
 
     # ##########################################################################
     # Optimizing the network
