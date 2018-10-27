@@ -356,25 +356,28 @@ class BaseAgent(base_agent.BaseAgent):
         """
         function helper for status printing
         """
-        q_max, q_min, q_mean, q_var, q_span, q_argmax = self.q_value_analysis(self.state_q_values)
-        td_max, td_min, td_mean, td_var, td_span, td_argmax = self.q_value_analysis(self.td_target.unsqueeze(1))
-        # print("environment reward: {:.2f}, step penalty: {:.2f}, reward total: {:.2f}".format(obs.reward, self.reward_shaped, self.reward_combined))
-        # print("Q_VALUES: {}".format(self.state_q_values))
-        # print("TD_TARGET: {}".format(self.td_target.unsqueeze(1)))
-        print_ts("Q_VALUES: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(q_max, q_min, q_span, q_mean, q_var, q_argmax))
-        print_ts("TD_TARGET: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(td_max, td_min, td_span, td_mean, td_var, td_argmax))
+        if self.episodes < self.supervised_episodes:
+            q_max, q_min, q_mean, q_var, q_span, q_argmax = self.q_value_analysis(self.state_q_values)
+            td_max, td_min, td_mean, td_var, td_span, td_argmax = self.q_value_analysis(self.td_target.unsqueeze(1))
+            # print("environment reward: {:.2f}, step penalty: {:.2f}, reward total: {:.2f}".format(obs.reward, self.reward_shaped, self.reward_combined))
+            # print("Q_VALUES: {}".format(self.state_q_values))
+            # print("TD_TARGET: {}".format(self.td_target.unsqueeze(1)))
+            print_ts("Q_VALUES: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(q_max, q_min, q_span, q_mean, q_var, q_argmax))
+            print_ts("TD_TARGET: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(td_max, td_min, td_span, td_mean, td_var, td_argmax))
 
-        print_ts("Epsilon: {:.2f}\t| choice: {}".format(self.epsilon, self.choice))
-        print_ts("Episode {}\t| Step {}\t| Total Steps: {}".format(self.episodes, self.timesteps, self.steps))
-        print_ts("Chosen action: {}".format(self.action))
-        # print_ts("chosen coordinates [x,y]: {}".format((self.x_coord.item(), self.y_coord.item())))
-        print_ts("Beacon center location [x,y]: {}".format(self.beacon_center))
-        print_ts("Marine center location [x,y]: {}".format(self.marine_center))
-        print_ts("Distance: {}, delta distance: {}".format(self.distance, self.reward_shaped))
-        print_ts("Current Episode Score: {}\t| Total Score: {}".format(self.last_score, self.reward))
-        print_ts("Environment reward in timestep: {}".format(self.env_reward))
-        print_ts("Action Loss: {:.5f}".format(self.loss))
-        print_ts("----------------------------------------------------------------")
+            print_ts("Epsilon: {:.2f}\t| choice: {}".format(self.epsilon, self.choice))
+            print_ts("Episode {}\t| Step {}\t| Total Steps: {}".format(self.episodes, self.timesteps, self.steps))
+            print_ts("Chosen action: {}".format(self.action))
+            # print_ts("chosen coordinates [x,y]: {}".format((self.x_coord.item(), self.y_coord.item())))
+            print_ts("Beacon center location [x,y]: {}".format(self.beacon_center))
+            print_ts("Marine center location [x,y]: {}".format(self.marine_center))
+            print_ts("Distance: {}, delta distance: {}".format(self.distance, self.reward_shaped))
+            print_ts("Current Episode Score: {}\t| Total Score: {}".format(self.last_score, self.reward))
+            print_ts("Environment reward in timestep: {}".format(self.env_reward))
+            print_ts("Action Loss: {:.5f}".format(self.loss))
+            print_ts("----------------------------------------------------------------")
+        else:
+            print(self.feature_screen)
 
     # ##########################################################################
     # Optimizing the network
