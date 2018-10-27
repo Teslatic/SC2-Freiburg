@@ -96,24 +96,26 @@ class BaseAgent(base_agent.BaseAgent):
     # Action Selection
     # ##########################################################################
 
-    def initializing_timestep(self, obs, last_score):
+    def prepare_timestep(self, obs, last_score):
         """
-        Initializing variables and flags
+        Initializing variables and flags.
+        The obs container will be written to member variables.
+        This shall keep the memory cleaner during the actual step.
         """
+        self.timesteps += 1
+        self.steps += 1  # From PYSC2 base class
+
         self.reward += obs.reward  # total_reward (PYSC2 convention)
         self.actual_reward = obs.reward
         self.step_type = obs.step_type  # Important to check for last step
         self.available_actions = obs.observation.available_actions
 
-        self.timesteps += 1
-        self.steps += 1  # From PYSC2 base class
-
-        self.last_score = last_score
-
         # Calculate additional information for reward shaping
         self.feature_screen = obs.observation.feature_screen.player_relative
         self.feature_screen2 = obs.observation.feature_screen.selected
         self.calculate_center()
+
+        self.last_score = last_score
 
         self.state = torch.tensor([self.feature_screen], dtype=torch.float, device=self.device)
         self.history_tensor = self.state
@@ -124,31 +126,33 @@ class BaseAgent(base_agent.BaseAgent):
         Calculates the euclidean distance between beacon and marine.
         """
         self.beacon_center = np.mean(self._xy_locs(self.feature_screen == 3), axis=0).round()
-        self.player_center = np.mean(self._xy_locs(self.feature_screen2 == 1), axis=0).round()
-        if isinstance(self.player_center, float):
-            self.player_center = self.beacon_center
-        self.distance = math.hypot(self.beacon_center[0] - self.player_center[0], self.beacon_center[1] - self.player_center[1])
-        self.reward_shaped = - self.distance
+        # Using feature_screen.selected since marine vanishes behind beacon when using feature_screen.player_relative
+        self.marine_center = np.mean(self._xy_locs(self.feature_screen2 == 1), axis=0).round()
 
-    def step(self, obs, agent_mode):
+        if isinstance(self.marine_center, float):
+            self.marine_center = self.beacon_center
+        self.distance = math.hypot(self.beacon_center[0] - self.marine_center[0], self.beacon_center[1] - self.marine_center[1])
+        self.reward_shaped = self.distance
+
+    def step(self, agent_mode):
         """
         Choosing an action
         """
         # For the first n episodes learn on forced actions.
         if self.episodes < self.supervised_episodes:
-            self.action, self.action_idx = self.force_action()
+            self.action, self.action_idx = self.supervised_action()
         else:
             # Choose an action according to the policy
             self.action, self.action_idx = self.choose_action(agent_mode)
         return self.action
 
-    def force_action(self):
+    def supervised_action(self):
         """
         This method selects an action which will force the marine in the
         direction of the beacon.
         Further improvements are possible.
         """
-        relative_vector = self.player_center - self.beacon_center
+        relative_vector = self.marine_center - self.beacon_center
         action_choice = np.random.choice([True, False], p=[0.5, 0.5])
 
         right_to_beacon = relative_vector[0] > 0.
@@ -271,17 +275,17 @@ class BaseAgent(base_agent.BaseAgent):
         """
         if self.can_do(actions.FUNCTIONS.Move_screen.id):
             if action is 'left':
-                if not (self.player_center[0] == 0):
-                    return actions.FUNCTIONS.Move_screen("now", self.player_center + (-2, 0))
+                if not (self.marine_center[0] == 0):
+                    return actions.FUNCTIONS.Move_screen("now", self.marine_center + (-2, 0))
             if action is 'up':
-                if not (self.player_center[1] == 0):
-                    return actions.FUNCTIONS.Move_screen("now", self.player_center + (0, -2))
+                if not (self.marine_center[1] == 0):
+                    return actions.FUNCTIONS.Move_screen("now", self.marine_center + (0, -2))
             if action is 'right':
-                if not (self.player_center[0] == 83):
-                    return actions.FUNCTIONS.Move_screen("now", self.player_center + (2, 0))
+                if not (self.marine_center[0] == 83):
+                    return actions.FUNCTIONS.Move_screen("now", self.marine_center + (2, 0))
             if action is 'down':
-                if not (self.player_center[1] == 63):
-                    return actions.FUNCTIONS.Move_screen("now", self.player_center + (0, 2))
+                if not (self.marine_center[1] == 63):
+                    return actions.FUNCTIONS.Move_screen("now", self.marine_center + (0, 2))
         else:
             return actions.FUNCTIONS.no_op()
 
@@ -319,10 +323,10 @@ class BaseAgent(base_agent.BaseAgent):
         self.feature_screen_next = obs.observation.feature_screen.player_relative
         self.feature_screen_next2 = obs.observation.feature_screen.selected
         self.beacon_center_next = np.mean(self._xy_locs(self.feature_screen_next == 3), axis=0).round()
-        self.player_center_next = np.mean(self._xy_locs(self.feature_screen_next2 == 1), axis=0).round()
-        if isinstance(self.player_center_next, float):
-            self.player_center_next = self.beacon_center_next
-        self.distance2 = math.hypot(self.beacon_center_next[0] - self.player_center_next[0], self.beacon_center_next[1] - self.player_center_next[1])
+        self.marine_center_next = np.mean(self._xy_locs(self.feature_screen_next2 == 1), axis=0).round()
+        if isinstance(self.marine_center_next, float):
+            self.marine_center_next = self.beacon_center_next
+        self.distance2 = math.hypot(self.beacon_center_next[0] - self.marine_center_next[0], self.beacon_center_next[1] - self.marine_center_next[1])
         self.reward_shaped = self.distance - self.distance2
         self.reward_combined = obs.reward + self.reward_shaped
         # collect transition data

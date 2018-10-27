@@ -44,23 +44,19 @@ def main(unused_argv):
     actual_obs = observation[0]
 
     while True:  # Starting a timestep
-        # last_score for debug reference
-
         # Set all variables at the start of a new timestep
-        agent.initializing_timestep(actual_obs, env._last_score[0])
-        # print(agent.timesteps)
+        agent.prepare_timestep(actual_obs, env._last_score[0])
+
         # Selecting action
         action = [actions.FUNCTIONS.select_army("select")]
-
         if actual_obs.first():  # Select Army in first step
             action = [actions.FUNCTIONS.select_army("select")]
         if actual_obs.last():  # End episode in last step
             print("Last step: epsilon is at {}, Total score is at {}".format(agent.epsilon, agent.reward))
             agent.update_target_network()
             env.reset()
-            # action = [actions.FUNCTIONS.no_op.id]
         if not actual_obs.first() and not actual_obs.last():  # make one step
-            action = agent.step(actual_obs, 'learn')
+            action = agent.step('learn')
 
         # Peforming action
         next_obs = env.step(action)
