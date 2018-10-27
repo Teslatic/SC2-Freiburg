@@ -106,14 +106,13 @@ class BaseAgent(base_agent.BaseAgent):
         self.steps += 1  # From PYSC2 base class
 
         self.reward += obs.reward  # total_reward (PYSC2 convention)
-        self.actual_reward = obs.reward
         self.step_type = obs.step_type  # Important to check for last step
         self.available_actions = obs.observation.available_actions
 
         # Calculate additional information for reward shaping
         self.feature_screen = obs.observation.feature_screen.player_relative
         self.feature_screen2 = obs.observation.feature_screen.selected
-        self.calculate_center()
+        self.beacon_center, self.marine_center, self.distance = self.calculate_distance(self.feature_screen, self.feature_screen2)
 
         self.last_score = last_score
 
@@ -121,18 +120,20 @@ class BaseAgent(base_agent.BaseAgent):
         self.history_tensor = self.state
         self.state_history_tensor = self.state.unsqueeze(1)
 
-    def calculate_center(self):
+    def calculate_distance(self, screen_player_relative, screen_selected):
         """
         Calculates the euclidean distance between beacon and marine.
+        Using feature_screen.selected since marine vanishes behind beacon when
+        using feature_screen.player_relative
         """
-        self.beacon_center = np.mean(self._xy_locs(self.feature_screen == 3), axis=0).round()
-        # Using feature_screen.selected since marine vanishes behind beacon when using feature_screen.player_relative
-        self.marine_center = np.mean(self._xy_locs(self.feature_screen2 == 1), axis=0).round()
+        marine_center = np.mean(self._xy_locs(screen_selected == 1), axis=0).round()
+        beacon_center = np.mean(self._xy_locs(screen_player_relative == 3), axis=0).round()
+        if isinstance(marine_center, float):
+            marine_center = beacon_center
+        distance = math.hypot(beacon_center[0] - marine_center[0],
+                              beacon_center[1] - marine_center[1])
 
-        if isinstance(self.marine_center, float):
-            self.marine_center = self.beacon_center
-        self.distance = math.hypot(self.beacon_center[0] - self.marine_center[0], self.beacon_center[1] - self.marine_center[1])
-        self.reward_shaped = self.distance
+        return beacon_center, marine_center, distance
 
     def step(self, agent_mode):
         """
@@ -320,28 +321,32 @@ class BaseAgent(base_agent.BaseAgent):
         Save the actual information in the history.
         As soon as there has been enough data, the experience is sampled from the replay buffer.
         """
+        self.env_reward = obs.reward
         self.feature_screen_next = obs.observation.feature_screen.player_relative
         self.feature_screen_next2 = obs.observation.feature_screen.selected
-        self.beacon_center_next = np.mean(self._xy_locs(self.feature_screen_next == 3), axis=0).round()
-        self.marine_center_next = np.mean(self._xy_locs(self.feature_screen_next2 == 1), axis=0).round()
-        if isinstance(self.marine_center_next, float):
-            self.marine_center_next = self.beacon_center_next
-        self.distance2 = math.hypot(self.beacon_center_next[0] - self.marine_center_next[0], self.beacon_center_next[1] - self.marine_center_next[1])
-        self.reward_shaped = self.distance - self.distance2
-        self.reward_combined = obs.reward + self.reward_shaped
+        self.reward_shaping()
+
         # collect transition data
-        # print("environment reward: {:.2f}, step penalty: {:.2f}, reward total: {:.2f}".format(obs.reward, self.reward_shaped, self.reward_combined))
-        reward = torch.tensor([self.reward_combined], device=self.device, dtype=torch.float)
+        reward = torch.tensor([self.reward_shaped], device=self.device, dtype=torch.float)
         step_type = torch.tensor([obs.step_type], device=self.device, dtype=torch.int)
-        next_state = torch.tensor([obs.observation.feature_screen.player_relative], dtype=torch.float, device=self.device)
+        next_state = torch.tensor([self.feature_screen_next], dtype=torch.float, device=self.device)
 
         # push next state on next state history stack
         next_state_history_tensor = next_state
 
-        # print("Transistion: Action index: {}, Reward: {}".format(self.action_idx, self.reward_combined))
-
         # save transition tuple to the memory buffer
-        self.memory.push(self.state_history_tensor, self.action_idx, 'NOT_USED', 'NOT_USED', reward, next_state_history_tensor, step_type)
+        self.memory.push(self.state_history_tensor, self.action_idx, reward, next_state_history_tensor, step_type)
+
+    def reward_shaping(self):
+        """
+        A new reward will be calculated based on the distance covered by the agent in the last step.
+        """
+        self.beacon_center_next, self.marine_center_next, self.distance_next = self.calculate_distance(self.feature_screen_next, self.feature_screen_next2)
+        self.reward_shaped = self.distance - self.distance_next
+        if self.distance == 0.0:
+            self.reward_shaped = 100
+        # self.reward_combined = self.reward + self.reward_shaped
+
 
     # ##########################################################################
     # Print status information of timestep
@@ -351,14 +356,31 @@ class BaseAgent(base_agent.BaseAgent):
         """
         function helper for status printing
         """
-        print_ts("Epsilon: {:.2f}\t| choice: {}".format(self.epsilon, self.choice))
-        print_ts("Episode {}\t| Step {}\t| Total Steps: {}".format(self.episodes, self.timesteps, self.steps))
-        print_ts("Chosen action: {}".format(self.action))
-        print_ts("chosen coordinates [x,y]: {}".format((self.x_coord.item(), self.y_coord.item())))
-        print_ts("Beacon center location [x,y]: {}".format(self.beacon_center))
-        print_ts("Current Episode Score: {}\t| Total Score: {}".format(self.last_score, self.reward))
-        print_ts("Action Loss: {:.5f}".format(self.loss))
-        print_ts("----------------------------------------------------------------")
+        print(self.state_q_values_full)
+        if self.episodes < self.supervised_episodes:
+            q_max, q_min, q_mean, q_var, q_span, q_argmax = self.q_value_analysis(self.state_q_values)
+            td_max, td_min, td_mean, td_var, td_span, td_argmax = self.q_value_analysis(self.td_target.unsqueeze(1))
+            # print("environment reward: {:.2f}, step penalty: {:.2f}, reward total: {:.2f}".format(obs.reward, self.reward_shaped, self.reward_combined))
+            # print("Q_VALUES: {}".format(self.state_q_values))
+            # print("TD_TARGET: {}".format(self.td_target.unsqueeze(1)))
+            print_ts("action: {}, idx: {}, Smart action: {}".format(self.action, self.action_idx, SMART_ACTIONS[self.action_idx]))
+            print_ts("Q_VALUES: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(q_max, q_min, q_span, q_mean, q_var, q_argmax))
+            print_ts("TD_TARGET: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(td_max, td_min, td_span, td_mean, td_var, td_argmax))
+            print_ts("MEMORY SIZE: {}".format(len(self.memory)))
+            print_ts("Epsilon: {:.2f}\t| choice: {}".format(self.epsilon, self.choice))
+            print_ts("Episode {}\t| Step {}\t| Total Steps: {}".format(self.episodes, self.timesteps, self.steps))
+            print_ts("Chosen action: {}".format(self.action))
+            # print_ts("chosen coordinates [x,y]: {}".format((self.x_coord.item(), self.y_coord.item())))
+            print_ts("Beacon center location [x,y]: {}".format(self.beacon_center))
+            print_ts("Marine center location [x,y]: {}".format(self.marine_center))
+            print_ts("Distance: {}, delta distance: {}".format(self.distance, self.reward_shaped))
+            print_ts("Current Episode Score: {}\t| Total Score: {}".format(self.last_score, self.reward))
+            print_ts("Environment reward in timestep: {}".format(self.env_reward))
+            print_ts("Action Loss: {:.5f}".format(self.loss))
+            print_ts("----------------------------------------------------------------")
+        else:
+            print(self.feature_screen)
+            print(SMART_ACTIONS[self.action_idx])
 
     # ##########################################################################
     # Optimizing the network
@@ -392,7 +414,7 @@ class BaseAgent(base_agent.BaseAgent):
         """
         Sample from batch.
         """
-        Transition = namedtuple('Transition', ('state', 'action', 'x_coord', 'y_coord', 'reward', 'next_state', 'step_type'))
+        Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state', 'step_type'))
         transitions = self.memory.sample(self.batch_size)
         return Transition(*zip(*transitions))
 
@@ -410,18 +432,15 @@ class BaseAgent(base_agent.BaseAgent):
         """
         """
         # forward pass
-        state_q_values = self.net(self.state_batch)
+        self.state_q_values_full = self.net(self.state_batch)
 
         # Debugging
-        _, _, _, _, _, max_action = self.q_value_analysis_on_batch(state_q_values)
-
-
+        # _, _, _, _, _, max_action = self.q_value_analysis_on_batch(state_q_values)
         # print(self.timesteps, max_action)
-
         # print(self.action_batch.detach().numpy())
 
         # gather action values with respect to the chosen action
-        self.state_q_values = state_q_values.gather(1, self.action_batch)
+        self.state_q_values = self.state_q_values_full.gather(1, self.action_batch)
         # compute action values of the next state over all actions and take the max
         next_state_q_values = self.target_net(self.next_state_batch)
         # print("next_state_q_values")
@@ -469,16 +488,7 @@ class BaseAgent(base_agent.BaseAgent):
         """
         Calculating the loss between TD-target Q-values.
         """
-        q_max, q_min, q_mean, q_var, q_span, q_argmax = self.q_value_analysis(self.state_q_values)
-        td_max, td_min, td_mean, td_var, td_span, td_argmax = self.q_value_analysis(self.td_target.unsqueeze(1))
-        print("Q_VALUES: {}".format(self.state_q_values))
-        print("TD_TARGET: {}".format(self.td_target.unsqueeze(1)))
-        print("Q_VALUES: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(q_max, q_min, q_span, q_mean, q_var, q_argmax))
-        print("TD_TARGET: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(td_max, td_min, td_span, td_mean, td_var, td_argmax))
-        # compute MSE loss
-        self.loss = F.mse_loss(self.state_q_values, self.td_target.unsqueeze(1))
-        # print(self.loss)
-        # print("----------------------------------------------------------------------------")
+        self.loss = F.mse_loss(self.state_q_values, self.td_target.unsqueeze(1))  # compute MSE loss
 
     def optimize_model(self):
         """

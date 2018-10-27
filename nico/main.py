@@ -55,7 +55,7 @@ def main(unused_argv):
             print("Last step: epsilon is at {}, Total score is at {}".format(agent.epsilon, agent.reward))
             agent.update_target_network()
             env.reset()
-        if not actual_obs.first() and not actual_obs.last():  # make one step
+        if not actual_obs.first() and not actual_obs.last():
             action = agent.step('learn')
 
         # Peforming action
@@ -66,7 +66,7 @@ def main(unused_argv):
             agent.store_transition(next_obs[0])
 
             # Optimize the agent
-            if len(agent.memory) >= 1000:
+            if len(agent.memory) >= 100:
                 agent.optimize()
 
                 # Print actual status information
