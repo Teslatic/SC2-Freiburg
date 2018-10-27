@@ -66,7 +66,7 @@ def main(unused_argv):
             agent.store_transition(next_obs[0])
 
             # Optimize the agent
-            if len(agent.memory) >= 1000:
+            if len(agent.memory) >= 100:
                 agent.optimize()
 
                 # Print actual status information
