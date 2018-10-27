@@ -13,7 +13,7 @@ BATCH_SIZE = 32
 TARGET_UPDATE_PERIOD = 5
 HIST_LENGTH = 1
 REPLAY_SIZE = 1000000
-SUPERVISED_EPISODES = 2
+SUPERVISED_EPISODES = 20
 DEVICE = 'cpu' # will be overwritten by main
 # DEVICE = "cuda:0"
 
@@ -22,12 +22,12 @@ PLAYERS = [sc2_env.Agent(sc2_env.Race.terran)]
 STEP_MULTIPLIER = 2  # 16 = 1s game time, None = map default
 EPISODES = 0  # 0 = unlimited game time, None = map default
 EPISODES_TEST = 5  # 0 = unlimited game time, None = map default
-VISUALIZE = True
+VISUALIZE = False
 SILENTMODE = False # True: Just a minimum of console output
 
 epsilon_file = {
-                'EPSILON': 0.20,
-                'EPS_START': 0.20,
+                'EPSILON': 0.02,
+                'EPS_START': 0.02,
                 'EPS_END': 0.01,
                 'EPS_DECAY': 10000 # 50000
                 }

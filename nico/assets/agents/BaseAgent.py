@@ -356,6 +356,7 @@ class BaseAgent(base_agent.BaseAgent):
         """
         function helper for status printing
         """
+        print(self.state_q_values_full)
         if self.episodes < self.supervised_episodes:
             q_max, q_min, q_mean, q_var, q_span, q_argmax = self.q_value_analysis(self.state_q_values)
             td_max, td_min, td_mean, td_var, td_span, td_argmax = self.q_value_analysis(self.td_target.unsqueeze(1))
@@ -379,6 +380,7 @@ class BaseAgent(base_agent.BaseAgent):
             print_ts("----------------------------------------------------------------")
         else:
             print(self.feature_screen)
+            print(SMART_ACTIONS[self.action_idx])
 
     # ##########################################################################
     # Optimizing the network
@@ -430,7 +432,7 @@ class BaseAgent(base_agent.BaseAgent):
         """
         """
         # forward pass
-        state_q_values = self.net(self.state_batch)
+        self.state_q_values_full = self.net(self.state_batch)
 
         # Debugging
         # _, _, _, _, _, max_action = self.q_value_analysis_on_batch(state_q_values)
@@ -438,7 +440,7 @@ class BaseAgent(base_agent.BaseAgent):
         # print(self.action_batch.detach().numpy())
 
         # gather action values with respect to the chosen action
-        self.state_q_values = state_q_values.gather(1, self.action_batch)
+        self.state_q_values = self.state_q_values_full.gather(1, self.action_batch)
         # compute action values of the next state over all actions and take the max
         next_state_q_values = self.target_net(self.next_state_batch)
         # print("next_state_q_values")
