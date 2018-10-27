@@ -387,18 +387,18 @@ class BaseAgent(base_agent.BaseAgent):
                     #if self.actual_obs.reward==1:
                     if self.next_obs[0].reward == 1:		
                         self.reward = torch.tensor([10] , device=self._device,
-                                       requires_grad=True, dtype=torch.float)
+                                       requires_grad=False, dtype=torch.float)
                         self.pseudo_reward = 10
                     else:
                         self.reward = torch.tensor([self.pseudo_reward] , device=self._device,
-                                                   requires_grad=True, dtype=torch.float)
+                                                   requires_grad=False, dtype=torch.float)
                 except:
                     pass
             else:
                 self.marine_x = -1
                 self.marine_y = -1
                 self.reward = torch.tensor([0] , device=self._device,
-                                       requires_grad=True, dtype=torch.float)
+                                       requires_grad=False, dtype=torch.float)
                 self.pseudo_reward = 0
  
             self.pseudo_reward_per_epoch += self.pseudo_reward
@@ -485,7 +485,7 @@ class BaseAgent(base_agent.BaseAgent):
                 while (True):
                     ## state tensor
                     self.state = torch.tensor([self.actual_obs.observation.feature_screen.player_relative],
-                                              dtype=torch.float, device=self._device, requires_grad = True).unsqueeze(1)
+                                              dtype=torch.float, device=self._device, requires_grad = False).unsqueeze(1)
 
                     # agent determines action to take
                     self.step()
@@ -501,7 +501,7 @@ class BaseAgent(base_agent.BaseAgent):
                     else:
                         self.next_state = torch.tensor([self.next_obs[0].observation.feature_screen.player_relative],\
                                                        dtype=torch.float, device=self._device,
-                                                       requires_grad = True).unsqueeze(1)
+                                                       requires_grad = False).unsqueeze(1)
 
                     # save transition
                     self.memory.push(self.state, self.action_idx, self.reward , self.next_state,
