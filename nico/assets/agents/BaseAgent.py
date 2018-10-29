@@ -144,7 +144,7 @@ class BaseAgent(base_agent.BaseAgent):
             self.action, self.action_idx = self.supervised_action()
         else:
             # Choose an action according to the policy
-            self.action, self.action_idx = self.choose_action(agent_mode)
+            self.action, self.action_idx = self.choose_action()
         return self.action
 
     def supervised_action(self):
@@ -242,7 +242,7 @@ class BaseAgent(base_agent.BaseAgent):
                 self.action_idx = 1
                 return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
 
-    def choose_action(self, agent_mode):
+    def choose_action(self, agent_mode='learn'):
         """
         chooses an action according to the current policy
         returns the chosen action id with x,y coordinates and the index of the action
