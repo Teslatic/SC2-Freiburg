@@ -37,7 +37,7 @@ import torchvision.transforms as T
 
 class TestAgent(base_agent.BaseAgent):
     ## Constructor
-    def __init__(self,architecture, FLAGS, device="cpu"):
+    def __init__(self,architecture, FLAGS, hyper_tuple, device="cuda:1"):
         super(TestAgent, self).__init__()
         ## where to save model and reward csv
         self._path = FLAGS.path
@@ -48,7 +48,7 @@ class TestAgent(base_agent.BaseAgent):
         ## Train on GPU  or CPU, default is GPU if available
         self._device = device
         ## Name of the scneario/map
-        self._map_name = FLAGS.map_name
+        self._map_name = hyper_tuple.map
         ## How many game steps per agent step
         self._step_multiplier = FLAGS.step_multiplier
         ## total reward achieved in training (pysc2 reward)
@@ -66,7 +66,7 @@ class TestAgent(base_agent.BaseAgent):
         ## initializing the pysc2 environment in order to play SC2
         self._env = self._build_env()
         ## initializing the x,y coordinate pairs available to the agent
-        self._xy_pairs = self._discretize_xy_grid(FLAGS.xy_grid)
+        self._xy_pairs = self._discretize_xy_grid(int(hyper_tuple.xy_factor))
 
         print("Network: \n{}".format(self._net))
         pytorch_total_params = sum(p.numel() for p in self._net.parameters())
@@ -78,7 +78,7 @@ class TestAgent(base_agent.BaseAgent):
     #  @param[out] net: feed forward neural network
     def _build_model(self, architecture):
         net = architecture.to(self._device)
-        net.load_state_dict(torch.load(self._path + "model.pt", map_location=self._device))
+        net.load_state_dict(torch.load(self._path + "model/model.pt", map_location=self._device))
         net.eval()
 
         return net
@@ -122,8 +122,8 @@ class TestAgent(base_agent.BaseAgent):
     #  @param[out] xy_space: array containing the discretized x,y coordinate pairs
     def _discretize_xy_grid(self, factor):
         """ "discretizing" action coordinates in order to keep action space small """
-        x_space = np.linspace(0, 83, factor, dtype = int)
-        y_space = np.linspace(0, 63, factor, dtype = int)
+        x_space = np.linspace(0, 83, np.sqrt(factor), dtype = int)
+        y_space = np.linspace(0, 63, np.sqrt(factor), dtype = int)
         xy_space = np.transpose([np.tile(x_space, len(y_space)),
                                    np.repeat(y_space, len(x_space))])
 

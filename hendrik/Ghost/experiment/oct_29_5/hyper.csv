@@ -2,11 +2,11 @@ learning_rate,0.0001
 gamma,0.999
 batch_size,32
 target_update_rate,5
-num_episodes,10000
+num_episodes,15000
 memory_size,175000
 architecture,PytorchTutorialDQN
-xy_factor,25
+xy_factor,100
 epsilon_decay,100000
 map,MoveToBeacon
-imitation_length,20
-step_multiplier,32
+imitation_length,5
+step_multiplier,48

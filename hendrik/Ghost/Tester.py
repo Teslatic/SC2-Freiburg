@@ -20,13 +20,14 @@ from collections import namedtuple
 import os
 from pathlib import Path
 import csv
+import pandas as pd
 
 # torch imports
 import torch
 
 
 # import architectures
-from Architectures import PytorchTutorialDQN, ConvNet, FullyConv
+from Architectures import PytorchTutorialDQN,  FullyConv
 
 # import Agent
 from TestAgency import TestAgent
@@ -36,14 +37,28 @@ def main(argv):
     del argv
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    if (FLAGS.architecture == "PytorchTutorialDQN"):
-        architecture = PytorchTutorialDQN(FLAGS)
-    if (FLAGS.architecture == "ConvNet"):
-        architecture = ConvNet(FLAGS)
-    if (FLAGS.architecture == "FullyConv"):
-        architecture = FullyConv(FLAGS)
+    # read in hyperparameter csv file and convert it into dict
+    hyper_params = pd.read_csv(FLAGS.path + "hyper.csv",  header=None, index_col=0).to_dict()
+
+    # for some reason, the dictionary created by the read-in, is a dict in a dict with one key 1
+    hyper_params = hyper_params[1]
+
+    # convert dictionary into namedtuple to make it like the flags
+    Hyper_tuple = namedtuple('Hyper_tuple', sorted(hyper_params))
+    hyper_tuple = Hyper_tuple(**hyper_params)
+
+    print(100 * "=")
+    print("Found following hyperparameter:")
+    for key in hyper_tuple._fields:
+        print(key, getattr(hyper_tuple, key))
+    print(100 * "=")
+
+    if (hyper_tuple.architecture == "PytorchTutorialDQN"):
+        architecture = PytorchTutorialDQN(hyper_tuple)
+    if (hyper_tuple.architecture == "FullyConv"):
+        architecture = FullyConv(hyper_tuple)
     ## agent object
-    agent = TestAgent(architecture, FLAGS, device)
+    agent = TestAgent(architecture, FLAGS, hyper_tuple, device)
     agent.test()
 
 
@@ -53,11 +68,8 @@ if __name__ == '__main__':
     cwd = os.getcwd()
 
     flags.DEFINE_string("path", cwd, "specifiy model directory")
-    flags.DEFINE_string("map_name", "MoveToBeacon" , "Name of the map")
     flags.DEFINE_integer("epochs", 100 , "Amount of test episodes")
-    flags.DEFINE_integer("xy_grid", 5 , "shrink possible xy coordinates to N x N possible pairs")
-    flags.DEFINE_bool("visualize", False, "Visualize pysc2 client")
-    flags.DEFINE_string("architecture", "PytorchTutorialDQN", "Architecture to use for experiments")
-    flags.DEFINE_integer("step_multiplier", 0 , "specifiy step multiplier. 16 = ~1s game time")
-
+    flags.DEFINE_bool("visualize", True, "Visualize pysc2 client")
+    flags.DEFINE_integer("step_multiplier", 1 , "specifiy step multiplier. 16 = ~1s game time")
+    
     app.run(main)

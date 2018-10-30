@@ -31,7 +31,7 @@ import torch
 
 
 # import architectures
-from Architectures import PytorchTutorialDQN, ConvNet, FullyConv
+from Architectures import PytorchTutorialDQN, FullyConv
 
 # import Agent
 from Agency import BaseAgent
@@ -66,7 +66,7 @@ def main(argv):
     logging.info("Memory Size: {}".format(FLAGS.memory_size))
     logging.info("Visualize: {}".format(FLAGS.visualize))
     logging.info("Architecture: {}".format(FLAGS.architecture))
-    logging.info("Amount of xy coordinate pairs: {}".format(FLAGS.xy_grid**2))
+    logging.info("Amount of xy coordinate pairs: {}".format(FLAGS.xy_factor**2))
     logging.info("Epsilon Decay value: {}".format(FLAGS.epsilon))
     logging.info("Chose map: {}".format(FLAGS.map_name))
     logging.info("Working directory {}".format(FLAGS.path))
@@ -79,11 +79,11 @@ def main(argv):
         "learning_rate" : FLAGS.learning_rate,
         "gamma": FLAGS.gamma,
         "batch_size" : FLAGS.batch_size,
-        "Target Update Rate" :FLAGS.target_update,
+        "target_update_rate" :FLAGS.target_update,
         "num_episodes" : FLAGS.epochs,
         "memory_size" : FLAGS.memory_size,
         "architecture" : FLAGS.architecture,
-        "xy_factor" : FLAGS.xy_grid**2,
+        "xy_factor" : FLAGS.xy_factor**2,
         "epsilon_decay" : FLAGS.epsilon,
         "map" : FLAGS.map_name,
         "imitation_length" : FLAGS.imitation_length,
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     flags.DEFINE_integer("memory_size", 1000 , "Capacity of the ReplayBuffer")
     flags.DEFINE_bool("visualize", False, "Visualize pysc2 client")
     flags.DEFINE_string("architecture", "PytorchTutorialDQN", "Architecture to use for experiments")
-    flags.DEFINE_integer("xy_grid", 5 , "shrink possible xy coordinates to N x N possible pairs")
+    flags.DEFINE_integer("xy_factor", 5 , "shrink possible xy coordinates to N x N possible pairs")
     flags.DEFINE_integer("epsilon", 20000 , "epsilon epsilon decay")
     flags.DEFINE_string("map_name", "MoveToBeacon" , "Name of the map")
     flags.DEFINE_integer("step_multiplier", 1 , "specifiy step multiplier. 16 = ~1s game time")

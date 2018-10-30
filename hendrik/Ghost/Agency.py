@@ -146,7 +146,7 @@ class BaseAgent(base_agent.BaseAgent):
         ## initializing the pysc2 environment in order to play SC2
         self._env = self._build_env()
         ## initializing the x,y coordinate pairs available to the agent
-        self._xy_pairs = self._discretize_xy_grid(FLAGS.xy_grid)
+        self._xy_pairs = self._discretize_xy_grid(FLAGS.xy_factor)
         ## imitation phase length
         self._imitation_phase_length = FLAGS.imitation_length
         self._imitation_phase = True
@@ -385,7 +385,7 @@ class BaseAgent(base_agent.BaseAgent):
                     self.pseudo_reward = -1 * scaling(distance).round(4)
 
                     #if self.actual_obs.reward==1:
-                    if self.next_obs[0].reward == 1:		
+                    if self.next_obs[0].reward == 1:
                         self.reward = torch.tensor([10] , device=self._device,
                                        requires_grad=False, dtype=torch.float)
                         self.pseudo_reward = 10
