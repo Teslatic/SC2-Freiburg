@@ -2,8 +2,8 @@ learning_rate,0.0001
 gamma,0.999
 batch_size,32
 Target Update Rate,5
-num_episodes,5000
-memory_size,150000
+num_episodes,10000
+memory_size,175000
 architecture,PytorchTutorialDQN
 xy_factor,100
 epsilon_decay,100000
