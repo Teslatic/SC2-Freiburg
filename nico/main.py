@@ -6,7 +6,7 @@ def start_test(test_env_file, net_weights, target_net_weights):
     Used to start an intermediate test with only exploiting actions.
     """
     # print("Starting Test in episode {}".format(ep))
-    test_agent = BaseAgent(agent_file)
+    test_agent = CompassAgent(agent_file)
     test_agent_interface = test_agent.setup_interface()
     test_env = setup_env(test_env_file,test_agent_interface)
     test_agent.setup(test_env.observation_spec(), test_env.action_spec())  # Necessary? --> For each minigame
@@ -34,9 +34,7 @@ def main(unused_argv):
     exp_root_dir = create_experiment_at_main(experiment_name)
 
     # Setting up the torch, agent, agent interface and environment
-    device = setup_torch()
-    print_ts("Performing calculations on {}".format(device))
-    agent = BaseAgent(agent_file)
+    agent = CompassAgent(agent_file)
     agent_interface = agent.setup_interface()
     env = setup_env(env_file, agent_interface)
     agent.setup(env.observation_spec(), env.action_spec())  # Necessary? --> For each minigame
@@ -44,6 +42,8 @@ def main(unused_argv):
     actual_obs = observation[0]  # Only most recent observation
 
     while True:  # Starting a timestep
+        start_time = time.time()
+
         # Set all variables at the start of a new timestep
         agent.prepare_timestep(actual_obs, env._last_score[0])
 
@@ -66,7 +66,7 @@ def main(unused_argv):
             agent.store_transition(next_obs[0])
 
             # Optimize the agent
-            if len(agent.memory) >= 100:
+            if agent.get_memory_length() >= 100:
                 agent.optimize()
 
                 # Print actual status information
@@ -77,6 +77,8 @@ def main(unused_argv):
             agent.log()
 
         actual_obs = next_obs[0]
+        end_time = time.time()
+        print_ts("Timestep took {} seconds.".format(end_time-start_time))
 
 if __name__ == "__main__":
     try:
@@ -86,14 +88,14 @@ if __name__ == "__main__":
         from absl import app
         from os import path
         import sys
+        import time
         if "../" not in sys.path:
             sys.path.append("../")
         from pysc2.lib import actions
 
             # custom imports
-        from assets.agents.BaseAgent import BaseAgent
+        from assets.agents.BaseAgent import CompassAgent
         from assets.helperFunctions.timestamps import print_timestamp as print_ts
-        from assets.helperFunctions.initializingHelpers import setup_torch
         from assets.helperFunctions.FileManager import *
         from assets.helperFunctions.initializingHelpers import setup_env
         from parameterfile import agent_file, env_file, test_env_file

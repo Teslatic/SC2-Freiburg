@@ -63,12 +63,3 @@ def setup_env(env_file, agent_interface):
         save_replay_episodes=env_file['SAVE_REPLAY'],
         replay_dir=env_file['REPLAY_DIR'])
     return env
-
-def setup_torch():
-    """
-    Setting GPU if available. Else, use the CPU.
-    """
-    # Initalizing
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    torch.set_printoptions(linewidth=750, profile="full")
-    return device
