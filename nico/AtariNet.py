@@ -55,29 +55,13 @@ class DQN(nn.Module):
         self.screen_conv2 = nn.Conv2d(16, 32, kernel_size=4, padding=0, stride=2)
         self.screen_conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1)
 
-        # # minimap conv layers
-        # self.minimap_conv1 = nn.Conv2d(3, 16, kernel_size=8, padding=0, stride=4)
-        # self.minimap_conv2 = nn.Conv2d(16, 32, kernel_size=4, padding=0, stride=2)
-        # self.minimap_conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1)
-
         # fully connected layers
         self.tmp_w = self._get_filter_dimension(84, 8, 0, 4)
         self.tmp_w = self._get_filter_dimension(self.tmp_w, 4, 0, 2)
         self.tmp_w = self._get_filter_dimension(self.tmp_w, 3, 0, 1)
-
         self.screen_fc1 = nn.Linear(64*self.tmp_w*self.tmp_w, 512)
-
-        # simple policy output
         self.action_fc1 = nn.Linear(512, self.num_actions)
 
-        # # action policy output
-        # self.action_fc1 = nn.Linear(512, self.num_actions)
-        #
-        # # x coordinate output
-        # self.x_coord_fc1 = nn.Linear(512, self.map_dimensions[0])
-        #
-        # # y coordinate output
-        # self.y_coord_fc1 = nn.Linear(512, self.map_dimensions[1])
 
     def _get_filter_dimension(self, w, f, p, s):
         '''
@@ -92,34 +76,7 @@ class DQN(nn.Module):
         screen = F.relu(self.screen_conv3(screen))
         screen = screen.view(-1, 64*self.tmp_w*self.tmp_w)
         screen = F.relu(self.screen_fc1(screen))
-
-        # estimated action q values
         action_q_values = self.action_fc1(screen)
-
-        # estimated x coordinates q values
-        x_coord_q_values = self.x_coord_fc1(screen)
-
-        # estimated y coordinates q values
-        y_coord_q_values = self.y_coord_fc1(screen)
-
-        return action_q_values, x_coord_q_values, y_coord_q_values
-
-    def forward(self, screen):
-        screen = F.relu(self.screen_conv1(screen))
-        screen = F.relu(self.screen_conv2(screen))
-        screen = F.relu(self.screen_conv3(screen))
-        screen = screen.view(-1, 64*self.tmp_w*self.tmp_w)
-        screen = F.relu(self.screen_fc1(screen))
-
-        # estimated action q values
-        action_q_values = self.action_fc1(screen)
-        #
-        # # estimated x coordinates q values
-        # x_coord_q_values = self.x_coord_fc1(screen)
-
-        # # estimated y coordinates q values
-        # y_coord_q_values = self.y_coord_fc1(screen)
-
         return action_q_values
 
 class SingleDQN(nn.Module):

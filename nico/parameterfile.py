@@ -13,7 +13,7 @@ BATCH_SIZE = 32
 TARGET_UPDATE_PERIOD = 5
 HIST_LENGTH = 1
 REPLAY_SIZE = 1000000
-SUPERVISED_EPISODES = 500
+SUPERVISED_EPISODES = 200
 DEVICE = 'cpu' # will be overwritten by main
 # DEVICE = "cuda:0"
 
@@ -23,8 +23,8 @@ STEP_MULTIPLIER = 2  # 16 = 1s game time, None = map default
 EPISODES = 0  # 0 = unlimited game time, None = map default
 EPISODES_TEST = 5  # 0 = unlimited game time, None = map default
 VISUALIZE = False
-SILENTMODE = False # True: Just a minimum of console output
-LOGGING = True  # Logs information in files for tmux sessions
+SILENTMODE = True # True: Just a minimum of console output
+LOGGING = False  # Logs information in files for tmux sessions
 
 epsilon_file = {
                 'EPSILON': 0.02,
@@ -47,7 +47,8 @@ agent_file = {
               'EPSILON_FILE': epsilon_file,
               'SILENTMODE': SILENTMODE,
               'LOGGING': LOGGING,
-              'SUPERVISED_EPISODES': SUPERVISED_EPISODES
+              'SUPERVISED_EPISODES': SUPERVISED_EPISODES,
+              'EXP_PATH': None
               }
 
 env_file = {
