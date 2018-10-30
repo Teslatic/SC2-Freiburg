@@ -41,7 +41,7 @@ def main(unused_argv):
     env = setup_env(env_file, agent_interface)
     agent.setup(env.observation_spec(), env.action_spec())  # Necessary? --> For each minigame
     observation = env.reset()
-    actual_obs = observation[0]
+    actual_obs = observation[0]  # Only most recent observation
 
     while True:  # Starting a timestep
         # Set all variables at the start of a new timestep
@@ -72,6 +72,9 @@ def main(unused_argv):
                 # Print actual status information
                 if not agent.silentmode:
                     agent.print_status()
+
+        if agent.logging:
+            agent.log()
 
         actual_obs = next_obs[0]
 

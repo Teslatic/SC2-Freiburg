@@ -24,6 +24,7 @@ EPISODES = 0  # 0 = unlimited game time, None = map default
 EPISODES_TEST = 5  # 0 = unlimited game time, None = map default
 VISUALIZE = False
 SILENTMODE = False # True: Just a minimum of console output
+LOGGING = True  # Logs information in files for tmux sessions
 
 epsilon_file = {
                 'EPSILON': 0.02,
@@ -45,6 +46,7 @@ agent_file = {
               'DEVICE': DEVICE,
               'EPSILON_FILE': epsilon_file,
               'SILENTMODE': SILENTMODE,
+              'LOGGING': LOGGING,
               'SUPERVISED_EPISODES': SUPERVISED_EPISODES
               }
 

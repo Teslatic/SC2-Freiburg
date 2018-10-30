@@ -61,6 +61,7 @@ class BaseAgent(base_agent.BaseAgent):
         self.size_replaybuffer = agent_file['REPLAY_SIZE']
         self.device = agent_file['DEVICE']
         self.silentmode = agent_file['SILENTMODE']
+        self.logging = agent_file['LOGGING']
         self.supervised_episodes = agent_file['SUPERVISED_EPISODES']
 
         epsilon_file = agent_file['EPSILON_FILE']
@@ -381,6 +382,12 @@ class BaseAgent(base_agent.BaseAgent):
         else:
             print(self.feature_screen)
             print(SMART_ACTIONS[self.action_idx])
+
+    def log(self):
+        pass
+        buffer_size = 10 # This makes it so changes appear without buffering
+        with open('output.log', 'w', buffer_size) as f:
+                f.write('{}\n'.format(self.feature_screen))
 
     # ##########################################################################
     # Optimizing the network
