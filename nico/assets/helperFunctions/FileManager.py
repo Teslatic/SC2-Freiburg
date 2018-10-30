@@ -19,12 +19,10 @@ def create_experiment(exp_path):
     """
     # print_timestamp('Created  at path {}'.format(exp_path))
     os.makedirs(exp_path)
-    os.makedirs(exp_path+'/policy_plots')
+    # os.makedirs(exp_path+'/policy_plots')
     os.makedirs(exp_path+'/parameters')
     create_plots_dir(exp_path)
     create_report_dir(exp_path)
-    # os.makedirs(exp_path+'/logs')
-    # os.makedirs(exp_path+'/CSV')
 
 def create_report_dir(exp_path):
     os.makedirs(exp_path+'/report')
