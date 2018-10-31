@@ -35,12 +35,12 @@ class CompassAgent(base_agent.BaseAgent):
         self.timesteps = 0  # timesteps in the current episode
         self.choice = None  # Choice of epsilon greedy
         self.loss = 0  # Action loss
-        self.DQN_module = DQN_module(self.batch_size,
-                                     self.gamma,
-                                     self.history_length,
-                                     self.size_replaybuffer,
-                                     self.optim_learning_rate)
-        self.device = self.DQN_module.device
+        self.DQN = DQN_module(self.batch_size,
+                              self.gamma,
+                              self.history_length,
+                              self.size_replaybuffer,
+                              self.optim_learning_rate)
+        self.device = self.DQN.device
         print_ts("Agent has been initalized")
 
     def unzip_hyperparameter_file(self, agent_file):
@@ -104,10 +104,7 @@ class CompassAgent(base_agent.BaseAgent):
 
         self.last_score = last_score
 
-        self.state_history_tensor = torch.tensor([self.feature_screen], device=self.device, dtype=torch.float,
-                        requires_grad=False).unsqueeze(1)
-        # self.history_tensor = self.state
-        # self.state_history_tensor = self.state.unsqueeze(1)
+        self.state = torch.tensor([self.feature_screen], device=self.device, dtype=torch.float, requires_grad=False).unsqueeze(1)
 
     def policy(self, agent_mode):
         """
@@ -233,7 +230,7 @@ class CompassAgent(base_agent.BaseAgent):
         else:
             # Q-values berechnen
             with torch.no_grad():
-                action_q_values = self.DQN_module.net(self.state_history_tensor)
+                action_q_values = self.DQN.net(self.state)
 
             # Beste Action bestimmen
             best_action_numpy = action_q_values.detach().numpy()
@@ -251,17 +248,17 @@ class CompassAgent(base_agent.BaseAgent):
         """
         if self.can_do(actions.FUNCTIONS.Move_screen.id):
             if action is 'left':
-                if not (self.marine_center[0] == 0):
-                    return actions.FUNCTIONS.Move_screen("now", self.marine_center + (-2, 0))
+                if not (self.marine_center[0] <= 0):
+                    return actions.FUNCTIONS.Move_screen("now", self.marine_center + (-4, 0))
             if action is 'up':
-                if not (self.marine_center[1] == 0):
-                    return actions.FUNCTIONS.Move_screen("now", self.marine_center + (0, -2))
+                if not (self.marine_center[1] <= 0):
+                    return actions.FUNCTIONS.Move_screen("now", self.marine_center + (0, -4))
             if action is 'right':
-                if not (self.marine_center[0] == 83):
-                    return actions.FUNCTIONS.Move_screen("now", self.marine_center + (2, 0))
+                if not (self.marine_center[0] >= 83):
+                    return actions.FUNCTIONS.Move_screen("now", self.marine_center + (4, 0))
             if action is 'down':
-                if not (self.marine_center[1] == 63):
-                    return actions.FUNCTIONS.Move_screen("now", self.marine_center + (0, 2))
+                if not (self.marine_center[1] >= 63):
+                    return actions.FUNCTIONS.Move_screen("now", self.marine_center + (0, 4))
         else:
             return actions.FUNCTIONS.no_op()
 
@@ -291,27 +288,27 @@ class CompassAgent(base_agent.BaseAgent):
     # Store transition in Replay Buffer
     # ##########################################################################
 
-    def store_transition(self, obs):
+    def store_transition(self, next_obs):
         """
         Save the actual information in the history.
         As soon as there has been enough data, the experience is sampled from the replay buffer.
         """
-        self.env_reward = obs.reward
-        self.feature_screen_next = obs.observation.feature_screen.player_relative
-        self.feature_screen_next2 = obs.observation.feature_screen.selected
-        self.reward_shaping()
+        self.env_reward = next_obs.reward
+        self.feature_screen_next = next_obs.observation.feature_screen.player_relative
+        self.feature_screen_next2 = next_obs.observation.feature_screen.selected
+        self.reward_shaped = self.reward_shaping()
 
         # collect transition data
         reward = torch.tensor([self.reward_shaped], device=self.device, dtype=torch.float, requires_grad=False)
-        step_type = torch.tensor([obs.step_type], device=self.device, dtype=torch.int)
-        self.next_state_history_tensor = torch.tensor([self.feature_screen_next], device=self.device, dtype=torch.float, requires_grad=False).unsqueeze(1)
+        step_type = torch.tensor([next_obs.step_type], device=self.device, dtype=torch.int, requires_grad=False)
+        self.next_state = torch.tensor([self.feature_screen_next], device=self.device, dtype=torch.float, requires_grad=False).unsqueeze(1)
 
         # push next state on next state history stack
-        #  self.next_state_history_tensor = next_state
+        #  self.next_state = next_state
 
         # save transition tuple to the memory buffer
-        self.DQN_module.memory.push(self.state_history_tensor, self.action_idx, reward, self.next_state_history_tensor, step_type)
-
+        self.DQN.memory.push(self.state, self.action_idx, reward, self.next_state, step_type)
+        # self.DQN.memory.push(self.state, self.action_idx, reward, self.next_state, step_type)
     # ##########################################################################
     # Reward shaping
     # ##########################################################################
@@ -346,9 +343,10 @@ class CompassAgent(base_agent.BaseAgent):
         A new reward will be calculated based on the distance covered by the agent in the last step.
         """
         self.beacon_center_next, self.marine_center_next, self.distance_next = self.calculate_distance(self.feature_screen_next, self.feature_screen_next2)
-        self.reward_shaped = self.distance - self.distance_next
+        reward_shaped = self.distance - self.distance_next
         if self.distance == 0.0:
-            self.reward_shaped = 100
+            reward_shaped = 100
+        return reward_shaped
         # self.reward_combined = self.reward + self.reward_shaped
 
 
@@ -360,13 +358,13 @@ class CompassAgent(base_agent.BaseAgent):
         """
         Returns the length of the ReplayBuffer
         """
-        return len(self.DQN_module.memory)
+        return len(self.DQN.memory)
 
     def optimize(self):
         """
         Optimizes the DQN_module on a minibatch
         """
-        self.DQN_module.optimize()
+        self.DQN.optimize()
 
     # ##########################################################################
     # Print status information of timestep
@@ -388,7 +386,7 @@ class CompassAgent(base_agent.BaseAgent):
             print_ts("action: {}, idx: {}, Smart action: {}".format(self.action, self.action_idx, SMART_ACTIONS[self.action_idx]))
             print_ts("Q_VALUES: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(q_max, q_min, q_span, q_mean, q_var, q_argmax))
             print_ts("TD_TARGET: max: {:.3f}, min: {:.3f}, span: {:.3f}, mean: {:.3f}, var: {:.6f}, argmax: {}".format(td_max, td_min, td_span, td_mean, td_var, td_argmax))
-            print_ts("MEMORY SIZE: {}".format(len(DQN_module.memory)))
+            print_ts("MEMORY SIZE: {}".format(len(DQN.memory)))
             print_ts("Epsilon: {:.2f}\t| choice: {}".format(self.epsilon, self.choice))
             print_ts("Episode {}\t| Step {}\t| Total Steps: {}".format(self.episodes, self.timesteps, self.steps))
             print_ts("Chosen action: {}".format(self.action))
@@ -413,7 +411,30 @@ class CompassAgent(base_agent.BaseAgent):
     def _save_model(self):
         save_path = self.exp_path + "/model/model.pt"
         # Path((self.exp_path + "/model")).mkdir(parents=True, exist_ok=True)
-        torch.save(self.DQN_module.net.state_dict(), save_path)
+        torch.save(self.DQN.net.state_dict(), save_path)
+
+    ## logs rewards per epochs and cumulative reward in a csv file
+    # def log_reward(self):
+    #     r_per_epoch_save_path = self.exp_path  + "/csv/reward_per_epoch.csv"
+    #     # Path((self._path + "/experiment/" + self._name + "/csv")).mkdir(parents=True, exist_ok=True)
+    #
+    #     d = {"sparse reward per epoch" : self.r_per_epoch,
+    #          "sparse cumulative reward": self.list_score_cumulative,
+    #          "pseudo reward per epoch" : self.list_pseudo_reward_per_epoch,
+    #          "epsilon" : self.list_epsilon }
+    #     df = pd.DataFrame(data=d)
+    #     with open(r_per_epoch_save_path, "w") as f:
+    #         df.to_csv(f, header=True, index=False)
+    #
+    #
+    # def log_coordinates(self):
+    #     save_path = self.exp_path + "/csv/coordinates.csv"
+    #     # Path((self._path + "/experiment/" + self._name + "/csv")).mkdir(parents=True, exist_ok=True)
+    #     d = {"x" : self.list_x,
+    #          "y":  self.list_y}
+    #     df = pd.DataFrame(data=d)
+    #     with open(save_path, "w") as f:
+    #         df.to_csv(f, header=True, index=False)
 
     # ##########################################################################
     # Ending Episode
@@ -425,7 +446,7 @@ class CompassAgent(base_agent.BaseAgent):
         """
         if self.episodes % self.target_update_period == 0:
             print_ts("About to update")
-            self.DQN_module.update_target_net()
+            self.DQN.update_target_net()
         self.reset()
 
     def reset(self):

@@ -4,7 +4,7 @@ from assets.helperFunctions.timestamps import print_timestamp as print_ts
 
 class DQN_module():
     """
-    A wrapper class that augments the AtariNet.DQN class bz optmizing methods.
+    A wrapper class that augments the AtariNet.DQN class by optmizing methods.
     """
     def __init__(self, batch_size, gamma, history_length, device):
         self.device = self._setup_torch()
@@ -42,6 +42,9 @@ class DQN_module():
         print_ts("Performing calculations on {}".format(device))
         return device
 
+    def store(self, *args):
+        self.memory.push(*args)
+
     # ##########################################################################
     # Optimizing the network
     # ##########################################################################
@@ -77,6 +80,8 @@ class DQN_module():
         Sample from batch.
         """
         Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state', 'step_type'))
+        # Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state'))
+        print(Transition)
         transitions = self.memory.sample(self.batch_size)
         return Transition(*zip(*transitions))
 
