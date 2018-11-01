@@ -53,10 +53,10 @@ def main(unused_argv):
         print("KeyboardInterrupt detected, saving model and data!")
         agent._save_model(emergency=True)
         print("Saving was successful")
-    except:
-        print("Fault occured. Emergency saving of agent weights")
-        agent._save_model(emergency=True)
-        print("Saving was successful")
+    # except:
+    #     print("Fault occured. Emergency saving of agent weights")
+    #     agent._save_model(emergency=True)
+    #     print("Saving was successful")
 
 if __name__ == "__main__":
     try:
@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     app.run(main)
 
-# 
+#
 # def start_test(test_env_file, net_weights, target_net_weights):
 #     """
 #     Used to start an intermediate test with only exploiting actions.

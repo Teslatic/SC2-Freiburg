@@ -46,6 +46,7 @@ class CompassAgent(base_agent.BaseAgent):
         self.timesteps = 0  # timesteps in the current episode
         self.choice = None  # Choice of epsilon greedy
         self.loss = 0  # Action loss
+        self.episode_reward_shaped = 0
         self.DQN = DQN_module(self.batch_size,
                               self.gamma,
                               self.history_length,
@@ -105,6 +106,7 @@ class CompassAgent(base_agent.BaseAgent):
 
         # Current episode
         self.timesteps += 1
+        self.episode_reward_env += obs.reward
         self.available_actions = obs.observation.available_actions
 
         # Calculate additional information for reward shaping
@@ -281,10 +283,8 @@ class CompassAgent(base_agent.BaseAgent):
         self.feature_screen_next = next_obs.observation.feature_screen.player_relative
         self.feature_screen_next2 = next_obs.observation.feature_screen.selected
         self.reward_shaped = self.reward_shaping()
+        self.episode_reward_shaped += self.reward_shaped
         self.next_state = self.feature_screen_next
-
-        # push next state on next state history stack
-        #  self.next_state = next_state
 
         # save transition tuple to the memory buffer
         self.DQN.memory.push([self.state], [self.action_idx], self.reward_shaped, [self.next_state])
@@ -439,3 +439,5 @@ class CompassAgent(base_agent.BaseAgent):
         """
         super(CompassAgent, self).reset()
         self.timesteps = 0
+        self.episode_reward_env = 0
+        self.episode_reward_shaped = 0

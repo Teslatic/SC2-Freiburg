@@ -53,7 +53,7 @@ class DQN_module():
         Setting GPU if available. Else, use the CPU.
         """
         # Initalizing
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
         torch.set_printoptions(linewidth=750, profile="full")
         print_ts("Performing calculations on {}".format(device))
         return device
@@ -104,13 +104,10 @@ class DQN_module():
         np.concatenate concatenate all the batch data into a single ndarray
         """
         self.state_batch =  torch.as_tensor(np.concatenate([batch.state]), device=self.device, dtype=torch.float)
-        # print(self.state_batch)
         self.action_batch = torch.as_tensor(batch.action, device=self.device)
-        # print(self.action_batch)
         self.reward_batch = torch.as_tensor(batch.reward, device=self.device, dtype=torch.float)
-        # print(self.reward_batch)
         self.next_state_batch = torch.as_tensor(np.concatenate([batch.next_state]), device=self.device, dtype=torch.float)
-        # print(self.next_state_batch)
+
 
     def calculate_q_values(self):
         """
