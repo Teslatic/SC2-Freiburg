@@ -1,32 +1,5 @@
 #!/usr/bin/env python3
 
-
-def start_test(test_env_file, net_weights, target_net_weights):
-    """
-    Used to start an intermediate test with only exploiting actions.
-    """
-    # print("Starting Test in episode {}".format(ep))
-    test_agent = CompassAgent(agent_file)
-    test_agent_interface = test_agent.setup_interface()
-    test_env = setup_env(test_env_file,test_agent_interface)
-    test_agent.setup(test_env.observation_spec(), test_env.action_spec())  # Necessary? --> For each minigame
-    # Load parameters into test agent
-    test_agent.set_net_weights(net_weights)
-    test_agent.set_target_net_weights(target_net_weights)
-    # Seed setzen?
-    test_observation = test_env.reset()
-    actual_test_obs = test_observation[0]
-    # Setting flags and random seed. Clearing reward and history?
-    while True:  # Starting a timestep
-        # get last_score for debug reference
-        last_score_test = test_env._last_score[0]  # Is this not contained in the reward structure?
-        # make one step
-        test_action = test_agent.policy(actual_test_obs, last_score_test, 'test')
-        next_test_obs = test_env.step(test_action)
-        actual_test_obs = next_test_obs[0]
-    print("TEST HAS ENDED")
-
-
 def main(unused_argv):
 
     # Create a new experiment
@@ -54,6 +27,7 @@ def main(unused_argv):
                 end_time = time.time()
                 print_ts("Episode took {} seconds.".format(end_time-start_time))
                 start_time = time.time()
+                # raise Exception("Test for weight saving")
             else:
                 # Peforming selected action
                 next_obs = env.step(action)
@@ -77,7 +51,12 @@ def main(unused_argv):
             # end_time = time.time()
     except KeyboardInterrupt:
         print("KeyboardInterrupt detected, saving model and data!")
-        agent._save_model()
+        agent._save_model(emergency=True)
+        print("Saving was successful")
+    except:
+        print("Fault occured. Emergency saving of agent weights")
+        agent._save_model(emergency=True)
+        print("Saving was successful")
 
 if __name__ == "__main__":
     try:
@@ -105,3 +84,28 @@ if __name__ == "__main__":
         print_ts("Fault while loading the modules. Some packages might be missing.")
 
     app.run(main)
+
+# 
+# def start_test(test_env_file, net_weights, target_net_weights):
+#     """
+#     Used to start an intermediate test with only exploiting actions.
+#     """
+#     # print("Starting Test in episode {}".format(ep))
+#     test_agent = CompassAgent(agent_file)
+#     test_agent_interface = test_agent.setup_interface()
+#     test_env = setup_env(test_env_file,test_agent_interface)
+#     test_agent.setup(test_env.observation_spec(), test_env.action_spec())  # Necessary? --> For each minigame
+#     # Load parameters into test agent
+#     test_agent.set_net_weights(net_weights)
+#     test_agent.set_target_net_weights(target_net_weights)
+#     # Seed setzen?
+#     test_observation = test_env.reset()
+#     actual_test_obs = test_observation[0]
+#     # Setting flags and random seed. Clearing reward and history?
+#     while True:  # Starting a timestep
+#         # get last_score for debug reference
+#         # make one step
+#         test_action = test_agent.policy(actual_test_obs, last_score_test, 'test')
+#         next_test_obs = test_env.step(test_action)
+#         actual_test_obs = next_test_obs[0]
+#     print("TEST HAS ENDED")

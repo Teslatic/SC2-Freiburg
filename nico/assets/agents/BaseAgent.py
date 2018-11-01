@@ -128,6 +128,7 @@ class CompassAgent(base_agent.BaseAgent):
 
         if obs.last():  # End episode in last step
             print_ts("Last step: epsilon is at {}, Total score is at {}".format(self.epsilon, self.reward))
+            self._save_model()
             self.update_target_network()
             self.action = 'reset'
 
@@ -387,10 +388,14 @@ class CompassAgent(base_agent.BaseAgent):
         with open('output.log', 'w', buffer_size) as f:
                 f.write('{}\n'.format(self.feature_screen))
 
-    def _save_model(self):
-        save_path = self.exp_path + "/model/model.pt"
+    def _save_model(self, emergency=False):
+        if emergency:
+            save_path = self.exp_path + "/model/emergency_model.pt"
+        else:
+            save_path = self.exp_path + "/model/model.pt"
+
         # Path((self.exp_path + "/model")).mkdir(parents=True, exist_ok=True)
-        torch.save(self.DQN.net.state_dict(), save_path)
+        self.DQN.save(save_path)
 
     ## logs rewards per epochs and cumulative reward in a csv file
     # def log_reward(self):

@@ -181,6 +181,9 @@ class DQN_module():
     # Weight methods
     # ##########################################################################
 
+    def save(self, save_path):
+        torch.save(self.net.state_dict(), save_path)
+
     def transfer_weights(self, src_net, target_net):
         """
         updates weights of the target network, i.e. copies model weights to it

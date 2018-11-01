@@ -22,7 +22,7 @@ PLAYERS = [sc2_env.Agent(sc2_env.Race.terran)]
 STEP_MULTIPLIER = 4  # 16 = 1s game time, None = map default
 EPISODES = 0  # 0 = unlimited game time, None = map default
 EPISODES_TEST = 5  # 0 = unlimited game time, None = map default
-VISUALIZE = True
+VISUALIZE = False
 SILENTMODE = True # True: Just a minimum of console output
 LOGGING = False  # Logs information in files for tmux sessions
 
