@@ -2,10 +2,9 @@ import numpy as np
 from pysc2.agents import base_agent
 from pysc2.lib import actions, features
 import math
-import torch
 import time
 
-from assets.RL.DQN_modules import DQN_module
+from assets.RL.DQN_module import DQN_module
 from assets.smart_actions import SMART_ACTIONS_SIMPLE_NAVIGATION as SMART_ACTIONS
 from assets.helperFunctions.flagHandling import set_flag_every, set_flag_from
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
@@ -15,7 +14,19 @@ np.set_printoptions(suppress=True, linewidth=np.nan, threshold=np.nan)  # only f
 
 class CompassAgent(base_agent.BaseAgent):
     """
-    This is a simple agent that uses an AtariNet action value approximator.
+    This is a simple agent that uses an PyTorch DQN_module as Q value approximator.
+    Current implemented features of the agent:
+    - Translation of smart actions (North, East, South, West) to PYSC2 conform actions.
+    - Simple initializing with the help of an agent_file (no argument parsing necessary)
+    - Policy switch between an imitation learning session and an epsilon greedy learning session.
+    - Storage of experience into simple Experience Replay Buffer
+    - Reward shaping which uses the covered timestep distance as reward.
+
+    To be implemented:
+    - Saving the hyperparameter file of the experiments for traceability and replicability.
+    - Storing the DQN model weights in case of Runtime error, KeyboardInterrupt or Successful run.
+    - Intermediate saving of model weights
+    - Plotting the episodic environment rewards, shaped rewards over time
     """
     # ##########################################################################
     # Initializing the agent
@@ -84,7 +95,7 @@ class CompassAgent(base_agent.BaseAgent):
     # Action Selection
     # ##########################################################################
 
-    def prepare_timestep(self, obs, last_score):
+    def prepare_timestep(self, obs):
         """
         timesteps:
         """
@@ -94,29 +105,40 @@ class CompassAgent(base_agent.BaseAgent):
 
         # Current episode
         self.timesteps += 1
-
-        self.step_type = obs.step_type  # Important to check for last step
         self.available_actions = obs.observation.available_actions
 
         # Calculate additional information for reward shaping
         self.feature_screen = obs.observation.feature_screen.player_relative
         self.feature_screen2 = obs.observation.feature_screen.selected
+        self.state = self.feature_screen
+        self.beacon_center, self.marine_center, self.distance = self.calculate_distance(self.feature_screen, self.feature_screen2)
 
-        self.last_score = last_score
-
-        self.state = torch.tensor([self.feature_screen], device=self.device, dtype=torch.float, requires_grad=False).unsqueeze(1)
-
-    def policy(self, agent_mode):
+    def policy(self, obs):
         """
         Choosing an action
         """
-        self.beacon_center, self.marine_center, self.distance = self.calculate_distance(self.feature_screen, self.feature_screen2)
-        # For the first n episodes learn on forced actions.
-        if self.episodes < self.supervised_episodes:
-            self.action, self.action_idx = self.supervised_action()
-        else:
-            # Choose an action according to the policy
-            self.action, self.action_idx = self.choose_action()
+        # Set all variables at the start of a new timestep
+        self.prepare_timestep(obs)
+
+        # Action seletion according to active policy
+        # action = [actions.FUNCTIONS.select_army("select")]
+
+        if obs.first():  # Select Army in first step
+            self.action = [actions.FUNCTIONS.select_army("select")]
+
+        if obs.last():  # End episode in last step
+            print_ts("Last step: epsilon is at {}, Total score is at {}".format(self.epsilon, self.reward))
+            self.update_target_network()
+            self.action = 'reset'
+
+        # Action selection for regular step
+        if not obs.first() and not obs.last():
+            # For the first n episodes learn on forced actions.
+            if self.episodes < self.supervised_episodes:
+                self.action, self.action_idx = self.supervised_action()
+            else:
+                # Choose an action according to the policy
+                self.action, self.action_idx = self.choose_action()
         return self.action
 
     def supervised_action(self):
@@ -136,83 +158,44 @@ class CompassAgent(base_agent.BaseAgent):
         above_beacon = relative_vector[1] < 0.
         horizontally_aligned = relative_vector[1] == 0.
 
-        # print("Test 1: {}, {}".format(horizontally_aligned, right_to_beacon))
-        if (horizontally_aligned and vertically_aligned):
-            chosen_action = self.translate_to_PYSC2_action(SMART_ACTIONS[self.action_idx])
-            return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
+        left = 0
+        up = 1
+        right = 2
+        down = 3
 
-        # print("Test 1: {}, {}".format(horizontally_aligned, right_to_beacon))
-        if (horizontally_aligned and right_to_beacon):
-            chosen_action = self.translate_to_PYSC2_action('left')
-            self.action_idx = 0
-            return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
-
-        # print("Test 2: {}, {}".format(below_beacon, vertically_aligned))
-        if (below_beacon and vertically_aligned):
-            chosen_action = self.translate_to_PYSC2_action('up')
-            self.action_idx = 1
-            return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
-
-        # print("Test 3: {}, {}".format(horizontally_aligned, left_to_beacon))
-        if (horizontally_aligned and left_to_beacon):
-            chosen_action = self.translate_to_PYSC2_action('right')
-            self.action_idx = 2
-            return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
-
-        # print("Test 4: {}, {}".format(above_beacon, vertically_aligned))
-        if (above_beacon and vertically_aligned):
-            chosen_action = self.translate_to_PYSC2_action('down')
-            self.action_idx = 3
-            return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
-
-        # print("Test 5: {}, {}".format(above_beacon, left_to_beacon))
-        if above_beacon and left_to_beacon:
-            # print("Test 5.1")
+        if (horizontally_aligned and vertically_aligned): # Hitting beacon, stay on last action
+            last_action_idx = self.action_idx  # self.action_idx not defined in first timestep
+            action_idx = last_action_idx
+        if (horizontally_aligned and right_to_beacon):  # East
+            action_idx = left
+        if (below_beacon and vertically_aligned):  # South
+            action_idx = up
+        if (horizontally_aligned and left_to_beacon):  # West
+            action_idx = right
+        if (above_beacon and vertically_aligned):  # North
+            action_idx = down
+        if above_beacon and left_to_beacon:  # North-West
             if action_choice:
-                chosen_action = self.translate_to_PYSC2_action('right')
-                self.action_idx = 2
-                return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
-            # print("Test 5.2")
+                action_idx = right
             if not action_choice:
-                chosen_action = self.translate_to_PYSC2_action('down')
-                self.action_idx = 3
-                return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
-        # print("Test 6: {}, {}".format(above_beacon, right_to_beacon))
-        if (above_beacon and right_to_beacon):
-            # print("Test 6.1")
+                action_idx = down
+        if (above_beacon and right_to_beacon):  # North-East
             if action_choice:
-                chosen_action = self.translate_to_PYSC2_action('left')
-                self.action_idx = 0
-                return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
-            # print("Test 6.2")
+                action_idx = left
             if not action_choice:
-                chosen_action = self.translate_to_PYSC2_action('down')
-                self.action_idx = 3
-                return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
-        # print("Test 7: {}, {}".format(below_beacon, right_to_beacon))
-        if (below_beacon and right_to_beacon):
-            # print("Test 7.1")
+                action_idx = down
+        if (below_beacon and right_to_beacon): # South-East
             if action_choice:
-                chosen_action = self.translate_to_PYSC2_action('left')
-                self.action_idx = 0
-                return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
-            # print("Test 7.2")
+                action_idx = left
             if not action_choice:
-                chosen_action = self.translate_to_PYSC2_action('up')
-                self.action_idx = 1
-                return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
-        # print("Test 8: {}, {}".format(below_beacon, left_to_beacon))
-        if (below_beacon and left_to_beacon):
-            # print("Test 8.1")
+                action_idx = up
+        if (below_beacon and left_to_beacon):  # South-West
             if action_choice:
-                chosen_action = self.translate_to_PYSC2_action('right')
-                self.action_idx = 2
-                return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
-            # print("Test 8.2")
+                action_idx = right
             if not action_choice:
-                chosen_action = self.translate_to_PYSC2_action('up')
-                self.action_idx = 1
-                return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
+                action_idx = up
+        chosen_action = self.translate_to_PYSC2_action(SMART_ACTIONS[action_idx])
+        return [chosen_action], action_idx
 
     def choose_action(self, agent_mode='learn'):
         """
@@ -225,21 +208,21 @@ class CompassAgent(base_agent.BaseAgent):
         self.choice = self.epsilon_greedy()
 
         if self.choice == 'random' and agent_mode == 'learn':
-            self.action_idx = np.random.randint(self.action_dim)
-            chosen_action = self.translate_to_PYSC2_action(SMART_ACTIONS[self.action_idx])
+            action_idx = np.random.randint(self.action_dim)
+            chosen_action = self.translate_to_PYSC2_action(SMART_ACTIONS[action_idx])
         else:
             # Q-values berechnen
             with torch.no_grad():
-                action_q_values = self.DQN.net(self.state)
+                action_q_values = self.DQN.predict_q_values(self.state)
 
             # Beste Action bestimmen
             best_action_numpy = action_q_values.detach().numpy()
-            self.action_idx = np.argmax(best_action_numpy)
-            best_action = SMART_ACTIONS[self.action_idx]
+            action_idx = np.argmax(best_action_numpy)
+            best_action = SMART_ACTIONS[action_idx]
 
             chosen_action = self.translate_to_PYSC2_action(best_action)
         # square brackets around chosen_action needed for internal pysc2 state machine
-        return [chosen_action], torch.tensor([self.action_idx], dtype=torch.long, device=self.device)
+        return [chosen_action], action_idx
 
     def translate_to_PYSC2_action(self, action):
         """
@@ -297,18 +280,14 @@ class CompassAgent(base_agent.BaseAgent):
         self.feature_screen_next = next_obs.observation.feature_screen.player_relative
         self.feature_screen_next2 = next_obs.observation.feature_screen.selected
         self.reward_shaped = self.reward_shaping()
-
-        # collect transition data
-        reward = torch.tensor([self.reward_shaped], device=self.device, dtype=torch.float, requires_grad=False)
-        step_type = torch.tensor([next_obs.step_type], device=self.device, dtype=torch.int, requires_grad=False)
-        self.next_state = torch.tensor([self.feature_screen_next], device=self.device, dtype=torch.float, requires_grad=False).unsqueeze(1)
+        self.next_state = self.feature_screen_next
 
         # push next state on next state history stack
         #  self.next_state = next_state
 
         # save transition tuple to the memory buffer
-        self.DQN.memory.push(self.state, self.action_idx, reward, self.next_state, step_type)
-        # self.DQN.memory.push(self.state, self.action_idx, reward, self.next_state, step_type)
+        self.DQN.memory.push([self.state], [self.action_idx], self.reward_shaped, [self.next_state])
+
     # ##########################################################################
     # Reward shaping
     # ##########################################################################

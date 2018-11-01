@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
@@ -10,7 +11,7 @@ from assets.helperFunctions.timestamps import print_timestamp as print_ts
 
 class DQN_module():
     """
-    A wrapper class that augments the AtariNet.DQN class bz optmizing methods.
+    A wrapper class that augments the AtariNet.DQN class by optmizing methods.
     """
     def __init__(self, batch_size, gamma, history_length, size_replaybuffer, optim_learning_rate):
         """
@@ -57,6 +58,10 @@ class DQN_module():
         print_ts("Performing calculations on {}".format(device))
         return device
 
+    def predict_q_values(self, state):
+        state_tensor = torch.tensor([state], device=self.device, dtype=torch.float, requires_grad=False)
+        return self.net(state_tensor)
+
     # ##########################################################################
     # Optimizing the network
     # ##########################################################################
@@ -67,11 +72,9 @@ class DQN_module():
         # TODO: extend Q-Update function to the x and y coordinates
         """
 
-        # Sample batch from experience replay buffer
-        self.batch = self.sample_batch()
-
-        # Unzip batch data
-        self.unzip_batch(self.batch)
+        # Sample and unzip batch from experience replay buffer
+        batch = self.sample_batch()
+        self.unzip_batch(batch)
 
         # Calculate Q-values
         self.calculate_q_values()
@@ -91,19 +94,23 @@ class DQN_module():
         """
         Sample from batch.
         """
-        Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state', 'step_type'))
+        Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state'))
         transitions = self.memory.sample(self.batch_size)
         return Transition(*zip(*transitions))
 
     def unzip_batch(self, batch):
         """
         Get the batches from the transition tuple
+        np.concatenate concatenate all the batch data into a single ndarray
         """
-        self.state_batch = torch.cat(batch.state)
-        self.action_batch = torch.cat(batch.action).unsqueeze(1)
-        self.reward_batch = torch.cat(batch.reward).detach()
-        self.step_type_batch = torch.cat(batch.step_type)
-        self.next_state_batch = torch.cat(batch.next_state)
+        self.state_batch =  torch.as_tensor(np.concatenate([batch.state]), device=self.device, dtype=torch.float)
+        # print(self.state_batch)
+        self.action_batch = torch.as_tensor(batch.action, device=self.device)
+        # print(self.action_batch)
+        self.reward_batch = torch.as_tensor(batch.reward, device=self.device, dtype=torch.float)
+        # print(self.reward_batch)
+        self.next_state_batch = torch.as_tensor(np.concatenate([batch.next_state]), device=self.device, dtype=torch.float)
+        # print(self.next_state_batch)
 
     def calculate_q_values(self):
         """
