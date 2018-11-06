@@ -46,6 +46,7 @@ class CompassAgent(base_agent.BaseAgent):
         self.timesteps = 0  # timesteps in the current episode
         self.choice = None  # Choice of epsilon greedy
         self.loss = 0  # Action loss
+        self.episode_reward_env = 0
         self.episode_reward_shaped = 0
         self.DQN = DQN_module(self.batch_size,
                               self.gamma,
@@ -380,7 +381,7 @@ class CompassAgent(base_agent.BaseAgent):
             print_ts("----------------------------------------------------------------")
         else:
             print(self.feature_screen)
-            print(SMART_ACTIONS[self.action_idx])
+            # print(SMART_ACTIONS[self.action_idx])
 
     def log(self):
         pass
