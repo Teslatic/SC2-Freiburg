@@ -5,7 +5,7 @@ target_update_rate,5
 num_episodes,15000
 memory_size,175000
 architecture,PytorchTutorialDQN
-xy_factor,100
+xy_factor,9
 epsilon_decay,100000
 map,MoveToBeacon
 imitation_length,5

@@ -8,5 +8,5 @@ architecture,PytorchTutorialDQN
 xy_factor,400
 epsilon_decay,100000
 map,MoveToBeacon
-imitation_length,2
+imitation_length,500
 step_multiplier,48

@@ -121,7 +121,7 @@ class BaseAgent(base_agent.BaseAgent):
         ## start value for epsilon decay
         self._EPS_START = 1.0
         ## end value for epsilon decay
-        self._EPS_END = 0.1
+        self._EPS_END = 0.05
         ## step counter for epsilon calculation
         self._steps_done = 0
         ## displays choice: random or greed, init with None
@@ -400,7 +400,7 @@ class BaseAgent(base_agent.BaseAgent):
                 self.reward = torch.tensor([0] , device=self._device,
                                        requires_grad=False, dtype=torch.float)
                 self.pseudo_reward = 0
- 
+
             self.pseudo_reward_per_epoch += self.pseudo_reward
             self.total_reward += self.actual_obs.reward
 

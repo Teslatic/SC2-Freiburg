@@ -28,7 +28,7 @@ import numpy as np
 class PytorchTutorialDQN(nn.Module):
   def __init__(self, FLAGS):
     super(PytorchTutorialDQN, self).__init__()
-    xy_factor = np.sqrt(int(FLAGS.xy_factor))
+    xy_factor =int(FLAGS.xy_factor)
     x_space = np.linspace(0, 83, xy_factor, dtype = int)
     y_space = np.linspace(0, 63, xy_factor, dtype = int)
     ## xy_space pairs of x,y coordinates from which the agent may choose

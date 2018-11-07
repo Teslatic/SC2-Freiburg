@@ -122,8 +122,8 @@ class TestAgent(base_agent.BaseAgent):
     #  @param[out] xy_space: array containing the discretized x,y coordinate pairs
     def _discretize_xy_grid(self, factor):
         """ "discretizing" action coordinates in order to keep action space small """
-        x_space = np.linspace(0, 83, np.sqrt(factor), dtype = int)
-        y_space = np.linspace(0, 63, np.sqrt(factor), dtype = int)
+        x_space = np.linspace(0, 83, factor, dtype = int)
+        y_space = np.linspace(0, 63, factor, dtype = int)
         xy_space = np.transpose([np.tile(x_space, len(y_space)),
                                    np.repeat(y_space, len(x_space))])
 

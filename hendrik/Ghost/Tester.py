@@ -46,6 +46,7 @@ def main(argv):
     # convert dictionary into namedtuple to make it like the flags
     Hyper_tuple = namedtuple('Hyper_tuple', sorted(hyper_params))
     hyper_tuple = Hyper_tuple(**hyper_params)
+    hyper_tuple = hyper_tuple._replace(xy_factor=np.sqrt(int(hyper_tuple.xy_factor)))
 
     print(100 * "=")
     print("Found following hyperparameter:")
@@ -71,5 +72,5 @@ if __name__ == '__main__':
     flags.DEFINE_integer("epochs", 100 , "Amount of test episodes")
     flags.DEFINE_bool("visualize", True, "Visualize pysc2 client")
     flags.DEFINE_integer("step_multiplier", 1 , "specifiy step multiplier. 16 = ~1s game time")
-    
+
     app.run(main)

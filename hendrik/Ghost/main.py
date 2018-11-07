@@ -102,7 +102,6 @@ def main(argv):
 
     ## device information: run on GPU if possible, else CPU
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-
     if (FLAGS.architecture == "PytorchTutorialDQN"):
         architecture = PytorchTutorialDQN(FLAGS)
     if (FLAGS.architecture == "ConvNet"):
