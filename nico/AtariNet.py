@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # assign operations to GPU if possible
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 '''
 AtariNet accordingly to the SC2-paper
@@ -51,15 +51,15 @@ class DQN(nn.Module):
         self.history_length = history_length
 
         # screen conv layers
-        self.screen_conv1 = nn.Conv2d(1, 16, kernel_size=8, padding=0, stride=4)
-        self.screen_conv2 = nn.Conv2d(16, 32, kernel_size=4, padding=0, stride=2)
-        self.screen_conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1)
+        self.screen_conv1 = nn.Conv2d(1, 16, kernel_size=5, padding=0, stride=4)
+        self.screen_conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=0, stride=1)
+        # self.screen_conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1)
 
         # fully connected layers
-        self.tmp_w = self._get_filter_dimension(84, 8, 0, 4)
-        self.tmp_w = self._get_filter_dimension(self.tmp_w, 4, 0, 2)
+        self.tmp_w = self._get_filter_dimension(84, 5, 0, 4)
         self.tmp_w = self._get_filter_dimension(self.tmp_w, 3, 0, 1)
-        self.screen_fc1 = nn.Linear(64*self.tmp_w*self.tmp_w, 512)
+        # self.tmp_w = self._get_filter_dimension(self.tmp_w, 3, 0, 1)
+        self.screen_fc1 = nn.Linear(32*self.tmp_w*self.tmp_w, 512)
         self.action_fc1 = nn.Linear(512, self.num_actions)
 
 
@@ -73,8 +73,8 @@ class DQN(nn.Module):
     def forward(self, screen):
         screen = F.relu(self.screen_conv1(screen))
         screen = F.relu(self.screen_conv2(screen))
-        screen = F.relu(self.screen_conv3(screen))
-        screen = screen.view(-1, 64*self.tmp_w*self.tmp_w)
+        # screen = F.relu(self.screen_conv3(screen))
+        screen = screen.view(-1, 32*self.tmp_w*self.tmp_w)
         screen = F.relu(self.screen_fc1(screen))
         action_q_values = self.action_fc1(screen)
         return action_q_values
