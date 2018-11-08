@@ -59,8 +59,9 @@ class DQN_module():
         return device
 
     def predict_q_values(self, state):
-        state_tensor = torch.tensor([state], device=self.device, dtype=torch.float, requires_grad=False)
-        return self.net(state_tensor)
+        with torch.no_grad():
+            state_tensor = torch.tensor([state], device=self.device, dtype=torch.float, requires_grad=False)
+            return self.net(state_tensor)
 
     # ##########################################################################
     # Optimizing the network
@@ -104,7 +105,7 @@ class DQN_module():
         np.concatenate concatenate all the batch data into a single ndarray
         """
         self.state_batch =  torch.as_tensor(np.concatenate([batch.state]), device=self.device, dtype=torch.float)
-        self.action_batch = torch.as_tensor(batch.action, device=self.device)
+        self.action_batch = torch.as_tensor(batch.action, device=self.device,dtype=torch.float)
         self.reward_batch = torch.as_tensor(batch.reward, device=self.device, dtype=torch.float)
         self.next_state_batch = torch.as_tensor(np.concatenate([batch.next_state]), device=self.device, dtype=torch.float)
 

@@ -23,7 +23,9 @@ def main(unused_argv):
             action = agent.policy(actual_obs)
 
             if (action is 'reset'):
+                print_ts("About to reset the environment")
                 next_obs = env.reset()
+                print_ts("Environment reset. Episode finished.")
                 end_time = time.time()
                 print_ts("Episode took {} seconds.".format(end_time-start_time))
                 start_time = time.time()

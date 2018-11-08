@@ -215,8 +215,6 @@ class CompassAgent(base_agent.BaseAgent):
             action_idx = np.random.randint(self.action_dim)
             chosen_action = self.translate_to_PYSC2_action(SMART_ACTIONS[action_idx])
         else:
-            # Q-values berechnen
-            with torch.no_grad():
                 action_q_values = self.DQN.predict_q_values(self.state)
 
             # Beste Action bestimmen
@@ -287,8 +285,14 @@ class CompassAgent(base_agent.BaseAgent):
         self.episode_reward_shaped += self.reward_shaped
         self.next_state = self.feature_screen_next
 
+        # Maybe using uint8 for storing into ReplayBuffer
+        # self.state_uint8 = np.uint8(self.state)
+        # self.next_state_uint8 = np.uint8(self.next_state)
+        # self.action_idx_uint8 = np.uint8(self.action_idx)
+
         # save transition tuple to the memory buffer
-        self.DQN.memory.push([self.state], [self.action_idx], self.reward_shaped, [self.next_state])
+        self.DQN.memory.push([np.uint8(self.state)], [np.uint8(self.action_idx)], self.reward_shaped, [np.uint8(self.next_state)])
+        # self.DQN.memory.push([self.state], [self.action_idx], self.reward_shaped, [self.next_state])
 
     # ##########################################################################
     # Reward shaping
