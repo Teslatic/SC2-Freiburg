@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Hendrik Vloet
-Copyright (C) 2018 Hendrik Vloet
+Nico Ott, Hendrik Vloet
+Copyright (C) 2018 Nico Ott, Hendrik Vloet
 Public Domain
 """
 # ______________________________________________________________________________
@@ -12,6 +12,11 @@ Public Domain
 #  Supervisor: Prof. Dr. J. Bödecker  
 #  Students: Nico Ott, Hendrik Vloet  
 
+# custom imports
+# from tensorforce.contrib.openai_gym import OpenAIGym
+# import sc2gym
+import gym
+import sc2gym.envs
 
 # normal python imports
 from absl import app
@@ -28,6 +33,21 @@ import csv
 
 # torch imports
 import torch
+
+class MoveToBeacon1d(BaseExample):
+    def __init__(self, visualize=False, step_mul=None) -> None:
+        super().__init__(_ENV_NAME, visualize, step_mul)
+
+    def get_action(self, env, obs):
+        neutral_y, neutral_x = (obs[0] == _PLAYER_NEUTRAL).nonzero()
+        if not neutral_y.any():
+            raise Exception('Beacon not found!')
+        target = [int(neutral_x.mean()), int(neutral_y.mean())]
+        target = np.ravel_multi_index(target, obs.shape[1:])
+        return target
+
+
+
 
 
 ## @package main
@@ -93,9 +113,11 @@ def main(argv):
         for key,value in flag_info.items():
             writer.writerow([key, value])
 
+    env = gym.make('SC2MoveToBeacon-v0')
+    print(env._states)
+    print(env._actions)
 
-
-
+    exit()
 
     for e in range(1, FLAGS.epochs + 1):
 
