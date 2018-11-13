@@ -10,8 +10,9 @@ def main(unused_argv):
     # Setting up the agent, agent interface and environment
     agent = CompassAgent(agent_file)
     agent_interface = agent.setup_interface()
-    env = setup_env(env_file, agent_interface)
-    agent.setup(env.observation_spec(), env.action_spec())  # Necessary? --> For each minigame
+    # env = setup_env(env_file, agent_interface)
+    env = gym.make("sc2-v0")
+    # agent.setup(env.observation_spec(), env.action_spec())  # Necessary? --> For each minigame
 
     try:
         # Reset environment and readout initial observation
@@ -63,6 +64,7 @@ def main(unused_argv):
 if __name__ == "__main__":
     try:
     # if True:
+        import gym
         print("Importing packages")
         # normal python modules
         from absl import app
