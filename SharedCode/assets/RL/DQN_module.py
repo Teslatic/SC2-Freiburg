@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 from collections import namedtuple
 
-from AtariNet import DQN
+from assets.RL.AtariNet import DQN
 from assets.memory.ReplayBuffer import ReplayBuffer
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 

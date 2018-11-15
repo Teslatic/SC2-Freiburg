@@ -4,7 +4,7 @@ import sys
 
 EPISODES = 10000
 
-STEP_MULTIPLIER = 4  # 16 = 1s game time, None = map default
+STEP_MUL = 4  # 16 = 1s game time, None = map default
 GAMESTEPS = 0  # 0 = unlimited game time, None = map default
 VISUALIZE = True
 SILENTMODE = False # True: Just a minimum of console output
@@ -19,7 +19,7 @@ GRID_FACTOR = 10
 
 mv2beacon_specs = {
     'EPISODES': EPISODES,
-    'STEP_MUL': STEP_MULTIPLIER,  # Standard 16
+    'STEP_MUL': STEP_MUL,  # Standard 16
     'GAMESTEPS': GAMESTEPS,
     'VISUALIZE': VISUALIZE,
     'SAVE_REPLAY': False,

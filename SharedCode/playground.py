@@ -15,7 +15,7 @@ import time
 from ReplayBuffer import ReplayBuffer
 from env_specs import mv2beacon_specs
 from agent_specs import mv2beacon_specs
-from squidward import print_squidward
+# from squidward import print_squidward
 
 from CompassAgent import CompassAgent
 
