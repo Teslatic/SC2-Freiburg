@@ -20,7 +20,7 @@ epsilon_specs = {
                 'EPS_DECAY': 10000 # 50000
                 }
 
-mv2beacon_specs = {
+compassagent_specs = {
               'TYPE': BASE_AGENT,  # Standard: BASE_AGENT
               'GAMMA': GAMMA,  # Standard 0.99
               'OPTIM_LR': OPTIM_LR,  # Standard 0.0001
@@ -32,4 +32,3 @@ mv2beacon_specs = {
               'EPSILON_FILE': epsilon_specs,
               'EXP_PATH': None
               }
-

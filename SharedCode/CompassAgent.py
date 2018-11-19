@@ -46,6 +46,7 @@ class CompassAgent(base_agent.BaseAgent):
         self.timesteps = 0  # timesteps in the current episode
         self.choice = None  # Choice of epsilon greedy
         self.loss = 0  # Action loss
+        self.reward = 0
         self.episode_reward_env = 0
         self.episode_reward_shaped = 0
         self.DQN = DQN_module(self.batch_size,
@@ -105,7 +106,7 @@ class CompassAgent(base_agent.BaseAgent):
         self.feature_screen = obs.observation.feature_screen.player_relative
         self.feature_screen2 = obs.observation.feature_screen.selected
         self.state = self.feature_screen
-        self.beacon_center, self.marine_center, self.distance = self.calculate_distance(self.feature_screen, self.feature_screen2)
+        # self.beacon_center, self.marine_center, self.distance = self.calculate_distance(self.feature_screen, self.feature_screen2)
 
     def policy(self, obs):
         """
