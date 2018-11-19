@@ -8,8 +8,9 @@ from assets.RL.DQN_module import DQN_module
 from assets.smart_actions import SMART_ACTIONS_SIMPLE_NAVIGATION as SMART_ACTIONS
 from assets.helperFunctions.flagHandling import set_flag_every, set_flag_from
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
+from assets.helperFunctions.FileManager import *
 
-# np.set_printoptions(suppress=True, linewidth=np.nan, threshold=np.nan)  # only for terminal output visualization
+np.set_printoptions(suppress=True, linewidth=np.nan, threshold=np.nan)  # only for terminal output visualization
 
 
 class CompassAgent(base_agent.BaseAgent):
@@ -76,8 +77,9 @@ class CompassAgent(base_agent.BaseAgent):
         self.device = agent_file['DEVICE']
         # self.silentmode = agent_file['SILENTMODE']
         # self.logging = agent_file['LOGGING']
-        # self.supervised_episodes = agent_file['SUPERVISED_EPISODES']
-        self.exp_path = agent_file['EXP_PATH']
+        self.supervised_episodes = agent_file['SUPERVISED_EPISODES']
+        self.patience = agent_file['PATIENCE']
+
 
         epsilon_file = agent_file['EPSILON_FILE']
         self.epsilon = epsilon_file['EPSILON']
@@ -85,50 +87,58 @@ class CompassAgent(base_agent.BaseAgent):
         self.eps_end = epsilon_file['EPS_END']
         self.eps_decay = epsilon_file['EPS_DECAY']
 
+        self.exp_path = create_experiment_at_main(agent_file['EXP_PATH'])
+
+
     # ##########################################################################
     # Action Selection
     # ##########################################################################
 
-    def prepare_timestep(self, obs):
+    def prepare_timestep(self, obs, reward, done, info):
         """
         timesteps:
         """
         # from PYSC2 base class
         self.steps += 1
-        self.reward += obs.reward
+        self.reward += reward
 
         # Current episode
         self.timesteps += 1
-        self.episode_reward_env += obs.reward
-        self.available_actions = obs.observation.available_actions
+        self.episode_reward_env += reward
+        # TODO(vloeth): extend observation to full pysc2 observation 
+        # self.available_actions = obs.observation.available_actions
 
         # Calculate additional information for reward shaping
-        self.feature_screen = obs.observation.feature_screen.player_relative
-        self.feature_screen2 = obs.observation.feature_screen.selected
-        self.state = self.feature_screen
+        self.state = obs[0]
         # self.beacon_center, self.marine_center, self.distance = self.calculate_distance(self.feature_screen, self.feature_screen2)
+        self.last = obs[3]
+        self.first = obs[2]
+        self.distance = obs[4]
+        self.marine_center  = obs[5]
+        self.beacon_center = obs[6]
 
-    def policy(self, obs):
+
+    def policy(self, obs, reward, done, info):
         """
         Choosing an action
         """
         # Set all variables at the start of a new timestep
-        self.prepare_timestep(obs)
+        self.prepare_timestep(obs, reward, done, info)
 
         # Action seletion according to active policy
         # action = [actions.FUNCTIONS.select_army("select")]
 
-        if obs.first():  # Select Army in first step
-            self.action = [actions.FUNCTIONS.select_army("select")]
+        if self.first:  # Select Army in first step
+            return [actions.FUNCTIONS.select_army("select")]
 
-        if obs.last():  # End episode in last step
+        if self.last:  # End episode in last step
             print_ts("Last step: epsilon is at {}, Total score is at {}".format(self.epsilon, self.reward))
             self._save_model()
             self.update_target_network()
             self.action = 'reset'
 
         # Action selection for regular step
-        if not obs.first() and not obs.last():
+        if not self.first and not self.last:
             # For the first n episodes learn on forced actions.
             if self.episodes < self.supervised_episodes:
                 self.action, self.action_idx = self.supervised_action()
@@ -190,8 +200,8 @@ class CompassAgent(base_agent.BaseAgent):
                 action_idx = right
             if not action_choice:
                 action_idx = up
-        chosen_action = self.translate_to_PYSC2_action(SMART_ACTIONS[action_idx])
-        return [chosen_action], action_idx
+        chosen_action = SMART_ACTIONS[action_idx]
+        return chosen_action, action_idx
 
     def choose_action(self, agent_mode='learn'):
         """
@@ -231,17 +241,18 @@ class CompassAgent(base_agent.BaseAgent):
     # Store transition in Replay Buffer
     # ##########################################################################
 
-    def store_transition(self, next_obs):
+    def store_transition(self, next_obs, reward):
         """
         Save the actual information in the history.
         As soon as there has been enough data, the experience is sampled from the replay buffer.
         """
-        self.env_reward = next_obs.reward
-        self.feature_screen_next = next_obs.observation.feature_screen.player_relative
-        self.feature_screen_next2 = next_obs.observation.feature_screen.selected
-        self.reward_shaped = self.reward_shaping()
-        self.episode_reward_shaped += self.reward_shaped
-        self.next_state = self.feature_screen_next
+        # don't store transition if first or last step
+        if self.first or self.last:
+            return
+
+        self.reward = reward
+        # self.episode_reward_shaped += self.reward_shaped
+        self.next_state = next_obs[0]
 
         # Maybe using uint8 for storing into ReplayBuffer
         # self.state_uint8 = np.uint8(self.state)
@@ -250,7 +261,7 @@ class CompassAgent(base_agent.BaseAgent):
 
         # save transition tuple to the memory buffer
         # self.DQN.memory.push([np.uint8(self.state)], [self.action_idx], self.reward_shaped, [np.uint8(self.next_state)])
-        self.DQN.memory.push([self.state], [self.action_idx], self.reward_shaped, [self.next_state])
+        self.DQN.memory.push([self.state], [self.action_idx], self.reward, [self.next_state])
 
 
     # ##########################################################################
@@ -267,7 +278,8 @@ class CompassAgent(base_agent.BaseAgent):
         """
         Optimizes the DQN_module on a minibatch
         """
-        self.DQN.optimize()
+        if self.get_memory_length() >= self.batch_size * self.patience:
+            self.DQN.optimize()
 
     # ##########################################################################
     # Print status information of timestep

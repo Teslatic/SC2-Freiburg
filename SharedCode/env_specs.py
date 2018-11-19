@@ -6,7 +6,7 @@ EPISODES = 10000
 
 STEP_MUL = 4  # 16 = 1s game time, None = map default
 GAMESTEPS = 0  # 0 = unlimited game time, None = map default
-VISUALIZE = True
+VISUALIZE = False
 SILENTMODE = False # True: Just a minimum of console output
 LOGGING = False  # Logs information in files for tmux sessions
 
