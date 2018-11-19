@@ -18,12 +18,12 @@ import os
 import pandas as pd
 from pathlib import Path
 
-# torch imports
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import torchvision.transforms as T
+# # torch imports
+# import torch
+# import torch.nn as nn
+# import torch.optim as optim
+# import torch.nn.functional as F
+# import torchvision.transforms as T
 
 # custom imports
 from assets.RL.DQN_module import DQN_module
@@ -54,13 +54,18 @@ class GridAgent(base_agent.BaseAgent):
         self.reward = 0
         self.episode_reward_env = 0
         self.episode_reward_shaped = 0
+        self._xy_pairs = self.discretize_xy_grid()
+        self.dim_actions = len(self._xy_pairs)
         self.DQN = DQN_module(self.batch_size,
                               self.gamma,
                               self.history_length,
                               self.size_replaybuffer,
-                              self.optim_learning_rate)
+                              self.optim_learning_rate,
+                              self.dim_actions
+        )
         self.device = self.DQN.device
         print_ts("Agent has been initalized")
+
 
     def unzip_hyperparameter_file(self, agent_file):
         """
@@ -87,6 +92,8 @@ class GridAgent(base_agent.BaseAgent):
         self.eps_decay = epsilon_file['EPS_DECAY']
 
         self.exp_path = create_experiment_at_main(agent_file['EXP_PATH'])
+
+        self.grid_factor = agent_file['GRID_FACTOR']
 
     # ##########################################################################
     # Action Selection
@@ -143,7 +150,7 @@ class GridAgent(base_agent.BaseAgent):
             else:
                 # Choose an action according to the policy
                 self.action, self.action_idx = self.choose_action()
-        return self.action
+        return self.action_idx
 
 
 
@@ -153,22 +160,20 @@ class GridAgent(base_agent.BaseAgent):
                 # self.actual_obs.observation.feature_screen.player_relative == 3),
                              # axis=0).round()
 
-            self.x_coord = self.beacon[0]
-            self.y_coord = self.beacon[1]
-
-            # print("Beacon target: {},{}".format(self.x_coord, self.y_coord))
-            # print("xy space: {}".format(self._xy_pairs))
+            self.x_coord = self.beacon_center[0]
+            self.y_coord = self.beacon_center[1]
 
             distances = []
             for xy_pair in self._xy_pairs:
-                dx = np.abs(xy_pair[0] - self.beacon[0])
-                dy = np.abs(xy_pair[1] - self.beacon[1])
+                dx = np.abs(xy_pair[0] - self.beacon_center[0])
+                dy = np.abs(xy_pair[1] - self.beacon_center[1])
                 distances.append(np.sqrt(dx**2 + dy**2).round())
 
             closest_pair = np.argmin(distances)
             # print("Closes pair: {}".format(closest_pair))
-            self.action_idx = torch.tensor([closest_pair],
-                                           dtype=torch.long, device=self._device)
+            self.action_idx = closest_pair
+            return self.action_idx, self.action_idx
+
 
     def choose_action(self, agent_mode='learn'):
         """
@@ -182,18 +187,18 @@ class GridAgent(base_agent.BaseAgent):
 
         if self.choice == 'random' and agent_mode == 'learn':
             action_idx = np.random.randint(self.action_dim)
-            chosen_action = self.translate_to_PYSC2_action(SMART_ACTIONS[action_idx])
+            # chosen_action = self.translate_to_PYSC2_action(SMART_ACTIONS[action_idx])
         else:
             action_q_values = self.DQN.predict_q_values(self.state)
 
             # Beste Action bestimmen
-            best_action_numpy = action_q_values.detach().numpy()
+            best_action_numpy = action_q_values.detach().cpu().numpy()
             action_idx = np.argmax(best_action_numpy)
-            best_action = SMART_ACTIONS[action_idx]
+            best_action = action_idx
 
-            chosen_action = self.translate_to_PYSC2_action(best_action)
+            # chosen_action = self.translate_to_PYSC2_action(best_action)
         # square brackets around chosen_action needed for internal pysc2 state machine
-        return [chosen_action], action_idx
+        return [action_idx], action_idx
 
     def epsilon_greedy(self):
         """
@@ -227,96 +232,81 @@ class GridAgent(base_agent.BaseAgent):
         self.DQN.memory.push([self.state], [self.action_idx], self.reward, [self.next_state])
 
 
-
-
-
-
-
     ## "discretizes" the x,y coordinate system into smaller parts in order to keep the
     #  action space smaller
     #
     #  @param[in] factor: splits the total original x,y grid into factor^2 pairs
     #  @param[out] xy_space: array containing the discretized x,y coordinate pairs
-    def _discretize_xy_grid(self, factor):
+    def discretize_xy_grid(self):
         """ "discretizing" action coordinates in order to keep action space small """
-        x_space = np.linspace(0, 83, factor, dtype = int)
-        y_space = np.linspace(0, 63, factor, dtype = int)
+        x_space = np.linspace(0, 83, self.grid_factor, dtype = int)
+        y_space = np.linspace(0, 63, self.grid_factor, dtype = int)
         xy_space = np.transpose([np.tile(x_space, len(y_space)),
                                    np.repeat(y_space, len(x_space))])
 
         return xy_space
 
-    ## determins if the next action is goint to be random or greedy
-    def decide(self):
-        if len(self.memory) >= self._batch_size:
-            self.epsilon = self._EPS_END + (self._EPS_START - self._EPS_END) \
-                * np.exp(-1. * self._steps_done / self._eps_decay)
-            self._steps_done += 1
-            self.choice = np.random.choice(['random', 'greedy'],
-                                           p=[self.epsilon, 1-self.epsilon])
-        else:
-            self.choice = 'random'
 
-    ## chooses the next action
-    #
-    #  depends of the outcom of decide():
-    #  - random: from the list of _xy_pairs, one pair is chosen and applied to the
-    #  move screeen action
-    #  - greedy: current state is feedforwarded through the network and a x,y pair
-    #  is picked according to the max q value
-    def choose_action(self):
-        if self.e % self._imitation_phase_length == 0:
-            self._imitation_phase = False
+    # ## chooses the next action
+    # #
+    # #  depends of the outcom of decide():
+    # #  - random: from the list of _xy_pairs, one pair is chosen and applied to the
+    # #  move screeen action
+    # #  - greedy: current state is feedforwarded through the network and a x,y pair
+    # #  is picked according to the max q value
+    # def choose_action(self):
+    #     if self.e % self._imitation_phase_length == 0:
+    #         self._imitation_phase = False
 
-        if self._imitation_phase==False:
-            self.decide()
-            if self.choice == 'random':
-                ## the index of the x,y pair that is chosen
-                self.action_idx = torch.tensor([random.randint(0, len(self._xy_pairs) - 1)],
-                                           dtype=torch.long, device=self._device)
-                ## the actual x,y pair which will be used in the next action
-                self.action_xy = self._xy_pairs[self.action_idx]
-            else:
-                with torch.no_grad():
-                    self.action_q_values = self._net(self.state)
-                    self.action_idx = torch.tensor([np.argmax(self.action_q_values)],
-                                           dtype=torch.long, device=self._device)
-                    self.action_xy = self._xy_pairs[self.action_idx]
-            self.x_coord = self.action_xy[0]
-            self.y_coord = self.action_xy[1]
-            self.list_x.append(self.x_coord)
-            self.list_y.append(self.y_coord)
-        else:
-            self.beacon = np.mean(self._xy_locs(
-                self.actual_obs.observation.feature_screen.player_relative == 3),
-                             axis=0).round()
+    #     if self._imitation_phase==False:
+    #         self.decide()
+    #         if self.choice == 'random':
+    #             ## the index of the x,y pair that is chosen
+    #             self.action_idx = torch.tensor([random.randint(0, len(self._xy_pairs) - 1)],
+    #                                        dtype=torch.long, device=self._device)
+    #             ## the actual x,y pair which will be used in the next action
+    #             self.action_xy = self._xy_pairs[self.action_idx]
+    #         else:
+    #             with torch.no_grad():
+    #                 self.action_q_values = self._net(self.state)
+    #                 self.action_idx = torch.tensor([np.argmax(self.action_q_values)],
+    #                                        dtype=torch.long, device=self._device)
+    #                 self.action_xy = self._xy_pairs[self.action_idx]
+    #         self.x_coord = self.action_xy[0]
+    #         self.y_coord = self.action_xy[1]
+    #         self.list_x.append(self.x_coord)
+    #         self.list_y.append(self.y_coord)
+    #     else:
+    #         self.beacon = np.mean(self._xy_locs(
+    #             self.actual_obs.observation.feature_screen.player_relative == 3),
+    #                          axis=0).round()
 
-            self.x_coord = self.beacon[0]
-            self.y_coord = self.beacon[1]
+    #         self.x_coord = self.beacon[0]
+    #         self.y_coord = self.beacon[1]
 
-            # print("Beacon target: {},{}".format(self.x_coord, self.y_coord))
-            # print("xy space: {}".format(self._xy_pairs))
+    #         # print("Beacon target: {},{}".format(self.x_coord, self.y_coord))
+    #         # print("xy space: {}".format(self._xy_pairs))
 
-            distances = []
-            for xy_pair in self._xy_pairs:
-                dx = np.abs(xy_pair[0] - self.beacon[0])
-                dy = np.abs(xy_pair[1] - self.beacon[1])
-                distances.append(np.sqrt(dx**2 + dy**2).round())
+    #         distances = []
+    #         for xy_pair in self._xy_pairs:
+    #             dx = np.abs(xy_pair[0] - self.beacon[0])
+    #             dy = np.abs(xy_pair[1] - self.beacon[1])
+    #             distances.append(np.sqrt(dx**2 + dy**2).round())
 
-            closest_pair = np.argmin(distances)
-            # print("Closes pair: {}".format(closest_pair))
-            self.action_idx = torch.tensor([closest_pair],
-                                           dtype=torch.long, device=self._device)
+    #         closest_pair = np.argmin(distances)
+    #         # print("Closes pair: {}".format(closest_pair))
+    #         self.action_idx = torch.tensor([closest_pair],
+    #                                        dtype=torch.long, device=self._device)
 
 
-        # first action is always to select the army
-        if self.actual_obs.first()==True:
-            ## the action id of the pysc2 action, necessary to extract the real action
-            self.pysc_action = self._SMART_ACTIONS[0]
-        else:
-            self.pysc_action = self._SMART_ACTIONS[1]
+    #     # first action is always to select the army
+    #     if self.actual_obs.first()==True:
+    #         ## the action id of the pysc2 action, necessary to extract the real action
+    #         self.pysc_action = self._SMART_ACTIONS[0]
+    #     else:
+    #         self.pysc_action = self._SMART_ACTIONS[1]
 
-        self.extract_action()
+    #     self.extract_action()
 
 
     ## extracts the action from the list of available actions in the actual game
@@ -341,200 +331,61 @@ class GridAgent(base_agent.BaseAgent):
             self.action = [actions.FUNCTIONS.no_op()]
 
 
-    ## invokes one agent step by starting the pipeline to acquire the next action
-    def step(self):
-        self.choose_action()
 
 
-    ## calculate a pseudo reward in order to handle sparse rewards
-    #
-    #  the actual reward of the pysc2 engine is very sparse. 0 for every step and 1
-    #  for the specific scenario reward, e.g. reaching a beacon. In order to make it
-    #  easy for the agent, a pseudo reward is used. This reward is antiproportional to
-    #  the distance from marine to beacon. Additionally, if the marine reaches the beacon
-    #  a +10 is added to the reward.
-    #
-    #  This is only an intermediate step in order to find good first hyperparameters
-    #  @param beacon: x,y coordinates of the current beacon
-    #  @param marine_x: current x positon of the marine
-    #  @param marine_y: current y position of the marine
-    def calc_pseudo_reward(self):
-            self.beacon = np.mean(self._xy_locs(
-                self.actual_obs.observation.feature_screen.player_relative == 3),
-                             axis=0).round()
-            b_x, b_y = self.beacon
-            if self.actual_obs.first()==False:
-                try:
-                    marine = self._xy_locs(self.actual_obs.observation.feature_screen.selected == 1)
-                    marine = np.mean(marine, axis = 0).round()
-                    self.marine_x = marine[0]
-                    self.marine_y = marine[1]
+    # ##########################################################################
+    # DQN module wrappers
+    # ##########################################################################
 
-                    dx = self.marine_x - b_x
-                    dy = self.marine_y - b_y
+    def get_memory_length(self):
+        """
+        Returns the length of the ReplayBuffer
+        """
+        return len(self.DQN.memory)
 
-                    distance = np.sqrt(dx**2 + dy**2).round(4)
-                    scaling = lambda x : (x - 0)/(100 - 0)
-                    # self.pseudo_reward = (0.1 * (1 - scaling(distance))).round(3)
-                    self.pseudo_reward = -1 * scaling(distance).round(4)
-
-                    #if self.actual_obs.reward==1:
-                    if self.next_obs[0].reward == 1:
-                        self.reward = torch.tensor([10] , device=self._device,
-                                       requires_grad=False, dtype=torch.float)
-                        self.pseudo_reward = 10
-                    else:
-                        self.reward = torch.tensor([self.pseudo_reward] , device=self._device,
-                                                   requires_grad=False, dtype=torch.float)
-                except:
-                    pass
-            else:
-                self.marine_x = -1
-                self.marine_y = -1
-                self.reward = torch.tensor([0] , device=self._device,
-                                       requires_grad=False, dtype=torch.float)
-                self.pseudo_reward = 0
-
-            self.pseudo_reward_per_epoch += self.pseudo_reward
-            self.total_reward += self.actual_obs.reward
-
-
-    ## optimizes the network and updates the target network every _target_net_udpdate episodes
-    #
-    #  In this method, a batch is sampled from the ReplayBuffer memory and organized in its
-    #  transition chunks:
-    #  - state_batch: batch of states
-    #  - action_batch: batch of actions
-    #  - reward_batch: batch of rewards
-    #  - next_states: batch of next states
-    #
-    #  The optimize method takes the batches and computes q values with the actual net and
-    #  q values for the next states via the target network. Afterwards, the td target is calculated
-    #  and used to get the loss between the actual q values and the td target
-    ##  @param[out] loss: current loss value computed by the opzimizer
     def optimize(self):
-        if len(self.memory) < self._batch_size:
-            return
-        transitions = self.memory.sample(self._batch_size)
+        """
+        Optimizes the DQN_module on a minibatch
+        """
+        if self.get_memory_length() >= self.batch_size * self.patience:
+            self.DQN.optimize()
 
-        batch = self.memory.Transition(*zip(*transitions))
-        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                batch.next_state)), device=self._device, dtype=torch.uint8)
-        non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
+    def log(self):
+        pass
+        buffer_size = 10 # This makes it so changes appear without buffering
+        with open('output.log', 'w', buffer_size) as f:
+                f.write('{}\n'.format(self.feature_screen))
 
-        state_batch = torch.cat(batch.state)
-        action_batch = torch.cat(batch.action).unsqueeze(1)
-        reward_batch = torch.cat(batch.reward).detach()
+    def _save_model(self, emergency=False):
+        if emergency:
+            save_path = self.exp_path + "/model/emergency_model.pt"
+        else:
+            save_path = self.exp_path + "/model/model.pt"
 
-        q_action = self._net(state_batch).gather(1, action_batch)
-
-        q_action_next = torch.zeros(self._batch_size, device=self._device)
-        q_action_next[non_final_mask] = self._target_net(non_final_next_states).max(1)[0].detach()
-
-        # non_final_next_action_q  = non_final_next_action_q.max(1)[0].detach()
-
-
-        td_target_actions = (q_action_next * self._gamma) + reward_batch
-
-        loss = F.mse_loss(q_action, td_target_actions.unsqueeze(1))
-
-        self._optimizer.zero_grad()
-        loss.backward()
-        self._optimizer.step()
-
-        return loss
-
-
-    ## prints some status infos, e.g. reward, episode, etc.
-    def print_status(self):
-
-        print("Episode: {}\t Total pysc2 reward: {}\t Pseudo Reward: {}".format(
-            self.e,self.total_reward,self.reward))
-        print("Epsilon: {:.4f}".format(self.epsilon))
-        print("Beacon at {}".format(self.beacon))
-        print("Marine at {}".format((self.marine_x, self.marine_y)))
-        print("Memory length: {}".format(len(self.memory)))
-        try:
-            print("Loss: {}".format(self.loss))
-        except:
-             pass
-        print(self.action)
-        print(100 * "=")
-
-
-    ## training loop
-    #
-    #  the play method is the actual training loop
-    ## @param state: tensor, where the current screen state is saved (player relative at the moment). The state has the dimensions (batch_size x 1 x 84 x 84)
-    ## @param next_state: same as state but for the next state
-    ## @param reward: tensor, containting the current reward
-    def play(self):
-        for self.e in range(1, self._epochs):
-            self.pseudo_reward_per_epoch = 0
-            try:
-                # get first observation
-                observation = self._env.reset()
-                ## verbose state observation
-                self.actual_obs = observation[0]
-                while (True):
-                    ## state tensor
-                    self.state = torch.tensor([self.actual_obs.observation.feature_screen.player_relative],
-                                              dtype=torch.float, device=self._device, requires_grad = False).unsqueeze(1)
-
-                    # agent determines action to take
-                    self.step()
-                    ## next_obs is the next state but densely encoded by the pysc2 engine
-                    self.next_obs = self._env.step(self.action)
-                    # get pseudo reward
-                    self.calc_pseudo_reward()
-
-                    # if in last step, write only None in next state
-                    if self.next_obs[0].last():
-                        ## next_state is the more verbose version of next_obs and also used by the network
-                        self.next_state = None
-                    else:
-                        self.next_state = torch.tensor([self.next_obs[0].observation.feature_screen.player_relative],\
-                                                       dtype=torch.float, device=self._device,
-                                                       requires_grad = False).unsqueeze(1)
-
-                    # save transition
-                    self.memory.push(self.state, self.action_idx, self.reward , self.next_state,
-                                     self.next_obs[0].step_type.value)
-
-                    # state <- next state
-                    self.actual_obs = self.next_obs[0]
-
-                    # train/optimize
-                    if self._imitation_phase==False:
-                        self.loss = self.optimize()
-
-                    # print status message
-                    self.print_status()
-
-                    # if in terminal state, break
-                    if self.next_obs[0].last()==True:
-                        break
-
-                # reward book keeping
-                # if self._imitation_phase==False:
-                self.r_per_epoch.append(self.actual_obs.observation["score_cumulative"][0])
-                self.list_score_cumulative.append(self.total_reward)
-                self.list_pseudo_reward_per_epoch.append(self.pseudo_reward_per_epoch)
-                self.list_epsilon.append(self.epsilon)
-                # self.print_status()
-                # update target network weights every _target_update epochs
-                # also save the model state dictionary
-                if self.e % self._target_update == 0:
-                    self._target_net.load_state_dict(self._net.state_dict())
-                    self._save_model()
-                    self.log_reward()
-                    self.log_coordinates()
-            except KeyboardInterrupt:
-                print("KeyboardInterrupt detected, saving model and data!")
-                self._save_model()
-                self.log_reward()
-                break
+        # Path((self.exp_path + "/model")).mkdir(parents=True, exist_ok=True)
+        self.DQN.save(save_path)
 
 
 
 
+ # ##########################################################################
+    # Ending Episode
+    # ##########################################################################
+
+    def update_target_network(self):
+        """
+        Transferring the estimator weights to the target weights
+        """
+        if self.episodes % self.target_update_period == 0:
+            print_ts("About to update")
+            self.DQN.update_target_net()
+        self.reset()
+
+    def reset(self):
+        """
+        Resetting the agent --> More explanation
+        """
+        super(GridAgent, self).reset()
+        self.timesteps = 0
+        self.episode_reward_env = 0
+        self.episode_reward_shaped = 0

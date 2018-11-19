@@ -10,9 +10,11 @@ PATIENCE = 5
 TARGET_UPDATE_PERIOD = 5
 HIST_LENGTH = 1
 REPLAY_SIZE = 30000
-SUPERVISED_EPISODES = 2
+SUPERVISED_EPISODES = 10
 DEVICE = 'cpu' # will be overwritten by main
 # DEVICE = "cuda:0"
+
+GRID_FACTOR = 20
 
 epsilon_specs = {
     'EPSILON': 0.02,
@@ -49,5 +51,6 @@ gridagent_specs = {
     'DEVICE': DEVICE,
     'EPSILON_FILE': epsilon_specs,
     'EXP_PATH': 'dummy',
-    'SUPERVISED_EPISODES' : SUPERVISED_EPISODES
+    'SUPERVISED_EPISODES' : SUPERVISED_EPISODES,
+    'GRID_FACTOR': GRID_FACTOR
 }

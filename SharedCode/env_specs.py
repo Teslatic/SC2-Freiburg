@@ -6,13 +6,14 @@ EPISODES = 10000
 
 STEP_MUL = 4  # 16 = 1s game time, None = map default
 GAMESTEPS = 0  # 0 = unlimited game time, None = map default
-VISUALIZE = False
+VISUALIZE = True
 SILENTMODE = False # True: Just a minimum of console output
 LOGGING = False  # Logs information in files for tmux sessions
 
-REWARD_TYPE = 'distance'
+# sparse, diff, distance
+REWARD_TYPE = 'diff'
 ACTION_TYPE = 'compass'
-GRID_FACTOR = 10
+GRID_FACTOR = 20
 
 # TODO: make environment specs as class, such that each map gets its own
 # specification object

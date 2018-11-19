@@ -44,9 +44,9 @@ and 18 on the games we considered.
 
 class DQN(nn.Module):
 
-    def __init__(self, history_length):
+    def __init__(self, history_length, dim_actions):
         super(DQN, self).__init__()
-        self.num_actions = 4
+        self.num_actions = dim_actions
         self.map_dimensions = (84, 64)
         self.history_length = history_length
 

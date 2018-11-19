@@ -13,7 +13,7 @@ class DQN_module():
     """
     A wrapper class that augments the AtariNet.DQN class by optmizing methods.
     """
-    def __init__(self, batch_size, gamma, history_length, size_replaybuffer, optim_learning_rate):
+    def __init__(self, batch_size, gamma, history_length, size_replaybuffer, optim_learning_rate, dim_actions):
         """
         update_cnt: Target network update counter.
         net:        The q-value network.
@@ -25,6 +25,7 @@ class DQN_module():
         self.batch_size = batch_size
         self.gamma = gamma
         self.history_length = history_length
+        self.dim_actions = dim_actions
         self.size_replaybuffer = size_replaybuffer
         self.optim_learning_rate = optim_learning_rate
         self.loss = 0
@@ -38,8 +39,8 @@ class DQN_module():
         """
         Initializing 2 networks and an Adam optimizer.
         """
-        net = DQN(self.history_length).to(self.device)
-        target_net = DQN(self.history_length).to(self.device)
+        net = DQN(self.history_length, self.dim_actions).to(self.device)
+        target_net = DQN(self.history_length, self.dim_actions).to(self.device)
         optimizer = optim.Adam(net.parameters(), lr=self.optim_learning_rate)
         return net, target_net, optimizer
 

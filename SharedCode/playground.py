@@ -26,8 +26,8 @@ from pysc2.lib import actions
 def main(argv):
     del argv
     print_squidward()
-    # agent = CompassAgent(compassagent_specs)
-    agent = GridAgent(gridagent_specs)
+    agent = CompassAgent(compassagent_specs)
+    # agent = GridAgent(gridagent_specs)
     env = gym.make("sc2-v0")
     obs, reward, done, info  = env.setup(mv2beacon_specs)
 

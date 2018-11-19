@@ -54,7 +54,8 @@ class CompassAgent(base_agent.BaseAgent):
                               self.gamma,
                               self.history_length,
                               self.size_replaybuffer,
-                              self.optim_learning_rate)
+                              self.optim_learning_rate,
+                              self.dim_actions)
         self.device = self.DQN.device
         print_ts("Agent has been initalized")
 
@@ -66,7 +67,7 @@ class CompassAgent(base_agent.BaseAgent):
         # self.minimap_dim = agent_file['MINIMAP_DIM']
         # self.x_map_dim = 84  # magic number
         # self.y_map_dim = 64  # magic number
-        self.action_dim = len(SMART_ACTIONS)
+        self.dim_actions = len(SMART_ACTIONS)
         # self.map_dimensions = (self.x_map_dim, self.y_map_dim)
         self.gamma = agent_file['GAMMA']
         self.optim_learning_rate = agent_file['OPTIM_LR']
