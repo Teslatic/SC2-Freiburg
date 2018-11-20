@@ -9,11 +9,13 @@ from assets.RL.AtariNet import DQN
 from assets.memory.ReplayBuffer import ReplayBuffer
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 
+
 class DQN_module():
     """
     A wrapper class that augments the AtariNet.DQN class by optmizing methods.
     """
-    def __init__(self, batch_size, gamma, history_length, size_replaybuffer, optim_learning_rate, dim_actions):
+    def __init__(self, batch_size, gamma, history_length, size_replaybuffer,
+                 optim_learning_rate, dim_actions):
         """
         update_cnt: Target network update counter.
         net:        The q-value network.
@@ -61,7 +63,10 @@ class DQN_module():
 
     def predict_q_values(self, state):
         with torch.no_grad():
-            state_tensor = torch.tensor([state], device=self.device, dtype=torch.float, requires_grad=False).unsqueeze(1)
+            state_tensor = torch.tensor([state],
+                                        device=self.device,
+                                        dtype=torch.float,
+                                        requires_grad=False).unsqueeze(1)
             return self.net(state_tensor)
 
     # ##########################################################################
@@ -82,7 +87,7 @@ class DQN_module():
         self.calculate_q_values()
 
         # calculate td targets of the actions, x&y coordinates
-        self.td_target = self.calculate_td_target(self.next_state_q_values_max)
+        self.td_target = self.calculate_td_target(self.next_state_q_max)
 
         # Compute the loss
         self.compute_loss()
@@ -96,7 +101,8 @@ class DQN_module():
         """
         Sample from batch.
         """
-        Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state'))
+        Transition = namedtuple('Transition',
+                                ('state', 'action', 'reward', 'next_state'))
         transitions = self.memory.sample(self.batch_size)
         return Transition(*zip(*transitions))
 
@@ -105,24 +111,32 @@ class DQN_module():
         Get the batches from the transition tuple
         np.concatenate concatenate all the batch data into a single ndarray
         """
-        self.state_batch =  torch.as_tensor(np.concatenate([batch.state]), device=self.device, dtype=torch.float)
-        self.action_batch = torch.tensor(batch.action, device=self.device, dtype=torch.long)
-        self.reward_batch = torch.as_tensor(batch.reward, device=self.device, dtype=torch.float)
-        self.next_state_batch = torch.as_tensor(np.concatenate([batch.next_state]), device=self.device, dtype=torch.float)
-
+        self.state_batch = torch.as_tensor(np.concatenate([batch.state]),
+                                           device=self.device,
+                                           dtype=torch.float)
+        self.action_batch = torch.tensor(batch.action,
+                                         device=self.device,
+                                         dtype=torch.long)
+        self.reward_batch = torch.as_tensor(batch.reward,
+                                            device=self.device,
+                                            dtype=torch.float)
+        self.next_state_batch = torch.as_tensor(
+                                            np.concatenate([batch.next_state]),
+                                            device=self.device,
+                                            dtype=torch.float)
 
     def calculate_q_values(self):
         """
         """
         # forward pass
-        self.state_q_values_full = self.net(self.state_batch)
+        self.state_q_values = self.net(self.state_batch)
 
         # gather action values with respect to the chosen action
-        self.state_q_values = self.state_q_values_full.gather(1, self.action_batch)
+        self.state_q_values = self.state_q_values.gather(1, self.action_batch)
 
-        # compute action values of the next state over all actions and take the max
+        # compute action values of the next state over all actions and take max
         self.next_state_q_values = self.target_net(self.next_state_batch)
-        self.next_state_q_values_max = self.next_state_q_values.max(1)[0].detach()
+        self.next_state_q_max = self.next_state_q_values.max(1)[0].detach()
 
     def calculate_td_target(self, q_values_best_next):
         """
@@ -156,12 +170,13 @@ class DQN_module():
         """
         Calculating the loss between TD-target Q-values.
         """
-        self.loss = F.mse_loss(self.state_q_values, self.td_target.unsqueeze(1))  # compute MSE loss
+        self.loss = F.mse_loss(self.state_q_values,
+                               self.td_target.unsqueeze(1))
 
     def optimize_model(self):
         """
         This step is used to update the parameter weights:
-        loss.backwards propagates the loss gradients for all net weights backwards.
+        loss.backwards propagates the backward gradients for all net weights.
         optimizer.step updates all net weights with the assigned gradients.
         optimizer.zero_grad sets the gradients to 0 for the next update cycle.
         """

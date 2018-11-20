@@ -1,7 +1,6 @@
-import time
 import datetime
 
 
-def print_timestamp(string = ""):
+def print_timestamp(string=""):
     now = datetime.datetime.now()
-    print(now.strftime("%Y-%m-%d %H:%M:%S: ")+string)
+    print(now.strftime("%Y-%m-%d %H:%M:%S: ") + string)
