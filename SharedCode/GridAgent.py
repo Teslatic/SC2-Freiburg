@@ -54,15 +54,16 @@ class GridAgent(base_agent.BaseAgent):
         self.reward = 0
         self.episode_reward_env = 0
         self.episode_reward_shaped = 0
+
         self._xy_pairs = self.discretize_xy_grid()
         self.dim_actions = len(self._xy_pairs)
+
         self.DQN = DQN_module(self.batch_size,
                               self.gamma,
                               self.history_length,
                               self.size_replaybuffer,
                               self.optim_learning_rate,
-                              self.dim_actions
-        )
+                              self.dim_actions)
         self.device = self.DQN.device
         print_ts("Agent has been initalized")
 
@@ -110,18 +111,16 @@ class GridAgent(base_agent.BaseAgent):
         # Current episode
         self.timesteps += 1
         self.episode_reward_env += reward
-        # TODO(vloeth): extend observation to full pysc2 observation 
+        # TODO(vloeth): extend observation to full pysc2 observation
         # self.available_actions = obs.observation.available_actions
 
-        # Calculate additional information for reward shaping
+        # Unzip the observation tuple
         self.state = obs[0]
-        # self.beacon_center, self.marine_center, self.distance = self.calculate_distance(self.feature_screen, self.feature_screen2)
-        self.last = obs[3]
         self.first = obs[2]
+        self.last = obs[3]
         self.distance = obs[4]
         self.marine_center  = obs[5]
         self.beacon_center = obs[6]
-
 
     def policy(self, obs, reward, done, info):
         """
@@ -130,11 +129,8 @@ class GridAgent(base_agent.BaseAgent):
         # Set all variables at the start of a new timestep
         self.prepare_timestep(obs, reward, done, info)
 
-        # Action seletion according to active policy
-        # action = [actions.FUNCTIONS.select_army("select")]
-
         if self.first:  # Select Army in first step
-            return [actions.FUNCTIONS.select_army("select")]
+            return 'select_army'
 
         if self.last:  # End episode in last step
             print_ts("Last step: epsilon is at {}, Total score is at {}".format(self.epsilon, self.reward))
@@ -155,7 +151,9 @@ class GridAgent(base_agent.BaseAgent):
 
 
     def supervised_action(self):
-
+        """
+        This method selects a grid point which is the closest to the beacon.
+        """
         # self.beacon = np.mean(self._xy_locs(
                 # self.actual_obs.observation.feature_screen.player_relative == 3),
                              # axis=0).round()
@@ -209,6 +207,21 @@ class GridAgent(base_agent.BaseAgent):
         self.steps_done += 1
         return np.random.choice(['random', 'greedy'], p=[self.epsilon, 1-self.epsilon])
 
+    # ##########################################################################
+    # Evaluate a timestep
+    # ##########################################################################
+
+    def evaluate(self, obs, reward, done info):
+        """
+        A generic wrapper, that contains all agent operations which are used
+        after finishing a timestep.
+        """
+        # Saving the episode data. Pushing the information onto the memory.
+        self.store_transition(obs, reward)
+
+        # Optimize the agent
+        self.optimize()
+
     def store_transition(self, next_obs, reward):
         """
         Save the actual information in the history.
@@ -230,6 +243,46 @@ class GridAgent(base_agent.BaseAgent):
         # save transition tuple to the memory buffer
         # self.DQN.memory.push([np.uint8(self.state)], [self.action_idx], self.reward_shaped, [np.uint8(self.next_state)])
         self.DQN.memory.push([self.state], [self.action_idx], self.reward, [self.next_state])
+
+    # ##########################################################################
+    # DQN module wrappers
+    # ##########################################################################
+
+    def get_memory_length(self):
+        """
+        Returns the length of the ReplayBuffer
+        """
+        return len(self.DQN.memory)
+
+    def optimize(self):
+        """
+        Optimizes the DQN_module on a minibatch
+        """
+        if self.get_memory_length() >= self.batch_size * self.patience:
+            self.DQN.optimize()
+
+ # ##########################################################################
+    # Ending Episode
+    # ##########################################################################
+
+    def update_target_network(self):
+        """
+        Transferring the estimator weights to the target weights
+        """
+        if self.episodes % self.target_update_period == 0:
+            print_ts("About to update")
+            self.DQN.update_target_net()
+        self.reset()
+
+    def reset(self):
+        """
+        Resetting the agent --> More explanation
+        """
+        super(GridAgent, self).reset()
+        self.timesteps = 0
+        self.episode_reward_env = 0
+        self.episode_reward_shaped = 0
+
 
 
     ## "discretizes" the x,y coordinate system into smaller parts in order to keep the
@@ -333,22 +386,7 @@ class GridAgent(base_agent.BaseAgent):
 
 
 
-    # ##########################################################################
-    # DQN module wrappers
-    # ##########################################################################
 
-    def get_memory_length(self):
-        """
-        Returns the length of the ReplayBuffer
-        """
-        return len(self.DQN.memory)
-
-    def optimize(self):
-        """
-        Optimizes the DQN_module on a minibatch
-        """
-        if self.get_memory_length() >= self.batch_size * self.patience:
-            self.DQN.optimize()
 
     def log(self):
         pass
@@ -364,28 +402,3 @@ class GridAgent(base_agent.BaseAgent):
 
         # Path((self.exp_path + "/model")).mkdir(parents=True, exist_ok=True)
         self.DQN.save(save_path)
-
-
-
-
- # ##########################################################################
-    # Ending Episode
-    # ##########################################################################
-
-    def update_target_network(self):
-        """
-        Transferring the estimator weights to the target weights
-        """
-        if self.episodes % self.target_update_period == 0:
-            print_ts("About to update")
-            self.DQN.update_target_net()
-        self.reset()
-
-    def reset(self):
-        """
-        Resetting the agent --> More explanation
-        """
-        super(GridAgent, self).reset()
-        self.timesteps = 0
-        self.episode_reward_env = 0
-        self.episode_reward_shaped = 0

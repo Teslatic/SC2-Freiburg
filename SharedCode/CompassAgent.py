@@ -1,14 +1,11 @@
 import numpy as np
 from pysc2.agents import base_agent
-from pysc2.lib import actions, features
-import math
-import time
 
 from assets.RL.DQN_module import DQN_module
 from assets.smart_actions import SMART_ACTIONS_SIMPLE_NAVIGATION as SMART_ACTIONS
-from assets.helperFunctions.flagHandling import set_flag_every, set_flag_from
+# from assets.helperFunctions.flagHandling import set_flag_every, set_flag_from
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
-from assets.helperFunctions.FileManager import *
+# from assets.helperFunctions.FileManager import *
 
 np.set_printoptions(suppress=True, linewidth=np.nan, threshold=np.nan)  # only for terminal output visualization
 
@@ -50,6 +47,7 @@ class CompassAgent(base_agent.BaseAgent):
         self.reward = 0
         self.episode_reward_env = 0
         self.episode_reward_shaped = 0
+
         self.DQN = DQN_module(self.batch_size,
                               self.gamma,
                               self.history_length,
@@ -63,12 +61,7 @@ class CompassAgent(base_agent.BaseAgent):
         """
         Unzipping the hyperparameter files and writing them into member variables.
         """
-        # self.screen_dim = agent_file['SCREEN_DIM']
-        # self.minimap_dim = agent_file['MINIMAP_DIM']
-        # self.x_map_dim = 84  # magic number
-        # self.y_map_dim = 64  # magic number
         self.dim_actions = len(SMART_ACTIONS)
-        # self.map_dimensions = (self.x_map_dim, self.y_map_dim)
         self.gamma = agent_file['GAMMA']
         self.optim_learning_rate = agent_file['OPTIM_LR']
         self.batch_size = agent_file['BATCH_SIZE']
@@ -109,15 +102,13 @@ class CompassAgent(base_agent.BaseAgent):
         # TODO(vloeth): extend observation to full pysc2 observation
         # self.available_actions = obs.observation.available_actions
 
-        # Calculate additional information for reward shaping
+        # Unzip the observation tuple
         self.state = obs[0]
-        # self.beacon_center, self.marine_center, self.distance = self.calculate_distance(self.feature_screen, self.feature_screen2)
-        self.last = obs[3]
         self.first = obs[2]
+        self.last = obs[3]
         self.distance = obs[4]
         self.marine_center  = obs[5]
         self.beacon_center = obs[6]
-
 
     def policy(self, obs, reward, done, info):
         """
@@ -125,9 +116,6 @@ class CompassAgent(base_agent.BaseAgent):
         """
         # Set all variables at the start of a new timestep
         self.prepare_timestep(obs, reward, done, info)
-
-        # Action seletion according to active policy
-        # action = [actions.FUNCTIONS.select_army("select")]
 
         if self.first:  # Select Army in first step
             return 'select_army'
@@ -248,6 +236,7 @@ class CompassAgent(base_agent.BaseAgent):
         """
         # Saving the episode data. Pushing the information onto the memory.
         self.store_transition(obs, reward)
+
         # Optimize the agent
         self.optimize()
 
@@ -256,7 +245,7 @@ class CompassAgent(base_agent.BaseAgent):
         Save the actual information in the history.
         As soon as there has been enough data, the experience is sampled from the replay buffer.
         """
-        # don't store transition if first or last step
+        # Don't store transition if first or last step
         if self.first or self.last:
             return
 
