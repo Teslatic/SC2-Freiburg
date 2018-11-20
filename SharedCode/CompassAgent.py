@@ -106,7 +106,7 @@ class CompassAgent(base_agent.BaseAgent):
         # Current episode
         self.timesteps += 1
         self.episode_reward_env += reward
-        # TODO(vloeth): extend observation to full pysc2 observation 
+        # TODO(vloeth): extend observation to full pysc2 observation
         # self.available_actions = obs.observation.available_actions
 
         # Calculate additional information for reward shaping
@@ -130,7 +130,7 @@ class CompassAgent(base_agent.BaseAgent):
         # action = [actions.FUNCTIONS.select_army("select")]
 
         if self.first:  # Select Army in first step
-            return [actions.FUNCTIONS.select_army("select")]
+            return 'select_army'
 
         if self.last:  # End episode in last step
             print_ts("Last step: epsilon is at {}, Total score is at {}".format(self.epsilon, self.reward))
@@ -216,7 +216,7 @@ class CompassAgent(base_agent.BaseAgent):
 
         if self.choice == 'random' and agent_mode == 'learn':
             action_idx = np.random.randint(self.action_dim)
-            chosen_action = self.translate_to_PYSC2_action(SMART_ACTIONS[action_idx])
+            chosen_action = SMART_ACTIONS[action_idx]
         else:
             action_q_values = self.DQN.predict_q_values(self.state)
 
@@ -224,8 +224,7 @@ class CompassAgent(base_agent.BaseAgent):
             best_action_numpy = action_q_values.detach().numpy()
             action_idx = np.argmax(best_action_numpy)
             best_action = SMART_ACTIONS[action_idx]
-
-            chosen_action = self.translate_to_PYSC2_action(best_action)
+            chosen_action = best_action
         # square brackets around chosen_action needed for internal pysc2 state machine
         return [chosen_action], action_idx
 
@@ -239,8 +238,18 @@ class CompassAgent(base_agent.BaseAgent):
         return np.random.choice(['random', 'greedy'], p=[self.epsilon, 1-self.epsilon])
 
     # ##########################################################################
-    # Store transition in Replay Buffer
+    # Evaluate a timestep
     # ##########################################################################
+
+    def evaluate(self, obs, reward, done info):
+        """
+        A generic wrapper, that contains all agent operations which are used
+        after finishing a timestep.
+        """
+        # Saving the episode data. Pushing the information onto the memory.
+        self.store_transition(obs, reward)
+        # Optimize the agent
+        self.optimize()
 
     def store_transition(self, next_obs, reward):
         """
@@ -252,7 +261,6 @@ class CompassAgent(base_agent.BaseAgent):
             return
 
         self.reward = reward
-        # self.episode_reward_shaped += self.reward_shaped
         self.next_state = next_obs[0]
 
         # Maybe using uint8 for storing into ReplayBuffer
@@ -281,6 +289,28 @@ class CompassAgent(base_agent.BaseAgent):
         """
         if self.get_memory_length() >= self.batch_size * self.patience:
             self.DQN.optimize()
+
+    # ##########################################################################
+    # Ending Episode
+    # ##########################################################################
+
+    def update_target_network(self):
+        """
+        Transferring the estimator weights to the target weights and resetting the agent.
+        """
+        if self.episodes % self.target_update_period == 0:
+            print_ts("About to update")
+            self.DQN.update_target_net()
+        self.reset()
+
+    def reset(self):
+        """
+        Resetting the agent --> More explanation
+        """
+        super(CompassAgent, self).reset()
+        self.timesteps = 0
+        self.episode_reward_env = 0
+        self.episode_reward_shaped = 0
 
     # ##########################################################################
     # Print status information of timestep
@@ -356,25 +386,3 @@ class CompassAgent(base_agent.BaseAgent):
     #     df = pd.DataFrame(data=d)
     #     with open(save_path, "w") as f:
     #         df.to_csv(f, header=True, index=False)
-
-    # ##########################################################################
-    # Ending Episode
-    # ##########################################################################
-
-    def update_target_network(self):
-        """
-        Transferring the estimator weights to the target weights
-        """
-        if self.episodes % self.target_update_period == 0:
-            print_ts("About to update")
-            self.DQN.update_target_net()
-        self.reset()
-
-    def reset(self):
-        """
-        Resetting the agent --> More explanation
-        """
-        super(CompassAgent, self).reset()
-        self.timesteps = 0
-        self.episode_reward_env = 0
-        self.episode_reward_shaped = 0
