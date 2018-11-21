@@ -1,6 +1,7 @@
 # python imports
 import numpy as np
 from pysc2.agents import base_agent
+import pandas as pd
 
 # custom imports
 from assets.RL.DQN_module import DQN_module
@@ -46,6 +47,20 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         self.timesteps = 0  # timesteps in the current episode
         self.setup_dqn()
 
+        # counter for book keepping
+        self.shaped_reward_cumulative = 0
+        self.shaped_reward_per_episode = 0
+        self.pysc2_reward_cumulative = 0
+
+        # lists for book keeping
+        self.list_shaped_reward_per_episode = []
+        self.list_shaped_reward_cumulative = []
+        self.list_epsilon_progression = []
+        self.list_loss_per_episode = []
+        self.list_loss_mean = []
+        self.list_pysc2_reward_per_episode = []
+        self.list_pysc2_reward_cumulative = []
+
     def setup_dqn(self):
         print_ts("Setup DQN of Move2BeaconAgent")
         self.DQN = DQN_module(self.batch_size,
@@ -67,7 +82,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         self.target_update_period = agent_file['TARGET_UPDATE_PERIOD']
         self.history_length = agent_file['HIST_LENGTH']
         self.size_replaybuffer = agent_file['REPLAY_SIZE']
-        self.device = agent_file['DEVICE']
+        # self.device = agent_file['DEVICE']
         # self.silentmode = agent_file['SILENTMODE']
         # self.logging = agent_file['LOGGING']
         self.supervised_episodes = agent_file['SUPERVISED_EPISODES']
@@ -77,6 +92,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         self.eps_start = epsilon_file['EPS_START']
         self.eps_end = epsilon_file['EPS_END']
         self.eps_decay = epsilon_file['EPS_DECAY']
+
 
         self.exp_path = create_experiment_at_main(agent_file['EXP_PATH'])
 
@@ -119,7 +135,10 @@ class Move2BeaconAgent(base_agent.BaseAgent):
             return 'select_army'
 
         if self.last:  # End episode in last step
-            print_ts("Last step: epsilon is at {}".format(self.epsilon))
+            try:
+                print_ts("Last step: epsilon is at {}".format(self.epsilon))
+            except:
+                pass
             print_ts("Total score is at {}".format(self.reward))
             self._save_model()
             self.update_target_network()
@@ -185,12 +204,78 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         """
         A generic wrapper, that contains all agent operations which are used
         after finishing a timestep.
-        """
-        # Saving the episode data. Pushing the information onto the memory.
-        self.store_transition(obs, reward)
 
-        # Optimize the agent
-        self.optimize()
+        Retuns a dictionary with the following information:
+            - Shaped reward per episode
+            - Shaped reward cumulative
+            - Mean loss per episode
+            - epsilon progression per episode
+        """
+        try:
+
+            # Saving the episode data. Pushing the information onto the memory.
+            self.store_transition(obs, reward)
+
+            # Optimize the agent
+            self.optimize()
+
+            # collect reward, loss and epsilon information as dictionary
+            agent_report = self.collect_report(obs, reward, done)
+        except KeyboardInterrupt:
+            self._save_model(emergency=True)
+        return agent_report, self.exp_path
+
+
+
+    def collect_report(self, obs, reward, done):
+        """
+        Retuns a dictionary with the following information:
+            - Shaped reward per episode
+            - Shaped reward cumulative
+            - Mean loss per episode
+            - epsilon progression per episode
+        """
+        self.shaped_reward_cumulative += reward
+        self.shaped_reward_per_episode += reward
+
+
+        if self.get_memory_length() >= self.batch_size * self.patience:
+            self.list_loss_per_episode.append(self.loss.data[0])
+        else:
+            self.list_loss_per_episode.append(self.loss)
+
+
+        if done:
+            self.list_shaped_reward_cumulative.append(self.shaped_reward_cumulative)
+            self.list_shaped_reward_per_episode.append(self.shaped_reward_per_episode)
+
+            self.list_loss_mean.append(np.mean(self.list_loss_per_episode))
+
+            # score observation per episode from pysc2 is appended
+            self.list_pysc2_reward_per_episode.append(obs[7])
+
+            # cumulative pysc2 reward
+            self.pysc2_reward_cumulative += obs[7]
+            self.list_pysc2_reward_cumulative.append(self.pysc2_reward_cumulative)
+
+
+            if self.episodes > self.supervised_episodes:
+                self.list_epsilon_progression.append(self.epsilon)
+            else:
+                self.list_epsilon_progression.append(self.eps_start)
+
+            dict_agent_report = {
+                 "ShapedRewardPerEpisode": self.list_shaped_reward_per_episode,
+                 "ShapedRewardCumulative":self.list_shaped_reward_cumulative,
+                 "Pysc2RewardPerEpisode": self.list_pysc2_reward_per_episode,
+                 "Pysc2RewardCumulative": self.list_pysc2_reward_cumulative,
+                 "MeanLossPerEpisode": self.list_loss_mean,
+                 "Epsilon": self.list_epsilon_progression,
+                }
+
+            return dict_agent_report
+
+
 
     def store_transition(self, next_obs, reward):
         """
@@ -224,7 +309,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         Optimizes the DQN_module on a minibatch
         """
         if self.get_memory_length() >= self.batch_size * self.patience:
-            self.DQN.optimize()
+            self.loss = self.DQN.optimize()
 
     # ##########################################################################
     # Ending Episode
@@ -249,12 +334,16 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         self.episode_reward_env = 0
         self.episode_reward_shaped = 0
 
+        self.shaped_reward_per_episode = 0
+        self.list_loss_per_episode = []
+
     # ##########################################################################
     # Print status information of timestep
     # ##########################################################################
 
     def _save_model(self, emergency=False):
         if emergency:
+            print("KeyboardInterrupt detected, saving last model!")
             save_path = self.exp_path + "/model/emergency_model.pt"
         else:
             save_path = self.exp_path + "/model/model.pt"

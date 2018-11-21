@@ -1,6 +1,6 @@
-from GridAgent import GridAgent
-from CompassAgent import CompassAgent
-from assets.helperFunctions.print_timestamp import print_timestamps as print_ts
+from assets.agents.GridAgent import GridAgent
+from assets.agents.CompassAgent import CompassAgent
+from assets.helperFunctions.timestamps import print_timestamp as print_ts
 
 
 def setup_agent(agent_file):

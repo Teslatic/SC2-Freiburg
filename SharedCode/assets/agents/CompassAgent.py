@@ -3,7 +3,7 @@ import numpy as np
 
 # custom imports
 from assets.RL.DQN_module import DQN_module
-from assets.smart_actions import SMART_ACTIONS_COMPASS as SMART_ACTIONS
+from assets.agents.smart_actions import SMART_ACTIONS_COMPASS as SMART_ACTIONS
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 from assets.agents.Move2BeaconAgent import Move2BeaconAgent
 

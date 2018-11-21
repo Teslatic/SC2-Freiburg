@@ -1,16 +1,16 @@
 ACTION_TYPE = 'grid'  # compass, grid, original
 GRID_FACTOR = 20
-REWARD_TYPE = 'diff'  # diff, distance, sparse
+REWARD_TYPE = 'distance'  # diff, distance, sparse
 
-EPISODES = 10000
+EPISODES = 5000
 GAMESTEPS = 0  # 0 = unlimited game time, None = map default
 REPLAY_DIR = None
 SAVE_REPLAY = False
-STEP_MUL = 4  # 16 = 1s game time, None = map default
+STEP_MUL = 32  # 16 = 1s game time, None = map default
 
 LOGGING = False  # Logs information in files for tmux sessions
 SILENTMODE = False  # True: Just a minimum of console output
-VISUALIZE = True
+VISUALIZE = False
 
 mv2beacon_specs = {
     'ACTION_TYPE': ACTION_TYPE,

@@ -8,9 +8,10 @@ import gym
 import gym_ghost
 
 # custom imports
-from assets.specs.agent_specs import agent_specs
-from assets.specs.env_specs import mv2beacon_specs
+from specs.agent_specs import agent_specs
+from specs.env_specs import mv2beacon_specs
 from assets.helperFunctions.initializingHelpers import setup_agent
+from assets.helperFunctions.FileManager import log_reports
 from assets.splash.squidward import print_squidward
 
 
@@ -29,7 +30,10 @@ def main(argv):
         else:
             # Peforming selected action
             obs, reward, done, info = env.step(action)
-            agent.evaluate(obs, reward, done, info)
+            dict_agent_report, exp_root_dir = agent.evaluate(obs, reward, done, info)
+
+            log_reports(dict_agent_report, exp_root_dir)
+
 
 
 if __name__ == "__main__":

@@ -1,6 +1,8 @@
+# python imports
 import os
 from os import path
 import sys
+import pandas as pd
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 
 
@@ -56,3 +58,18 @@ def create_experiment_at_main(exp_name):
     exp_root_dir = create_path_and_experiment(all_exp_path, exp_name)
     print_ts("Created eperiment at path {}".format(exp_root_dir))
     return exp_root_dir
+
+
+
+def log_reports(agent_report, exp_path):
+    """
+    Merges report dictionaries and saves them as csv
+    """
+    report_path = exp_path + "/report"
+    if agent_report is not None:
+        dictb = {"MergeDummy": 0}
+        dict_complete = {**agent_report, **dictb}
+        logging_df = pd.DataFrame.from_dict(dict_complete)
+
+        with open(report_path + "/report.csv", "w") as f:
+            logging_df.to_csv(f, header=True, index=True)
