@@ -11,13 +11,15 @@ import gym_ghost
 from specs.agent_specs import agent_specs
 from specs.env_specs import mv2beacon_specs
 from assets.helperFunctions.initializingHelpers import setup_agent
-from assets.helperFunctions.FileManager import log_reports, save_specs, create_experiment_at_main
+from assets.helperFunctions.FileManager import log_training_reports
+from assets.helperFunctions.FileManager import save_specs
+from assets.helperFunctions.FileManager import create_experiment_at_main
 from assets.splash.squidward import print_squidward
 
 
 def main(argv):
     print_squidward()
-    
+
     agent = setup_agent(agent_specs)
     env = gym.make("sc2-v0")
 
@@ -38,7 +40,7 @@ def main(argv):
             obs, reward, done, info = env.step(action)
             dict_agent_report, exp_root_dir = agent.evaluate(obs, reward, done, info)
 
-            log_reports(dict_agent_report, exp_root_dir)
+            log_training_reports(dict_agent_report, exp_root_dir)
 
 
 

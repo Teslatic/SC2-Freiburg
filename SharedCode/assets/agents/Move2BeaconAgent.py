@@ -28,7 +28,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
     # Initializing the agent
     # ##########################################################################
 
-    def __init__(self, agent_file):
+    def __init__(self, agent_file, mode='learning'):
         """
         steps_done: Total timesteps done in the agents lifetime.
         timesteps:  Timesteps performed in the current episode.
@@ -37,11 +37,13 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         hist:       The history buffer for more complex minigames.
         """
         super(Move2BeaconAgent, self).__init__()
+        self.mode = mode
         self.unzip_hyperparameter_file(agent_file)
         self.choice = None  # Choice of epsilon greedy
         self.episode_reward_env = 0
         self.episode_reward_shaped = 0
         self.loss = 0  # Action loss
+        self.mode = mode # learning or testing
         self.reward = 0
         self.steps_done = 0  # total_timesteps
         self.timesteps = 0  # timesteps in the current episode
@@ -76,27 +78,29 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         """
         Unzipping and writing the hyperparameter file into member variables.
         """
-        self.gamma = agent_file['GAMMA']
-        self.optim_learning_rate = agent_file['OPTIM_LR']
-        self.batch_size = agent_file['BATCH_SIZE']
-        self.target_update_period = agent_file['TARGET_UPDATE_PERIOD']
-        self.history_length = agent_file['HIST_LENGTH']
-        self.size_replaybuffer = agent_file['REPLAY_SIZE']
+        self.gamma = float(agent_file['GAMMA'])
+        self.optim_learning_rate = float(agent_file['OPTIM_LR'])
+        self.batch_size = int(agent_file['BATCH_SIZE'])
+        self.target_update_period = int(agent_file['TARGET_UPDATE_PERIOD'])
+        self.history_length = int(agent_file['HIST_LENGTH'])
+        self.size_replaybuffer = int(agent_file['REPLAY_SIZE'])
         # self.device = agent_file['DEVICE']
         # self.silentmode = agent_file['SILENTMODE']
         # self.logging = agent_file['LOGGING']
-        self.supervised_episodes = agent_file['SUPERVISED_EPISODES']
-        self.patience = agent_file['PATIENCE']
+        self.supervised_episodes = int(agent_file['SUPERVISED_EPISODES'])
+        self.patience = int(agent_file['PATIENCE'])
 
         # epsilon_file = agent_file['EPSILON_FILE']
-        self.eps_start = agent_file['EPS_START']
-        self.eps_end = agent_file['EPS_END']
-        self.eps_decay = agent_file['EPS_DECAY']
+        self.eps_start = float(agent_file['EPS_START'])
+        self.eps_end = float(agent_file['EPS_END'])
+        self.eps_decay = int(agent_file['EPS_DECAY'])
 
+        if self.mode == 'learning':
+            self.exp_path = create_experiment_at_main(agent_file['EXP_PATH'])
+        else:
+            self.exp_path = agent_file['ROOT_DIR']
 
-        self.exp_path = create_experiment_at_main(agent_file['EXP_PATH'])
-
-        self.grid_factor = agent_file['GRID_FACTOR']
+        self.grid_factor = int(agent_file['GRID_FACTOR'])
 
     # ##########################################################################
     # Action Selection
@@ -158,12 +162,22 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         """
         Only forward passing and reporting for testing evaluation
         """
+        self.prepare_timestep(obs, reward, done, info)
 
-        self.action, self.action_idx = self.choose_action(agent_mode='test')
+        if self.first:  # Select Army in first step
+            self.action = 'select_army'
 
-        test_report = self.collect_report(obs, reward, done)
+        if self.last:  # End episode in last step
+            self.action = 'reset'
 
-        return self.action, test_report
+        # Action selection for regular step
+        if not self.first and not self.last:
+            # For the first n episodes learn on forced actions.
+            self.action, self.action_idx = self.choose_action(agent_mode='test')
+
+        # test_report = self.collect_report(obs, reward, done)
+        #
+        return self.action
 
 
 
@@ -227,14 +241,17 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         """
         try:
 
-            # Saving the episode data. Pushing the information onto the memory.
-            self.store_transition(obs, reward)
+            if self.mode=="learning":
+                # Saving the episode data. Pushing the information onto the memory.
+                self.store_transition(obs, reward)
 
-            # Optimize the agent
-            self.optimize()
+                # Optimize the agent
+                self.optimize()
+
 
             # collect reward, loss and epsilon information as dictionary
             agent_report = self.collect_report(obs, reward, done)
+
         except KeyboardInterrupt:
             self._save_model(emergency=True)
         return agent_report, self.exp_path

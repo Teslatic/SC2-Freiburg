@@ -2,7 +2,8 @@ ACTION_TYPE = 'grid'  # compass, grid, original
 GRID_FACTOR = 20
 REWARD_TYPE = 'distance'  # diff, distance, sparse
 
-EPISODES = 5000
+EPISODES = 20
+TEST_EPISODES = 10
 GAMESTEPS = 0  # 0 = unlimited game time, None = map default
 REPLAY_DIR = None
 SAVE_REPLAY = False
@@ -22,6 +23,7 @@ mv2beacon_specs = {
     'REPLAY_DIR': REPLAY_DIR,
     'SAVE_REPLAY': SAVE_REPLAY,
     'STEP_MUL': STEP_MUL,  # Standard 16 = 1s/action
+    'TEST_EPISODES': TEST_EPISODES,
 
     'LOGGING': LOGGING,
     'SILENTMODE': SILENTMODE,

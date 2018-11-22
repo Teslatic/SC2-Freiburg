@@ -24,11 +24,11 @@ class GridAgent(Move2BeaconAgent):
     # ##########################################################################
     # Initializing the agent
     # ##########################################################################
-    def __init__(self, agent_file):
+    def __init__(self, agent_file, mode='learning'):
         """
         Refer to Move2BeaconAgent.
         """
-        super(GridAgent, self).__init__(agent_file)
+        super(GridAgent, self).__init__(agent_file, mode)
 
     def setup_dqn(self):
         """

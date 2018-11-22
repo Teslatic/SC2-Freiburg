@@ -29,7 +29,7 @@ class CompassAgent(Move2BeaconAgent):
         """
         Refer to Move2BeaconAgent.
         """
-        super(CompassAgent, self).__init__(agent_file)
+        super(CompassAgent, self).__init__(agent_file, mode)
 
     def setup_dqn(self):
         """

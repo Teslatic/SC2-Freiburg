@@ -62,7 +62,7 @@ def create_experiment_at_main(exp_name):
 
 
 
-def log_reports(agent_report, exp_path):
+def log_training_reports(agent_report, exp_path):
     """
     Merges report dictionaries and saves them as csv
     """
@@ -72,8 +72,22 @@ def log_reports(agent_report, exp_path):
         dict_complete = {**agent_report, **dictb}
         logging_df = pd.DataFrame.from_dict(dict_complete)
 
-        with open(report_path + "/report.csv", "w") as f:
-            logging_df.to_csv(f, header=True, index=True)
+        with open(report_path + "/training_report.csv", "w") as f:
+            logging_df.to_csv(f, header=True, index=False)
+
+
+def log_test_reports(test_report, exp_path):
+    """
+    Merges report dictionaries and saves them as csv
+    """
+    report_path = exp_path + "/report"
+    if test_report is not None:
+        dictb = {"MergeDummy": 0}
+        dict_complete = {**test_report, **dictb}
+        logging_df = pd.DataFrame.from_dict(dict_complete)
+
+        with open(report_path + "/test_report.csv", "w") as f:
+            logging_df.to_csv(f, header=True, index=False)
 
 
 

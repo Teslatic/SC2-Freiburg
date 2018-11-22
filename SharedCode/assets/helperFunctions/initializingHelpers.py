@@ -3,15 +3,15 @@ from assets.agents.CompassAgent import CompassAgent
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 
 
-def setup_agent(agent_file):
+def setup_agent(agent_file, mode="learning"):
     """
     Initializing right agent and agent_interface for the environment.
     """
     agent_type = agent_file["AGENT_TYPE"]
     if agent_type == 'compass':
-        return CompassAgent(agent_file)
+        return CompassAgent(agent_file, mode)
     if agent_type == 'grid':
-        return GridAgent(agent_file)
+        return GridAgent(agent_file, mode)
     if agent_type == 'original':
         raise("This agent type has not been implemeted yet.")
         exit()

@@ -199,8 +199,9 @@ class DQN_module():
         torch.save(self.net.state_dict(), save_path)
 
     def load(self, load_path):
-        net.load_state_dict(torch.load(load_path, map_location=self._device))
-        net.eval()
+        print("Model loaded from {}".format(load_path))
+        self.net.load_state_dict(torch.load(load_path, map_location=self.device))
+        self.net.eval()
 
 
     def transfer_weights(self, src_net, target_net):
