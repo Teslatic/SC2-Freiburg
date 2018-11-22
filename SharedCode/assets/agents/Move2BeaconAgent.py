@@ -88,10 +88,10 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         self.supervised_episodes = agent_file['SUPERVISED_EPISODES']
         self.patience = agent_file['PATIENCE']
 
-        epsilon_file = agent_file['EPSILON_FILE']
-        self.eps_start = epsilon_file['EPS_START']
-        self.eps_end = epsilon_file['EPS_END']
-        self.eps_decay = epsilon_file['EPS_DECAY']
+        # epsilon_file = agent_file['EPSILON_FILE']
+        self.eps_start = agent_file['EPS_START']
+        self.eps_end = agent_file['EPS_END']
+        self.eps_decay = agent_file['EPS_DECAY']
 
 
         self.exp_path = create_experiment_at_main(agent_file['EXP_PATH'])
@@ -153,6 +153,20 @@ class Move2BeaconAgent(base_agent.BaseAgent):
                 # Choose an action according to the policy
                 self.action, self.action_idx = self.choose_action()
         return self.action
+
+    def test(self, obs, reward, done, info):
+        """
+        Only forward passing and reporting for testing evaluation
+        """
+
+        self.action, self.action_idx = self.choose_action(agent_mode='test')
+
+        test_report = self.collect_report(obs, reward, done)
+
+        return self.action, test_report
+
+
+
 
     def supervised_action(self):
         """
@@ -350,3 +364,8 @@ class Move2BeaconAgent(base_agent.BaseAgent):
 
         # Path((self.exp_path + "/model")).mkdir(parents=True, exist_ok=True)
         self.DQN.save(save_path)
+
+    def _load_model(self):
+        load_path = self.exp_path + "/model/emergency_model.pt"
+
+        self.DQN.load(load_path)

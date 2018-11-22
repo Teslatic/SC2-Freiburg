@@ -198,6 +198,11 @@ class DQN_module():
     def save(self, save_path):
         torch.save(self.net.state_dict(), save_path)
 
+    def load(self, load_path):
+        net.load_state_dict(torch.load(load_path, map_location=self._device))
+        net.eval()
+
+
     def transfer_weights(self, src_net, target_net):
         """
         updates weights of the target network, i.e. copies model weights to it

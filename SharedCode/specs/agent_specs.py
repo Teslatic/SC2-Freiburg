@@ -3,6 +3,9 @@ GRID_FACTOR = 20
 EXP_PATH = 'dummy'
 
 BATCH_SIZE = 32
+EPS_START = 0.95
+EPS_END = 0.01
+EPS_DECAY = 80000
 GAMMA = 0.99
 HIST_LENGTH = 1
 OPTIM_LR = 0.001
@@ -11,10 +14,11 @@ REPLAY_SIZE = 175000
 SUPERVISED_EPISODES = 5
 TARGET_UPDATE_PERIOD = 5
 
-epsilon_specs = {
-    'EPS_START': 0.95,
-    'EPS_END': 0.01,
-    'EPS_DECAY': 10000}
+
+# epsilon_specs = {
+#     'EPS_START': 0.95,
+#     'EPS_END': 0.01,
+#     'EPS_DECAY': 80000}
 
 agent_specs = {
     'AGENT_TYPE': AGENT_TYPE,
@@ -28,5 +32,8 @@ agent_specs = {
     'REPLAY_SIZE': REPLAY_SIZE,
     'SUPERVISED_EPISODES': SUPERVISED_EPISODES,
     'TARGET_UPDATE_PERIOD': TARGET_UPDATE_PERIOD,   # Standard 5
-    'EPSILON_FILE': epsilon_specs
+    # 'EPSILON_FILE': epsilon_specs
+    'EPS_START': EPS_START,
+    'EPS_END': EPS_END,
+    'EPS_DECAY': EPS_DECAY
 }

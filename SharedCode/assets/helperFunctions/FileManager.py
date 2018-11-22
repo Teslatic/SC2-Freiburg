@@ -1,4 +1,5 @@
 # python imports
+import csv
 import os
 from os import path
 import sys
@@ -24,7 +25,7 @@ def create_experiment(exp_path):
     # print_timestamp('Created  at path {}'.format(exp_path))
     os.makedirs(exp_path)
     # os.makedirs(exp_path+'/policy_plots')
-    os.makedirs(exp_path+'/parameters')
+    os.makedirs(exp_path+'/specs')
     create_plots_dir(exp_path)
     create_report_dir(exp_path)
     create_model_dir(exp_path)
@@ -73,3 +74,35 @@ def log_reports(agent_report, exp_path):
 
         with open(report_path + "/report.csv", "w") as f:
             logging_df.to_csv(f, header=True, index=True)
+
+
+
+
+def save_specs(agent_specs, env_specs, exp_path):
+    """
+    Saves agent and environment specs as csv
+    """
+    spec_path = exp_path + "/specs"
+    exp_path_dict = {'ROOT_DIR': exp_path}
+    spec_dict = {**exp_path_dict, **agent_specs, **env_specs}
+    spec_df = pd.DataFrame.from_dict(spec_dict, orient="index")
+    with open(spec_path + "/spec_summary.csv", "w") as f:
+        spec_df.to_csv(f, header=False, index=True)
+
+
+def load_spec_summary(spec_path):
+    """
+    Loads the spec summary into a pandas DataFrame
+    """
+    # spec_path = exp_path + "/specs"
+
+    with open(spec_path, mode='r') as infile:
+        reader = csv.reader(infile)
+        spec_summary = {rows[0]:rows[1] for rows in reader}
+    #
+    # print(mydict)
+    # exit()
+    #
+    # with open(spec_path, "r") as f:
+    #     spec_summary = pd.read_csv(f, index_col=[0])
+    return spec_summary
