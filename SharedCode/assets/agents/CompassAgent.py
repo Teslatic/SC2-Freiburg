@@ -25,11 +25,11 @@ class CompassAgent(Move2BeaconAgent):
     # Initializing the agent
     # ##########################################################################
 
-    def __init__(self, agent_file):
+    def __init__(self, agent_specs):
         """
         Refer to Move2BeaconAgent.
         """
-        super(CompassAgent, self).__init__(agent_file, mode)
+        super(CompassAgent, self).__init__(agent_specs)
 
     def setup_dqn(self):
         """

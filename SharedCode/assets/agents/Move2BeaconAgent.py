@@ -28,7 +28,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
     # Initializing the agent
     # ##########################################################################
 
-    def __init__(self, agent_file, mode='learning'):
+    def __init__(self, agent_specs):
         """
         steps_done: Total timesteps done in the agents lifetime.
         timesteps:  Timesteps performed in the current episode.
@@ -37,13 +37,12 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         hist:       The history buffer for more complex minigames.
         """
         super(Move2BeaconAgent, self).__init__()
-        self.mode = mode
-        self.unzip_hyperparameter_file(agent_file)
+        self.unzip_hyperparameter_file(agent_specs)
+        self.episodes = 1
         self.choice = None  # Choice of epsilon greedy
         self.episode_reward_env = 0
         self.episode_reward_shaped = 0
         self.loss = 0  # Action loss
-        self.mode = mode # learning or testing
         self.reward = 0
         self.steps_done = 0  # total_timesteps
         self.timesteps = 0  # timesteps in the current episode
@@ -74,33 +73,35 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         self.device = self.DQN.device
         print_ts("DQN module has been initalized")
 
-    def unzip_hyperparameter_file(self, agent_file):
+    def unzip_hyperparameter_file(self, agent_specs):
         """
         Unzipping and writing the hyperparameter file into member variables.
         """
-        self.gamma = float(agent_file['GAMMA'])
-        self.optim_learning_rate = float(agent_file['OPTIM_LR'])
-        self.batch_size = int(agent_file['BATCH_SIZE'])
-        self.target_update_period = int(agent_file['TARGET_UPDATE_PERIOD'])
-        self.history_length = int(agent_file['HIST_LENGTH'])
-        self.size_replaybuffer = int(agent_file['REPLAY_SIZE'])
-        # self.device = agent_file['DEVICE']
-        # self.silentmode = agent_file['SILENTMODE']
-        # self.logging = agent_file['LOGGING']
-        self.supervised_episodes = int(agent_file['SUPERVISED_EPISODES'])
-        self.patience = int(agent_file['PATIENCE'])
+        self.gamma = float(agent_specs['GAMMA'])
+        self.optim_learning_rate = float(agent_specs['OPTIM_LR'])
+        self.batch_size = int(agent_specs['BATCH_SIZE'])
+        self.target_update_period = int(agent_specs['TARGET_UPDATE_PERIOD'])
+        self.history_length = int(agent_specs['HIST_LENGTH'])
+        self.size_replaybuffer = int(agent_specs['REPLAY_SIZE'])
+        # self.device = agent_specs['DEVICE']
+        # self.silentmode = agent_specs['SILENTMODE']
+        # self.logging = agent_specs['LOGGING']
+        self.supervised_episodes = int(agent_specs['SUPERVISED_EPISODES'])
+        self.patience = int(agent_specs['PATIENCE'])
 
-        # epsilon_file = agent_file['EPSILON_FILE']
-        self.eps_start = float(agent_file['EPS_START'])
-        self.eps_end = float(agent_file['EPS_END'])
-        self.eps_decay = int(agent_file['EPS_DECAY'])
+        # epsilon_file = agent_specs['EPSILON_FILE']
+        self.eps_start = float(agent_specs['EPS_START'])
+        self.eps_end = float(agent_specs['EPS_END'])
+        self.eps_decay = int(agent_specs['EPS_DECAY'])
 
-        if self.mode == 'learning':
-            self.exp_path = create_experiment_at_main(agent_file['EXP_PATH'])
+        self.mode = agent_specs['MODE']
+        if self.mode != 'testing':
+            self.exp_path = create_experiment_at_main(agent_specs['EXP_PATH'])
         else:
-            self.exp_path = agent_file['ROOT_DIR']
+            self.exp_path = agent_specs['ROOT_DIR']
 
-        self.grid_factor = int(agent_file['GRID_FACTOR'])
+        self.grid_dim_x = int(agent_specs['GRID_DIM_X'])
+        self.grid_dim_y = int(agent_specs['GRID_DIM_Y'])
 
     # ##########################################################################
     # Action Selection
@@ -128,6 +129,14 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         self.marine_center = obs[5]
         self.beacon_center = obs[6]
 
+        # mode switch
+        if (self.episodes > self.supervised_episodes) and \
+            (not self.mode == 'testing'):
+            self.set_learning_mode()
+
+        print(self.episodes)
+        print(self.mode)
+
     def policy(self, obs, reward, done, info):
         """
         Choosing an action
@@ -138,49 +147,45 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         if self.first:  # Select Army in first step
             return 'select_army'
 
-        if self.last:  # End episode in last step
-            try:
-                print_ts("Last step: epsilon is at {}".format(self.epsilon))
-            except:
-                pass
-            print_ts("Total score is at {}".format(self.reward))
-            self._save_model()
-            self.update_target_network()
-            self.action = 'reset'
-
         # Action selection for regular step
         if not self.first and not self.last:
-            # For the first n episodes learn on forced actions.
-            if self.episodes < self.supervised_episodes:
+            if self.mode == 'supervised':
+                # For the first n episodes learn on forced actions.
                 self.action, self.action_idx = self.supervised_action()
-            else:
+            if self.mode == 'learning':
                 # Choose an action according to the policy
-                self.action, self.action_idx = self.choose_action()
-        return self.action
+                self.action, self.action_idx = self.epsilon_greedy_action()
+            if self.mode == 'testing':
+                self.action, self.action_idx = self.pick_action()
 
-    def test(self, obs, reward, done, info):
-        """
-        Only forward passing and reporting for testing evaluation
-        """
-        self.prepare_timestep(obs, reward, done, info)
-
-        if self.first:  # Select Army in first step
-            self.action = 'select_army'
 
         if self.last:  # End episode in last step
             self.action = 'reset'
-
-        # Action selection for regular step
-        if not self.first and not self.last:
-            # For the first n episodes learn on forced actions.
-            self.action, self.action_idx = self.choose_action(agent_mode='test')
-
-        # test_report = self.collect_report(obs, reward, done)
-        #
+            if self.mode != 'testing':
+                self._save_model()
+                self.update_target_network()
         return self.action
 
-
-
+    # def test(self, obs, reward, done, info):
+    #     """
+    #     Only forward passing and reporting for testing evaluation
+    #     """
+    #     self.prepare_timestep(obs, reward, done, info)
+    #
+    #     if self.first:  # Select Army in first step
+    #         self.action = 'select_army'
+    #
+    #     if self.last:  # End episode in last step
+    #         self.action = 'reset'
+    #
+    #     # Action selection for regular step
+    #     if not self.first and not self.last:
+    #         # For the first n episodes learn on forced actions.
+    #         self.action, self.action_idx = self.choose_action()
+    #
+    #     # test_report = self.collect_report(obs, reward, done)
+    #     #
+    #     return self.action
 
     def supervised_action(self):
         """
@@ -190,7 +195,16 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         """
         raise NotImplementedError
 
-    def choose_action(self, agent_mode='learn'):
+    def pick_action(self):
+        action_q_values = self.DQN.predict_q_values(self.state)
+        # Beste Action bestimmen
+        best_action_numpy = action_q_values.detach().cpu().numpy()
+        action_idx = np.argmax(best_action_numpy)
+        best_action = self.smart_actions[action_idx]
+        chosen_action = best_action
+        return chosen_action, action_idx
+
+    def epsilon_greedy_action(self):
         """
         chooses an action according to the current policy
         returns the chosen action id with x,y coordinates and the index of the
@@ -200,17 +214,11 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         """
         self.choice = self.epsilon_greedy()
 
-        if self.choice == 'random' and agent_mode == 'learn':
+        if self.choice == 'random':
             action_idx = np.random.randint(self.dim_actions)
             chosen_action = self.smart_actions[action_idx]
         else:
-            action_q_values = self.DQN.predict_q_values(self.state)
-
-            # Beste Action bestimmen
-            best_action_numpy = action_q_values.detach().cpu().numpy()
-            action_idx = np.argmax(best_action_numpy)
-            best_action = self.smart_actions[action_idx]
-            chosen_action = best_action
+            chosen_action, action_idx = self.pick_action()
         return chosen_action, action_idx
 
     def epsilon_greedy(self):
@@ -241,7 +249,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         """
         try:
 
-            if self.mode=="learning":
+            if self.mode != 'testing':
                 # Saving the episode data. Pushing the information onto the memory.
                 self.store_transition(obs, reward)
 
@@ -256,7 +264,26 @@ class Move2BeaconAgent(base_agent.BaseAgent):
             self._save_model(emergency=True)
         return agent_report, self.exp_path
 
+    def set_learning_mode(self):
+        """
+        Set the agent to learning mode. The agent will perform
+        actions according to an epsilon-greedy policy.
+        """
+        self.mode = "learning"
 
+    def set_supervised_mode(self):
+        """
+        Set the agent to supervised mode. The agent will perform
+        actions which are generating valuable experience.
+        """
+        self.mode = "supervised"
+
+    def set_testing_mode(self):
+        """
+        Set the agent to testing mode. The agent will perform only
+        aexploiting actions without any randomness.
+        """
+        self.mode = "testing"
 
     def collect_report(self, obs, reward, done):
         """

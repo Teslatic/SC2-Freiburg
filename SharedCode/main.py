@@ -42,6 +42,9 @@ def main(argv):
 
             log_training_reports(dict_agent_report, exp_root_dir)
 
+        if env.finished:
+            print("Finished da learning boi. imma break.")
+            break
 
 
 if __name__ == "__main__":

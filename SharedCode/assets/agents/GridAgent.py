@@ -24,11 +24,11 @@ class GridAgent(Move2BeaconAgent):
     # ##########################################################################
     # Initializing the agent
     # ##########################################################################
-    def __init__(self, agent_file, mode='learning'):
+    def __init__(self, agent_specs):
         """
         Refer to Move2BeaconAgent.
         """
-        super(GridAgent, self).__init__(agent_file, mode)
+        super(GridAgent, self).__init__(agent_specs)
 
     def setup_dqn(self):
         """
@@ -36,7 +36,6 @@ class GridAgent(Move2BeaconAgent):
         """
         self._xy_pairs, self.dim_actions, self.smart_actions = \
             self.discretize_xy_grid()
-
         self.DQN = DQN_module(self.batch_size,
                               self.gamma,
                               self.history_length,
@@ -50,8 +49,8 @@ class GridAgent(Move2BeaconAgent):
         """
         Discretizing action coordinates in order to keep action space small
         """
-        x_space = np.linspace(0, 83, self.grid_factor, dtype=int)
-        y_space = np.linspace(0, 63, self.grid_factor, dtype=int)
+        x_space = np.linspace(0, 83, self.grid_dim_x, dtype=int)
+        y_space = np.linspace(0, 63, self.grid_dim_y, dtype=int)
         xy_space = np.transpose([np.tile(x_space, len(y_space)),
                                 np.repeat(y_space, len(x_space))])
         dim_actions = len(xy_space)
@@ -66,8 +65,8 @@ class GridAgent(Move2BeaconAgent):
         """
         This method selects a grid point which is the closest to the beacon.
         """
-        self.x_coord = self.beacon_center[0]
-        self.y_coord = self.beacon_center[1]
+        x_coord = self.beacon_center[0]
+        y_coord = self.beacon_center[1]
 
         distances = []
         for xy_pair in self._xy_pairs:
@@ -77,8 +76,9 @@ class GridAgent(Move2BeaconAgent):
 
         # TODO: Check if correct
         closest_pair = np.argmin(distances)
-        self.action_idx = closest_pair
-        return self.action_idx, self.action_idx
+        action_idx = closest_pair
+        action = action_idx
+        return action, action_idx
 
     def log(self):
         pass

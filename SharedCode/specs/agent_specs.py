@@ -1,5 +1,9 @@
 AGENT_TYPE = 'grid'
-GRID_FACTOR = 20
+MODE = 'supervised'
+# GRID_DIM_X x GRID_DIM_Y
+GRID_DIM_X = 84
+GRID_DIM_Y = 64
+
 EXP_PATH = 'dummy'
 
 BATCH_SIZE = 32
@@ -22,7 +26,9 @@ TARGET_UPDATE_PERIOD = 5
 
 agent_specs = {
     'AGENT_TYPE': AGENT_TYPE,
-    'GRID_FACTOR': GRID_FACTOR,
+    'MODE': MODE,
+    'GRID_DIM_X': GRID_DIM_X,
+    'GRID_DIM_Y': GRID_DIM_Y,
     'EXP_PATH': EXP_PATH,
     'BATCH_SIZE': BATCH_SIZE,  # Standard 32
     'GAMMA': GAMMA,  # Standard 0.99

@@ -34,14 +34,14 @@ def main(argv):
     while(True):
         # Action selection
 
-        action = agent.test(obs, reward, done, info)
+        action = agent.policy(obs, reward, done, info)
 
         if (action is 'reset'):
             obs, reward, done, info = env.reset()
         else:
             # Peforming selected action
             obs, reward, done, info = env.step(action)
-            test_report, spec_summary['ROOT_DIR'] = agent.evaluate(obs, reward, done, info)
+            test_report, _ = agent.evaluate(obs, reward, done, info)
 
             log_test_reports(test_report, spec_summary['ROOT_DIR'])
 
