@@ -6,7 +6,7 @@ import pandas as pd
 # custom imports
 from assets.RL.DQN_module import DQN_module
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
-from assets.helperFunctions.FileManager import create_experiment_at_main
+# from assets.helperFunctions.FileManager import create_experiment_at_main
 
 np.set_printoptions(suppress=True, linewidth=np.nan, threshold=np.nan)
 
@@ -93,15 +93,22 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         self.eps_start = float(agent_specs['EPS_START'])
         self.eps_end = float(agent_specs['EPS_END'])
         self.eps_decay = int(agent_specs['EPS_DECAY'])
+        # epsilon in current timestep
+        self.epsilon = 0
 
         self.mode = agent_specs['MODE']
-        if self.mode != 'testing':
-            self.exp_path = create_experiment_at_main(agent_specs['EXP_PATH'])
-        else:
-            self.exp_path = agent_specs['ROOT_DIR']
 
         self.grid_dim_x = int(agent_specs['GRID_DIM_X'])
         self.grid_dim_y = int(agent_specs['GRID_DIM_Y'])
+
+        self.exp_name = agent_specs['EXP_NAME']
+
+    # def specify_experiment_path(self, agent_specs):
+    #     if self.mode != 'testing':
+    #         self.exp_path = create_experiment_at_main(self.exp_name)
+    #     else:
+    #         self.exp_path = agent_specs['ROOT_DIR']
+
 
     # ##########################################################################
     # Action Selection
@@ -134,8 +141,6 @@ class Move2BeaconAgent(base_agent.BaseAgent):
             (not self.mode == 'testing'):
             self.set_learning_mode()
 
-        print(self.episodes)
-        print(self.mode)
 
     def policy(self, obs, reward, done, info):
         """
@@ -162,8 +167,8 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         if self.last:  # End episode in last step
             self.action = 'reset'
             if self.mode != 'testing':
-                self._save_model()
                 self.update_target_network()
+            self.reset()
         return self.action
 
     # def test(self, obs, reward, done, info):
@@ -257,12 +262,14 @@ class Move2BeaconAgent(base_agent.BaseAgent):
                 self.optimize()
 
 
+
+
             # collect reward, loss and epsilon information as dictionary
             agent_report = self.collect_report(obs, reward, done)
 
         except KeyboardInterrupt:
-            self._save_model(emergency=True)
-        return agent_report, self.exp_path
+            self.save_model(emergency=True)
+        return agent_report
 
     def set_learning_mode(self):
         """
@@ -317,10 +324,10 @@ class Move2BeaconAgent(base_agent.BaseAgent):
             self.list_pysc2_reward_cumulative.append(self.pysc2_reward_cumulative)
 
 
-            if self.episodes > self.supervised_episodes:
-                self.list_epsilon_progression.append(self.epsilon)
-            else:
-                self.list_epsilon_progression.append(self.eps_start)
+            # if self.episodes > self.supervised_episodes:
+            self.list_epsilon_progression.append(self.epsilon)
+            # else:
+                # self.list_epsilon_progression.append(self.eps_start)
 
             dict_agent_report = {
                  "ShapedRewardPerEpisode": self.list_shaped_reward_per_episode,
@@ -381,7 +388,6 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         if self.episodes % self.target_update_period == 0:
             print_ts("About to update")
             self.DQN.update_target_net()
-        self.reset()
 
     def reset(self):
         """
@@ -399,12 +405,12 @@ class Move2BeaconAgent(base_agent.BaseAgent):
     # Print status information of timestep
     # ##########################################################################
 
-    def _save_model(self, emergency=False):
+    def save_model(self, exp_path, emergency=False):
         if emergency:
             print("KeyboardInterrupt detected, saving last model!")
-            save_path = self.exp_path + "/model/emergency_model.pt"
+            save_path = exp_path + "/model/emergency_model.pt"
         else:
-            save_path = self.exp_path + "/model/model.pt"
+            save_path = exp_path + "/model/model.pt"
 
         # Path((self.exp_path + "/model")).mkdir(parents=True, exist_ok=True)
         self.DQN.save(save_path)

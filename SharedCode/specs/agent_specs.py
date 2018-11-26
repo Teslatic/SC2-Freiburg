@@ -1,10 +1,10 @@
-AGENT_TYPE = 'grid'
+AGENT_TYPE = 'compass'
 MODE = 'supervised'
 # GRID_DIM_X x GRID_DIM_Y
 GRID_DIM_X = 84
 GRID_DIM_Y = 64
 
-EXP_PATH = 'dummy'
+EXP_NAME = 'dummy'
 
 BATCH_SIZE = 32
 EPS_START = 0.95
@@ -29,7 +29,7 @@ agent_specs = {
     'MODE': MODE,
     'GRID_DIM_X': GRID_DIM_X,
     'GRID_DIM_Y': GRID_DIM_Y,
-    'EXP_PATH': EXP_PATH,
+    'EXP_NAME': EXP_NAME,
     'BATCH_SIZE': BATCH_SIZE,  # Standard 32
     'GAMMA': GAMMA,  # Standard 0.99
     'HIST_LENGTH': HIST_LENGTH,

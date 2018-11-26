@@ -65,32 +65,13 @@ class GridAgent(Move2BeaconAgent):
         """
         This method selects a grid point which is the closest to the beacon.
         """
-        x_coord = self.beacon_center[0]
-        y_coord = self.beacon_center[1]
 
-        distances = []
-        for xy_pair in self._xy_pairs:
-            dx = np.abs(xy_pair[0] - self.beacon_center[0])
-            dy = np.abs(xy_pair[1] - self.beacon_center[1])
-            distances.append(np.sqrt(dx**2 + dy**2).round())
+        dx = self._xy_pairs[:,0] - self.beacon_center[0]
+        dy = self._xy_pairs[:,1] - self.beacon_center[1]
+        distances = np.sqrt(dx**2 + dy**2).round().astype(int)
 
         # TODO: Check if correct
         closest_pair = np.argmin(distances)
         action_idx = closest_pair
         action = action_idx
         return action, action_idx
-
-    def log(self):
-        pass
-        buffer_size = 10  # This makes it so changes appear without buffering
-        with open('output.log', 'w', buffer_size) as f:
-                f.write('{}\n'.format(self.feature_screen))
-
-    def _save_model(self, emergency=False):
-        if emergency:
-            save_path = self.exp_path + "/model/emergency_model.pt"
-        else:
-            save_path = self.exp_path + "/model/model.pt"
-
-        # Path((self.exp_path + "/model")).mkdir(parents=True, exist_ok=True)
-        self.DQN.save(save_path)

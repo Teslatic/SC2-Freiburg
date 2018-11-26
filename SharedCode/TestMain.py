@@ -11,9 +11,11 @@ import gym_ghost
 from specs.agent_specs import agent_specs
 from specs.env_specs import mv2beacon_specs
 from assets.helperFunctions.initializingHelpers import setup_agent
-from assets.helperFunctions.FileManager import log_test_reports
-from assets.helperFunctions.FileManager import save_specs, load_spec_summary
-from assets.helperFunctions.FileManager import create_experiment_at_main
+
+from assets.helperFunctions.FileManager import FileManager
+# from assets.helperFunctions.FileManager import log_test_reports
+# from assets.helperFunctions.FileManager import save_specs, load_spec_summary
+# from assets.helperFunctions.FileManager import create_experiment_at_main
 from assets.splash.squidward import print_squidward
 
 
@@ -21,16 +23,23 @@ def main(argv):
     print_squidward()
 
     # load specs used in experiment
-    spec_summary = load_spec_summary(FLAGS.specs)
-    agent = setup_agent(spec_summary, mode="testing")
+
+    # FileManager
+    fm = FileManager()
+    spec_summary = fm.load_spec_summary(FLAGS.specs)
+    fm.change_cwd(spec_summary["ROOT_DIR"])
+
+    agent = setup_agent(spec_summary)
 
     agent.DQN.load(FLAGS.model)
-
-    env = gym.make("sc2-v0")
+    agent.set_testing_mode()
+    # agent.specify_experiment_path(spec_summary)
 
     # setup environment in testing mode
-    obs, reward, done, info = env.setup(spec_summary, mode="testing")
+    env = gym.make("sc2-v0")
+    obs, reward, done, info = env.setup(spec_summary)
 
+    fm.create_test_file()
     while(True):
         # Action selection
 
@@ -41,9 +50,9 @@ def main(argv):
         else:
             # Peforming selected action
             obs, reward, done, info = env.step(action)
-            test_report, _ = agent.evaluate(obs, reward, done, info)
+            test_report = agent.evaluate(obs, reward, done, info)
 
-            log_test_reports(test_report, spec_summary['ROOT_DIR'])
+            fm.log_test_reports(test_report)
 
 
 

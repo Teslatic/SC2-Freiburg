@@ -107,16 +107,3 @@ class CompassAgent(Move2BeaconAgent):
                 action_idx = up
         chosen_action = SMART_ACTIONS[action_idx]
         return chosen_action, action_idx
-
-    # ##########################################################################
-    # Print status information of timestep
-    # ##########################################################################
-
-    def _save_model(self, emergency=False):
-        if emergency:
-            save_path = self.exp_path + "/model/emergency_model.pt"
-        else:
-            save_path = self.exp_path + "/model/model.pt"
-
-        # Path((self.exp_path + "/model")).mkdir(parents=True, exist_ok=True)
-        self.DQN.save(save_path)
