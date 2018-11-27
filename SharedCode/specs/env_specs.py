@@ -6,7 +6,7 @@ GRID_DIM_Y = 64
 
 REWARD_TYPE = 'distance'  # diff, distance, sparse
 
-EPISODES = 10000
+EPISODES = 30000
 TEST_EPISODES = 10
 GAMESTEPS = 0  # 0 = unlimited game time, None = map default
 REPLAY_DIR = None

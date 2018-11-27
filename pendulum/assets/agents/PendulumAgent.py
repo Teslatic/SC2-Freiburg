@@ -1,17 +1,19 @@
 # python imports
 import numpy as np
-from pysc2.agents import base_agent
 import pandas as pd
+from sys import getsizeof
 
 # custom imports
 from assets.RL.DQN_module import DQN_module
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 # from assets.helperFunctions.FileManager import create_experiment_at_main
 
+from assets.agents.smart_actions import SMART_ACTIONS_PENDULUM as SMART_ACTIONS
+
 np.set_printoptions(suppress=True, linewidth=np.nan, threshold=np.nan)
 
 
-class Move2BeaconAgent(base_agent.BaseAgent):
+class PendulumAgent():
     """
     This is a simple agent that uses an PyTorch DQN_module as Q value
     approximator. Current implemented features of the agent:
@@ -36,7 +38,6 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         loss:       Action loss
         hist:       The history buffer for more complex minigames.
         """
-        super(Move2BeaconAgent, self).__init__()
         self.unzip_hyperparameter_file(agent_specs)
         self.episodes = 1
         self.choice = None  # Choice of epsilon greedy
@@ -45,6 +46,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         self.loss = 0  # Action loss
         self.reward = 0
         self.steps_done = 0  # total_timesteps
+        self.steps = 0
         self.timesteps = 0  # timesteps in the current episode
         self.setup_dqn()
 
@@ -63,6 +65,8 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         self.list_pysc2_reward_cumulative = []
 
     def setup_dqn(self):
+        self.dim_actions = 2
+        self.smart_actions = SMART_ACTIONS
         print_ts("Setup DQN of Move2BeaconAgent")
         self.DQN = DQN_module(self.batch_size,
                               self.gamma,
@@ -103,13 +107,6 @@ class Move2BeaconAgent(base_agent.BaseAgent):
 
         self.exp_name = agent_specs['EXP_NAME']
 
-    # def specify_experiment_path(self, agent_specs):
-    #     if self.mode != 'testing':
-    #         self.exp_path = create_experiment_at_main(self.exp_name)
-    #     else:
-    #         self.exp_path = agent_specs['ROOT_DIR']
-
-
     # ##########################################################################
     # Action Selection
     # ##########################################################################
@@ -129,12 +126,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         # self.available_actions = obs.observation.available_actions
 
         # Unzip the observation tuple
-        self.state = obs[0]
-        self.first = obs[2]
-        self.last = obs[3]
-        self.distance = obs[4]
-        self.marine_center = obs[5]
-        self.beacon_center = obs[6]
+        self.state = obs
 
         # mode switch
         if (self.episodes > self.supervised_episodes) and \
@@ -149,48 +141,23 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         # Set all variables at the start of a new timestep
         self.prepare_timestep(obs, reward, done, info)
 
-        if self.first:  # Select Army in first step
-            return 'select_army'
-
         # Action selection for regular step
-        if not self.first and not self.last:
-            if self.mode == 'supervised':
-                # For the first n episodes learn on forced actions.
-                self.action, self.action_idx = self.supervised_action()
-            if self.mode == 'learning':
-                # Choose an action according to the policy
-                self.action, self.action_idx = self.epsilon_greedy_action()
-            if self.mode == 'testing':
-                self.action, self.action_idx = self.pick_action()
 
+        if self.mode == 'supervised':
+            # For the first n episodes learn on forced actions.
+            self.action, self.action_idx = self.supervised_action()
+        if self.mode == 'learning':
+            # Choose an action according to the policy
+            self.action, self.action_idx = self.epsilon_greedy_action()
+        if self.mode == 'testing':
+            self.action, self.action_idx = self.pick_action()
 
-        if self.last:  # End episode in last step
-            self.action = 'reset'
+        self.done = False
+        if self.done:  # End episode in last step
             if self.mode != 'testing':
                 self.update_target_network()
-            self.reset()
-        return self.action
 
-    # def test(self, obs, reward, done, info):
-    #     """
-    #     Only forward passing and reporting for testing evaluation
-    #     """
-    #     self.prepare_timestep(obs, reward, done, info)
-    #
-    #     if self.first:  # Select Army in first step
-    #         self.action = 'select_army'
-    #
-    #     if self.last:  # End episode in last step
-    #         self.action = 'reset'
-    #
-    #     # Action selection for regular step
-    #     if not self.first and not self.last:
-    #         # For the first n episodes learn on forced actions.
-    #         self.action, self.action_idx = self.choose_action()
-    #
-    #     # test_report = self.collect_report(obs, reward, done)
-    #     #
-    #     return self.action
+        return self.action
 
     def supervised_action(self):
         """
@@ -265,8 +232,8 @@ class Move2BeaconAgent(base_agent.BaseAgent):
 
 
             # collect reward, loss and epsilon information as dictionary
-            agent_report = self.collect_report(obs, reward, done)
-
+            # agent_report = self.collect_report(obs, reward, done)
+            return None
         except KeyboardInterrupt:
             self.save_model(emergency=True)
         return agent_report
@@ -337,7 +304,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
                  "MeanLossPerEpisode": self.list_loss_mean,
                  "Epsilon": self.list_epsilon_progression,
                 }
-
+            print("Last epsilon: {}".format(self.list_epsilon_progression[-1]))
             return dict_agent_report
 
 
@@ -348,17 +315,27 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         enough data, the experience is sampled from the replay buffer.
         TODO: Maybe using uint8 for storing into ReplayBuffer
         """
-        # Don't store transition if first or last step
-        if self.first or self.last:
-            return
-
         self.reward = reward
-        self.next_state = next_obs[0]
+        self.next_state = next_obs
+        # self.state = self.state.astype(np.uint8)
+        # self.next_state = self.next_state.astype(np.uint8)
         self.DQN.memory.push([self.state],
                              [self.action_idx],
                              self.reward,
                              [self.next_state])
 
+        # print(80 * "-")
+        # print("Size of state: {} | {} | {}".format(self.state.nbytes, type(self.state), self.state.shape))
+        # print("Size of action_idx: {} | {}".format(self.action_idx.nbytes, type(self.action_idx)))
+        # print("Size of reward: {} | {}".format(self.reward.nbytes, type(self.reward)))
+        # print("Size of next_state: {} | {}".format(self.next_state.nbytes, type(self.next_state)))
+
+        # for i in range(0,len(self.DQN.memory[0])):
+        #     # print(self.DQN.memory[0][i])
+        #     print("Size of memory: {}".format(getsizeof(self.DQN.memory[0][i])))
+        #     print(80 * "-")
+
+        # exit()
     # ##########################################################################
     # DQN module wrappers
     # ##########################################################################

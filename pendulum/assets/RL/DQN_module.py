@@ -56,7 +56,7 @@ class DQN_module():
         Setting GPU if available. Else, use the CPU.
         """
         # Initalizing
-        device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         torch.set_printoptions(linewidth=750, profile="full")
         print_ts("Performing calculations on {}".format(device))
         return device
@@ -68,6 +68,14 @@ class DQN_module():
                                         dtype=torch.float,
                                         requires_grad=False).unsqueeze(1)
             return self.net(state_tensor)
+
+    def resize(self):
+        """
+        From original DQN pendulum tutorial with PyTorch
+        """
+        return T.Compose([T.ToPILImage(),
+                            T.Resize(40, interpolation=Image.CUBIC),
+                            T.ToTensor()])
 
     # ##########################################################################
     # Optimizing the network
@@ -95,6 +103,7 @@ class DQN_module():
         # optimize model
         self.optimize_model()
 
+        print("Optimization finished")
         return self.loss
 
     def sample_batch(self):

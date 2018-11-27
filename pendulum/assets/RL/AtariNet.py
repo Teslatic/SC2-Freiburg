@@ -53,11 +53,15 @@ class DQN(nn.Module):
         #                                 stride=1)
 
         # fully connected layers
-        self.tmp_w = self._get_filter_dimension(84, 5, 0, 4)
+        self.tmp_w = self._get_filter_dimension(320, 5, 0, 4)
         self.tmp_w = self._get_filter_dimension(self.tmp_w, 3, 0, 1)
         # self.tmp_w = self._get_filter_dimension(self.tmp_w, 3, 0, 1)
-        self.screen_fc1 = nn.Linear(32*self.tmp_w*self.tmp_w, 512)
-        self.action_fc1 = nn.Linear(512, self.num_actions)
+
+        self.tmp_h = self._get_filter_dimension(160, 5, 0, 4)
+        self.tmp_h = self._get_filter_dimension(self.tmp_h, 3, 0, 1)
+
+        self.screen_fc1 = nn.Linear(32*self.tmp_w*self.tmp_h, 512)
+        self.screen_fc2 = nn.Linear(512, self.num_actions)
 
     def _get_filter_dimension(self, w, f, p, s):
         '''
@@ -66,13 +70,23 @@ class DQN(nn.Module):
         '''
         return int((w - f + 2*p) / s + 1)
 
+    def num_flat_features(self, x):
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
+        return num_features
+
     def forward(self, screen):
         screen = F.relu(self.screen_conv1(screen))
         screen = F.relu(self.screen_conv2(screen))
         # screen = F.relu(self.screen_conv3(screen))
-        screen = screen.view(-1, 32*self.tmp_w*self.tmp_w)
+        # screen = self.screen_fc1(screen.view(screen.size(0),-1))
+        screen = screen.view(-1, self.num_flat_features(screen))
         screen = F.relu(self.screen_fc1(screen))
-        action_q_values = self.action_fc1(screen)
+        action_q_values = F.relu(self.screen_fc2(screen))
+
+        # action_q_values = F.relu(self.head(screen))
         return action_q_values
 
 

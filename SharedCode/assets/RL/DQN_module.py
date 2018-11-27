@@ -43,6 +43,8 @@ class DQN_module():
         """
         net = DQN(self.history_length, self.dim_actions).to(self.device)
         target_net = DQN(self.history_length, self.dim_actions).to(self.device)
+        target_net.load_state_dict(net.state_dict())
+        target_net.eval() # set to evaluation mode
         optimizer = optim.Adam(net.parameters(), lr=self.optim_learning_rate)
         return net, target_net, optimizer
 

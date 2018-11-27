@@ -1,95 +1,82 @@
+#!/usr/bin/env python3
+
 import gym
-import math
-import random
-import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from collections import namedtuple
 from itertools import count
-from PIL import Image
+
+from assets.helperFunctions.screen_extraction import get_cart_location, get_screen, resize
+from assets.agents.PendulumAgent import PendulumAgent
+# custom imports
+from specs.agent_specs import agent_specs
+from specs.env_specs import mv2beacon_specs
+from assets.helperFunctions.initializingHelpers import setup_agent
+# from assets.helperFunctions.FileManager import FileManager
 
 import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import torchvision.transforms as T
+def plot_durations():
+    plt.figure(2)
+    plt.clf()
+    durations_t = torch.tensor(episode_durations, dtype=torch.float)
+    plt.title('Training...')
+    plt.xlabel('Episode')
+    plt.ylabel('Duration')
+    plt.plot(durations_t.numpy())
+    # Take 100 episode averages and plot them too
+    if len(durations_t) >= 100:
+        means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
+        means = torch.cat((torch.zeros(99), means))
+        plt.plot(means.numpy())
 
-
-env = gym.make('CartPole-v0').unwrapped
+    plt.pause(0.001)  # pause a bit so that plots are updated
+    if is_ipython:
+        display.clear_output(wait=True)
+        display.display(plt.gcf())
 
 # set up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython:
     from IPython import display
-
 plt.ion()
 
-# This is based on the code from gym.
-screen_width = 600
-
+env = gym.make('CartPole-v0').unwrapped
 env.reset()
 
-if True:
-    plt.figure()
-    plt.imshow(get_screen().cpu().squeeze(0).permute(1, 2, 0).numpy(),
-               interpolation='none')
-    plt.title('Example extracted screen')
-    plt.show()
-
-BATCH_SIZE = 128
-GAMMA = 0.999
-EPS_START = 0.9
-EPS_END = 0.05
-EPS_DECAY = 200
-TARGET_UPDATE = 10
-
-policy_net = DQN().to(device)
-target_net = DQN().to(device)
-target_net.load_state_dict(policy_net.state_dict())
-target_net.eval()
-
-optimizer = optim.RMSprop(policy_net.parameters())
-memory = ReplayMemory(10000)
-
-
-steps_done = 0
-
+agent = PendulumAgent(agent_specs)
+agent.set_learning_mode()
 num_episodes = 50
 for i_episode in range(num_episodes):
+
     # Initialize the environment and state
-    env.reset()
-    last_screen = get_screen()
-    current_screen = get_screen()
+    state, reward, done, info = env.reset()
+    last_screen = get_screen(env)
+    current_screen = get_screen(env)
     state = current_screen - last_screen
+
     for t in count():
         # Select and perform an action
-        action = select_action(state)
-        _, reward, done, _ = env.step(action.item())
-        reward = torch.tensor([reward], device=device)
-
-        # Observe new state
+        action = agent.policy(state, reward, done, info)
+        print(action)
+        _, reward, done, info = env.step(action)
         last_screen = current_screen
-        current_screen = get_screen()
+        current_screen = get_screen(env)
+        print(current_screen.shape)
         if not done:
             next_state = current_screen - last_screen
         else:
             next_state = None
 
         # Store the transition in memory
-        memory.push(state, action, next_state, reward)
+        dict_agent_report = agent.evaluate(next_state, reward, done, info)
 
         # Move to the next state
         state = next_state
 
-        # Perform one step of the optimization (on the target network)
-        optimize_model()
         if done:
-            episode_durations.append(t + 1)
-            plot_durations()
+            # episode_durations.append(t + 1)
+            # plot_durations()
             break
-    # Update the target network
-    if i_episode % TARGET_UPDATE == 0:
-        target_net.load_state_dict(policy_net.state_dict())
+
 
 print('Complete')
 env.render()

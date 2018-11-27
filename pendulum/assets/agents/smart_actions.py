@@ -16,3 +16,8 @@ SMART_ACTIONS_COMPASS = [
           'right',
           'down'
         ]
+
+SMART_ACTIONS_PENDULUM = [
+            0,
+            1
+        ]
