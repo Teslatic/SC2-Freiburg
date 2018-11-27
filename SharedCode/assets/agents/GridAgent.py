@@ -45,6 +45,7 @@ class GridAgent(Move2BeaconAgent):
         self.device = self.DQN.device
         print_ts("DQN module has been initalized")
 
+
     def discretize_xy_grid(self):
         """
         Discretizing action coordinates in order to keep action space small
