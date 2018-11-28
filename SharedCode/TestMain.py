@@ -37,7 +37,7 @@ def main(argv):
 
     # setup environment in testing mode
     env = gym.make("sc2-v0")
-    obs, reward, done, info = env.setup(spec_summary)
+    obs, reward, done, info = env.setup(spec_summary, "testing")
 
     fm.create_test_file()
     while(True):
