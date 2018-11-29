@@ -63,10 +63,10 @@ class DQN_module():
 
     def predict_q_values(self, state):
         with torch.no_grad():
-            state_tensor = torch.tensor([state],
+            state_tensor = torch.tensor(state,
                                         device=self.device,
                                         dtype=torch.float,
-                                        requires_grad=False).unsqueeze(1)
+                                        requires_grad=False)
             return self.net(state_tensor)
 
     def resize(self):
@@ -95,7 +95,7 @@ class DQN_module():
         self.calculate_q_values()
 
         # calculate td targets of the actions, x&y coordinates
-        self.td_target = self.calculate_td_target(self.next_state_q_max)
+        # self.td_target = self.calculate_td_target(self.next_state_q_max)
 
         # Compute the loss
         self.compute_loss()
@@ -103,7 +103,7 @@ class DQN_module():
         # optimize model
         self.optimize_model()
 
-        print("Optimization finished")
+        # print("Optimization finished")
         return self.loss
 
     def sample_batch(self):
@@ -120,7 +120,14 @@ class DQN_module():
         Get the batches from the transition tuple
         np.concatenate concatenate all the batch data into a single ndarray
         """
-        self.state_batch = torch.as_tensor(np.concatenate([batch.state]),
+
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+            batch.next_state)), device=self.device, dtype=torch.uint8)
+
+        tensor_next_state = [torch.as_tensor(s, device=self.device, dtype=torch.float) for s in batch.next_state if s is not None]
+        non_final_next_states = torch.cat(tensor_next_state)
+
+        self.state_batch = torch.as_tensor(np.concatenate(batch.state),
                                            device=self.device,
                                            dtype=torch.float)
         self.action_batch = torch.tensor(batch.action,
@@ -129,10 +136,15 @@ class DQN_module():
         self.reward_batch = torch.as_tensor(batch.reward,
                                             device=self.device,
                                             dtype=torch.float)
-        self.next_state_batch = torch.as_tensor(
-                                            np.concatenate([batch.next_state]),
-                                            device=self.device,
-                                            dtype=torch.float)
+
+
+        next_state_values = torch.zeros(self.batch_size, device=self.device)
+        next_state_values[non_final_mask] = self.target_net(non_final_next_states).max(1)[0].detach()
+
+
+        self.td_target = (next_state_values * self.gamma) + self.reward_batch
+
+
 
     def calculate_q_values(self):
         """
@@ -144,8 +156,8 @@ class DQN_module():
         self.state_q_values = self.state_q_values.gather(1, self.action_batch)
 
         # compute action values of the next state over all actions and take max
-        self.next_state_q_values = self.target_net(self.next_state_batch)
-        self.next_state_q_max = self.next_state_q_values.max(1)[0].detach()
+        # self.next_state_q_values = self.target_net(self.next_state_batch)
+        # self.next_state_q_max = self.next_state_q_values.max(1)[0].detach()
 
     def calculate_td_target(self, q_values_best_next):
         """

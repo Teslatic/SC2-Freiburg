@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import gym
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from itertools import count
@@ -33,6 +34,17 @@ def plot_durations():
         display.clear_output(wait=True)
         display.display(plt.gcf())
 
+def plot_diff(diff_screen):
+    plt.figure(3)
+    plt.imshow(np.transpose(diff_screen.squeeze(0),(1,2,0)), interpolation='none')
+    plt.title('difference screen')
+    plt.pause(0.0001)  # pause a bit so that plots are updated
+
+    if is_ipython:
+        display.clear_output(wait=True)
+        display.display(plt.gcf())
+    # plt.show()
+
 # set up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython:
@@ -40,11 +52,21 @@ if is_ipython:
 plt.ion()
 
 env = gym.make('CartPole-v0').unwrapped
+
+
 env.reset()
+plt.figure()
+# print(get_screen(env).squeeze(0).shape)
+plt.imshow(np.transpose(get_screen(env).squeeze(0),(1,2,0)), interpolation='none')
+plt.title('Example extracted screen')
+plt.show()
+
+episode_durations = []
 
 agent = PendulumAgent(agent_specs)
 agent.set_learning_mode()
-num_episodes = 50
+num_episodes = 500
+
 for i_episode in range(num_episodes):
 
     # Initialize the environment and state
@@ -56,27 +78,31 @@ for i_episode in range(num_episodes):
     for t in count():
         # Select and perform an action
         action = agent.policy(state, reward, done, info)
-        print(action)
         _, reward, done, info = env.step(action)
         last_screen = current_screen
         current_screen = get_screen(env)
-        print(current_screen.shape)
         if not done:
             next_state = current_screen - last_screen
+            # plot_diff(next_state)
+
+
         else:
             next_state = None
+            agent.episodes += 1
+            agent.update_target_network()
+            episode_durations.append(t + 1)
+            plot_durations()
+            # break
+        print(i_episode, t, reward, agent.epsilon, action)
+
 
         # Store the transition in memory
         dict_agent_report = agent.evaluate(next_state, reward, done, info)
-
         # Move to the next state
         state = next_state
 
         if done:
-            # episode_durations.append(t + 1)
-            # plot_durations()
             break
-
 
 print('Complete')
 env.render()

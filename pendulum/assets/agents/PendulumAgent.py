@@ -127,7 +127,6 @@ class PendulumAgent():
 
         # Unzip the observation tuple
         self.state = obs
-
         # mode switch
         if (self.episodes > self.supervised_episodes) and \
             (not self.mode == 'testing'):
@@ -142,7 +141,6 @@ class PendulumAgent():
         self.prepare_timestep(obs, reward, done, info)
 
         # Action selection for regular step
-
         if self.mode == 'supervised':
             # For the first n episodes learn on forced actions.
             self.action, self.action_idx = self.supervised_action()
@@ -185,7 +183,6 @@ class PendulumAgent():
         "intermediate" solution for a restricted action space.
         """
         self.choice = self.epsilon_greedy()
-
         if self.choice == 'random':
             action_idx = np.random.randint(self.dim_actions)
             chosen_action = self.smart_actions[action_idx]
@@ -210,7 +207,7 @@ class PendulumAgent():
 
     def evaluate(self, obs, reward, done, info):
         """
-        A generic wrapper, that contains all agent operations which are used
+        A generic wrapper, thaprintt contains all agent operations which are used
         after finishing a timestep.
 
         Retuns a dictionary with the following information:
@@ -227,9 +224,6 @@ class PendulumAgent():
 
                 # Optimize the agent
                 self.optimize()
-
-
-
 
             # collect reward, loss and epsilon information as dictionary
             # agent_report = self.collect_report(obs, reward, done)
@@ -319,10 +313,10 @@ class PendulumAgent():
         self.next_state = next_obs
         # self.state = self.state.astype(np.uint8)
         # self.next_state = self.next_state.astype(np.uint8)
-        self.DQN.memory.push([self.state],
+        self.DQN.memory.push(self.state,
                              [self.action_idx],
                              self.reward,
-                             [self.next_state])
+                             self.next_state)
 
         # print(80 * "-")
         # print("Size of state: {} | {} | {}".format(self.state.nbytes, type(self.state), self.state.shape))

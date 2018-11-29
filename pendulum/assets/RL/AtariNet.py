@@ -37,7 +37,7 @@ class DQN(nn.Module):
         self.history_length = history_length
 
         # screen conv layers
-        self.screen_conv1 = nn.Conv2d(in_channels=1,
+        self.screen_conv1 = nn.Conv2d(in_channels=3,
                                       out_channels=16,
                                       kernel_size=5,
                                       padding=0,
@@ -53,11 +53,11 @@ class DQN(nn.Module):
         #                                 stride=1)
 
         # fully connected layers
-        self.tmp_w = self._get_filter_dimension(320, 5, 0, 4)
+        self.tmp_w = self._get_filter_dimension(200, 5, 0, 4)
         self.tmp_w = self._get_filter_dimension(self.tmp_w, 3, 0, 1)
         # self.tmp_w = self._get_filter_dimension(self.tmp_w, 3, 0, 1)
 
-        self.tmp_h = self._get_filter_dimension(160, 5, 0, 4)
+        self.tmp_h = self._get_filter_dimension(400 , 5, 0, 4)
         self.tmp_h = self._get_filter_dimension(self.tmp_h, 3, 0, 1)
 
         self.screen_fc1 = nn.Linear(32*self.tmp_w*self.tmp_h, 512)
@@ -85,7 +85,7 @@ class DQN(nn.Module):
         screen = screen.view(-1, self.num_flat_features(screen))
         screen = F.relu(self.screen_fc1(screen))
         action_q_values = F.relu(self.screen_fc2(screen))
-
+        # print(action_q_values)
         # action_q_values = F.relu(self.head(screen))
         return action_q_values
 

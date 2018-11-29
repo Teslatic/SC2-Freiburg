@@ -78,7 +78,7 @@ is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython:
     from IPython import display
 
-plt.ion()
+# plt.ion()
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -394,6 +394,8 @@ def optimize_model():
 
     # Compute V(s_{t+1}) for all next states.
     next_state_values = torch.zeros(BATCH_SIZE, device=device)
+    print(non_final_next_states.shape, next_state_values.shape, non_final_mask.shape)
+
     next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0].detach()
     # Compute the expected Q values
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
@@ -431,8 +433,8 @@ for i_episode in range(num_episodes):
     for t in count():
         # Select and perform an action
         action = select_action(state)
-        print(action)
-        exit()
+        # print(action)
+        # exit()
         _, reward, done, _ = env.step(action.item())
         reward = torch.tensor([reward], device=device)
 
@@ -441,6 +443,10 @@ for i_episode in range(num_episodes):
         current_screen = get_screen()
         if not done:
             next_state = current_screen - last_screen
+            plt.figure()
+            plt.imshow(np.transpose(next_state.squeeze(0),(1,2,0)), interpolation='none')
+            plt.title('difference screen')
+            plt.show()
         else:
             next_state = None
 

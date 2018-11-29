@@ -8,7 +8,7 @@ import torchvision.transforms as T
 from PIL import Image
 
 resize = T.Compose([T.ToPILImage(),
-                        T.Resize(40, interpolation=Image.CUBIC),
+                        T.Resize(200, interpolation=Image.CUBIC),
                         T.ToTensor()])
 
 def get_cart_location(env):
@@ -19,6 +19,7 @@ def get_cart_location(env):
 
 
 def get_screen(env):
+    global resize
     screen_width = 600
     screen = env.render(mode='rgb_array').transpose(
         (2, 0, 1))  # transpose into torch order (CHW)
@@ -38,6 +39,9 @@ def get_screen(env):
     # Convert to float, rescare, convert to torch tensor
     # (this doesn't require a copy)
     screen = np.ascontiguousarray(screen, dtype=np.float32) / 255
-    # screen = torch.from_numpy(screen)
+    screen = torch.from_numpy(screen)
+    screen = resize(screen).unsqueeze(0)
+    screen = screen.numpy()
     # Resize, and add a batch dimension (BCHW)
-    return screen[0]
+    # return screen[0]
+    return screen
