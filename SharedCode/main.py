@@ -12,26 +12,24 @@ from specs.agent_specs import agent_specs
 from specs.env_specs import mv2beacon_specs
 from assets.helperFunctions.initializingHelpers import setup_agent
 from assets.helperFunctions.FileManager import FileManager
-# from assets.helperFunctions.FileManager import log_training_reports
-# from assets.helperFunctions.FileManager import save_specs
-# from assets.helperFunctions.FileManager import create_experiment_at_main
 from assets.splash.squidward import print_squidward
 
 
 def main(argv):
     print_squidward()
 
-    agent = setup_agent(agent_specs)
-    agent.set_supervised_mode()
-
-    env = gym.make("sc2-v0")
-
-    # FileManager
+    # FileManager: Save specs and create experiment
     fm = FileManager()
-    fm.create_experiment(agent_specs["EXP_NAME"])
+    fm.create_experiment(agent_specs["EXP_NAME"]) # Automatic cwd switch
     fm.save_specs(agent_specs, mv2beacon_specs)
     fm.create_train_file()
 
+    agent = setup_agent(agent_specs)
+    # Loading of model possible fot training mode
+    agent.set_supervised_mode()
+
+    # setup environment in learning mode
+    env = gym.make("sc2-v0")
     obs, reward, done, info = env.setup(mv2beacon_specs)
 
     while(True):
@@ -40,9 +38,7 @@ def main(argv):
 
         if (action is 'reset'):
             obs, reward, done, info = env.reset()
-            print("Memory length: {}".format(agent.get_memory_length()))
             agent.save_model(fm.get_cwd())
-
         else:
             # Peforming selected action
             obs, reward, done, info = env.step(action)
@@ -50,7 +46,7 @@ def main(argv):
             fm.log_training_reports(dict_agent_report)
 
         if env.finished:
-            print("Finished da learning boi. imma break.")
+            print("Finished learning.")
             break
 
 
