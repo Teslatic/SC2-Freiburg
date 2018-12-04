@@ -16,12 +16,16 @@ from assets.splash.squidward import print_squidward
 
 
 def main(argv):
-    print_squidward()
+    # print_squidward()
 
     # FileManager: Save specs and create experiment
     fm = FileManager()
-    fm.create_experiment(agent_specs["EXP_NAME"]) # Automatic cwd switch
-    fm.save_specs(agent_specs, mv2beacon_specs)
+    try:
+        fm.create_experiment(agent_specs["EXP_NAME"])  # Automatic cwd switch
+        fm.save_specs(agent_specs, mv2beacon_specs)
+    except:
+        print("Creating eperiment or saving specs failed.")
+        exit()
     fm.create_train_file()
 
     agent = setup_agent(agent_specs)
@@ -36,11 +40,10 @@ def main(argv):
         # Action selection
         action = agent.policy(obs, reward, done, info)
 
-        if (action is 'reset'):
+        if (action is 'reset'):  # Resetting the environment
             obs, reward, done, info = env.reset()
             agent.save_model(fm.get_cwd())
-        else:
-            # Peforming selected action
+        else:  # Peforming selected action
             obs, reward, done, info = env.step(action)
             dict_agent_report = agent.evaluate(obs, reward, done, info)
             fm.log_training_reports(dict_agent_report)
@@ -51,4 +54,9 @@ def main(argv):
 
 
 if __name__ == "__main__":
+    # No flags for arg parsing defined yet.
+
+
+
+
     app.run(main)
