@@ -118,6 +118,7 @@ class FileManager():
             logging_df = pd.DataFrame.from_dict(dict_complete)
 
             with open(self.current_train_dir + "/training_report.csv", "w") as f:
+                print("logging into {}".format(self.current_train_dir))
                 logging_df.to_csv(f, header=True, index=False)
 
     def create_test_file(self):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # python imports
-from absl import app
+from absl import app, flags
 from itertools import count
 
 # gym imports
@@ -22,23 +22,23 @@ def main(argv):
     # FileManager: Save specs and create experiment
     fm = FileManager()
     try:
-        fm.create_experiment(agent_specs["EXP_NAME"])  # Automatic cwd switch
-        fm.save_specs(agent_specs, cartpole_specs)
+        spec_summary = fm.load_spec_summary(FLAGS.specs)
+        fm.change_cwd(spec_summary["ROOT_DIR"])
     except:
-        print("Creating eperiment or saving specs failed.")
+        print("Loading specs/model failed. Have you selected the right path?")
         exit()
-    fm.create_train_file()
+    fm.create_test_file()
 
     # show_extracted_screen(get_screen(env))
     plotter = Plotter()
 
     # No FileManager yet
     agent = CartPoleAgent(agent_specs)
-    agent.set_learning_mode()
+    agent.set_testing_mode()
 
     env = gym.make('CartPole-v0').unwrapped
 
-    num_episodes = cartpole_specs["EPISODES"]
+    num_episodes = int(spec_summary["TEST_EPISODES"])
     for e in range(num_episodes):
 
         # Initialize the environment and state
@@ -46,9 +46,6 @@ def main(argv):
         last_screen = get_screen(env)
         current_screen = get_screen(env)
         state = current_screen - last_screen
-
-        if e%50==0 and e!=0:
-            agent.save_model(fm.get_cwd())
 
         for t in count():
             # Select and perform an action
@@ -61,16 +58,13 @@ def main(argv):
             else:
                 next_state = None
                 agent.episodes += 1
-                # agent.update_target_network()
                 plotter.episode_durations.append(t + 1)
                 plotter.plot_durations()
 
-            print(e, t, reward, action, len(agent.DQN.memory), agent.epsilon)
+            print(e, t, reward, action)
             # Store the transition in memory
-            train_report = agent.evaluate(next_state, reward, done, info)
-            fm.log_training_reports(train_report)
-
-
+            test_report = agent.evaluate(next_state, reward, done, info)
+            fm.log_test_reports(test_report)
 
             # Move to the next state
             state = next_state
@@ -78,11 +72,13 @@ def main(argv):
             if done:
                 break
 
-    agent.save_model(fm.get_cwd())
-    print('Training complete')
+    print('Testing complete')
     env.close()
     plotter.close()
 
 if __name__ == "__main__":
-    # No flags for arg parsing defined yet.
+    # Arg parsing for model and specs paths
+    FLAGS = flags.FLAGS
+    flags.DEFINE_string("specs", None, "path to spec summary")
+    flags.DEFINE_string("model", None, "path to pytorch model")
     app.run(main)

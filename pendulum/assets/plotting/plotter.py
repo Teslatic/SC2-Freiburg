@@ -39,7 +39,7 @@ class Plotter():
         plt.figure(3)
         plt.imshow(np.transpose(diff_screen.squeeze(0),(1,2,0)), interpolation='none')
         plt.title('difference screen')
-        plt.pause(0.0001)  # pause a bit so that plots are updated
+        # plt.pause(0.0001)  # pause a bit so that plots are updated
 
         if self.is_ipython:
             display.clear_output(wait=True)
@@ -52,4 +52,11 @@ class Plotter():
         # print(get_screen(env).squeeze(0).shape)
         plt.imshow(np.transpose(screen.squeeze(0),(1,2,0)), interpolation='none')
         plt.title('Example extracted screen')
+        plt.show()
+
+    def close(self):
+        """
+        Clean closing of plots.
+        """
+        plt.ioff()
         plt.show()

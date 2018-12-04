@@ -56,7 +56,7 @@ class DQN_module():
         Setting GPU if available. Else, use the CPU.
         """
         # Initalizing
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
         torch.set_printoptions(linewidth=750, profile="full")
         print_ts("Performing calculations on {}".format(device))
         return device
