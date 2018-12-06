@@ -49,6 +49,7 @@ class CartPoleAgent():
         self.steps = 0
         self.timesteps = 0  # timesteps in the current episode
         self.setup_dqn()
+        self.done = False
 
         # counter for book keepping
         self.shaped_reward_cumulative = 0
@@ -150,10 +151,10 @@ class CartPoleAgent():
         if self.mode == 'testing':
             self.action, self.action_idx = self.pick_action()
 
-        self.done = False
-        if self.done:  # End episode in last step
-            if self.mode != 'testing':
-                self.update_target_network()
+        # self.done = False
+        # if self.done:  # End episode in last step
+        #     if self.mode != 'testing':
+        #         self.update_target_network()
 
         return self.action
 

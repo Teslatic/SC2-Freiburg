@@ -66,17 +66,18 @@ def main(argv):
                 plotter.plot_durations()
 
             print(e, t, reward, action, len(agent.DQN.memory), agent.epsilon)
+            # print(agent.DQN.state_q_values)
             # Store the transition in memory
             train_report = agent.evaluate(next_state, reward, done, info)
             fm.log_training_reports(train_report)
-
-
 
             # Move to the next state
             state = next_state
 
             if done:
                 break
+
+        agent.update_target_network()
 
     agent.save_model(fm.get_cwd())
     print('Training complete')

@@ -34,7 +34,10 @@ def main(argv):
 
     # No FileManager yet
     agent = CartPoleAgent(agent_specs)
+    agent.DQN.load(FLAGS.model)
     agent.set_testing_mode()
+
+    list_reward_per_episode = []
 
     env = gym.make('CartPole-v0').unwrapped
 
@@ -47,10 +50,17 @@ def main(argv):
         current_screen = get_screen(env)
         state = current_screen - last_screen
 
+        reward_cnt = 0
+        try:
+            print("Episode {} | Last reward: {}".format(e, list_reward_per_episode[-1]))
+        except:
+            pass
+
         for t in count():
             # Select and perform an action
             action = agent.policy(state, reward, done, info)
             _, reward, done, info = env.step(action)
+            reward_cnt += reward
             last_screen = current_screen
             current_screen = get_screen(env)
             if not done:
@@ -61,7 +71,6 @@ def main(argv):
                 plotter.episode_durations.append(t + 1)
                 plotter.plot_durations()
 
-            print(e, t, reward, action)
             # Store the transition in memory
             test_report = agent.evaluate(next_state, reward, done, info)
             fm.log_test_reports(test_report)
@@ -70,6 +79,9 @@ def main(argv):
             state = next_state
 
             if done:
+                list_reward_per_episode.append(reward_cnt)
+                dict_test_report = {"RewardPerEpisode": list_reward_per_episode }
+                fm.log_test_reports(dict_test_report)
                 break
 
     print('Testing complete')

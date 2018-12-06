@@ -32,6 +32,7 @@ def main(argv):
     agent.DQN.load(FLAGS.model)
     agent.set_testing_mode()
 
+
     # setup environment in testing mode
     env = gym.make("sc2-v0")
     obs, reward, done, info = env.setup(spec_summary, "testing")
@@ -39,6 +40,7 @@ def main(argv):
     while(True):
         # Action selection
         action = agent.policy(obs, reward, done, info)
+        print(action)
 
         if (action is 'reset'):  # Resetting the environment
             obs, reward, done, info = env.reset()

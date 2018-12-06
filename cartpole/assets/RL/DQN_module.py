@@ -33,6 +33,8 @@ class DQN_module():
         self.loss = 0
         self.update_cnt = 0  # Target network update_counter
 
+        self.state_q_values = 0
+
         self.net, self.target_net, self.optimizer = self._build_model()
         self.print_architecture()
         self.memory = ReplayBuffer(self.size_replaybuffer)
@@ -95,7 +97,7 @@ class DQN_module():
         self.calculate_q_values()
 
         # calculate td targets of the actions, x&y coordinates
-        # self.td_target = self.calculate_td_target(self.next_state_q_max)
+        self.td_target = self.calculate_td_target(self.next_state_q_max)
 
         # Compute the loss
         self.compute_loss()
@@ -121,11 +123,11 @@ class DQN_module():
         np.concatenate concatenate all the batch data into a single ndarray
         """
 
-        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+        self.non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
             batch.next_state)), device=self.device, dtype=torch.uint8)
 
         tensor_next_state = [torch.as_tensor(s, device=self.device, dtype=torch.float) for s in batch.next_state if s is not None]
-        non_final_next_states = torch.cat(tensor_next_state)
+        self.non_final_next_states = torch.cat(tensor_next_state)
 
         self.state_batch = torch.as_tensor(np.concatenate(batch.state),
                                            device=self.device,
@@ -138,24 +140,21 @@ class DQN_module():
                                             dtype=torch.float)
 
 
-        next_state_values = torch.zeros(self.batch_size, device=self.device)
-        next_state_values[non_final_mask] = self.target_net(non_final_next_states).max(1)[0].detach()
-
-
-        self.td_target = (next_state_values * self.gamma) + self.reward_batch
-
-
-
     def calculate_q_values(self):
         """
         """
         # forward pass
         self.state_q_values = self.net(self.state_batch)
+        print(self.state_q_values)
 
         # gather action values with respect to the chosen action
         self.state_q_values = self.state_q_values.gather(1, self.action_batch)
 
+
         # compute action values of the next state over all actions and take max
+        self.next_state_q_max = torch.zeros(self.batch_size, device=self.device)
+        self.next_state_q_max[self.non_final_mask] = self.target_net(self.non_final_next_states).max(1)[0].detach()
+
         # self.next_state_q_values = self.target_net(self.next_state_batch)
         # self.next_state_q_max = self.next_state_q_values.max(1)[0].detach()
 
