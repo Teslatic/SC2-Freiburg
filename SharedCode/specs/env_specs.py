@@ -6,7 +6,7 @@ GRID_DIM_Y = 64
 
 REWARD_TYPE = 'distance'  # diff, distance, sparse
 
-EPISODES = 30000
+EPISODES = 5000
 TEST_EPISODES = 10
 GAMESTEPS = 0  # 0 = unlimited game time, None = map default
 REPLAY_DIR = None
@@ -16,6 +16,7 @@ STEP_MUL = 32  # 16 = 1s game time, None = map default
 LOGGING = False  # Logs information in files for tmux sessions
 SILENTMODE = False  # True: Just a minimum of console output
 VISUALIZE = False
+TEST_VISUALIZE = True
 
 mv2beacon_specs = {
     'ACTION_TYPE': ACTION_TYPE,
@@ -33,7 +34,8 @@ mv2beacon_specs = {
 
     'LOGGING': LOGGING,
     'SILENTMODE': SILENTMODE,
-    'VISUALIZE': VISUALIZE}
+    'VISUALIZE': VISUALIZE,
+    'TEST_VISUALIZE': TEST_VISUALIZE}
 
 # TODO: make environment specs as class, such that each map gets its own
 # specification object

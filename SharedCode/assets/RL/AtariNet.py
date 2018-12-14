@@ -100,6 +100,8 @@ class ExtendedDQN(nn.Module):
         self.screen_fc2 = nn.Linear(128, 256)
         self.screen_fc3 = nn.Linear(256, self.num_actions)
 
+        self.softmax = nn.Softmax()
+
     def _get_filter_dimension(self, w, f, p, s):
         '''
         calculates filter dimension according to following formula:
@@ -122,10 +124,10 @@ class ExtendedDQN(nn.Module):
         screen = screen.view(-1, self.num_flat_features(screen))
         screen = self.dropout(F.relu(self.screen_fc1(screen)))
         screen = self.dropout(F.relu(self.screen_fc2(screen)))
-        action_q_values = F.relu(self.screen_fc3(screen))
+        action_q_values =  F.relu(self.screen_fc3(screen))
         # print(action_q_values)
         # action_q_values = F.relu(self.head(screen))
-        return action_q_values
+        return self.softmax(action_q_values)
 
 class DQN(nn.Module):
 

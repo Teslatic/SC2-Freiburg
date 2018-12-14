@@ -175,7 +175,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
 
     def pick_action(self):
         action_q_values = self.DQN.predict_q_values(self.state)
-        # Beste Action bestimmen
+        print(max(action_q_values[0]), 1/400)        # Beste Action bestimmen
         best_action_numpy = action_q_values.detach().cpu().numpy()
         action_idx = np.argmax(best_action_numpy)
         best_action = self.smart_actions[action_idx]
@@ -310,7 +310,10 @@ class Move2BeaconAgent(base_agent.BaseAgent):
                  "MeanLossPerEpisode": self.list_loss_mean,
                  "Epsilon": self.list_epsilon_progression,
                 }
-            print("Last epsilon: {}".format(self.list_epsilon_progression[-1]))
+
+            print("Last epsilon: {}| Memory length: {}".format(
+                    self.list_epsilon_progression[-1],
+                    self.get_memory_length()))
             return dict_agent_report
 
 
