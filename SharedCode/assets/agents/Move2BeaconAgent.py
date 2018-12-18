@@ -3,6 +3,7 @@ import numpy as np
 from pysc2.agents import base_agent
 import pandas as pd
 from sys import getsizeof
+import time
 
 # custom imports
 from assets.RL.DQN_module import DQN_module
@@ -83,7 +84,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         self.batch_size = int(agent_specs['BATCH_SIZE'])
         self.target_update_period = int(agent_specs['TARGET_UPDATE_PERIOD'])
         self.history_length = int(agent_specs['HIST_LENGTH'])
-        self.size_replaybuffer = int(agent_specs['REPLAY_SIZE'])
+        self.size_replaybuffer = int(float(agent_specs['REPLAY_SIZE']))
         # self.device = agent_specs['DEVICE']
         # self.silentmode = agent_specs['SILENTMODE']
         # self.logging = agent_specs['LOGGING']
@@ -124,11 +125,11 @@ class Move2BeaconAgent(base_agent.BaseAgent):
 
         # Unzip the observation tuple
         self.state = np.array(obs[0], dtype=np.uint8)
-        self.first = obs[2]
-        self.last = obs[3]
-        self.distance = obs[4]
-        self.marine_center = obs[5]
-        self.beacon_center = obs[6]
+        self.first = obs[1]
+        self.last = obs[2]
+        self.distance = obs[3]
+        self.marine_center = obs[4]
+        self.beacon_center = obs[5]
 
         # mode switch
         if (self.episodes > self.supervised_episodes) and \
@@ -175,7 +176,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
 
     def pick_action(self):
         action_q_values = self.DQN.predict_q_values(self.state)
-        print(max(action_q_values[0]), 1/400)        # Beste Action bestimmen
+        # print(max(action_q_values[0]), 1/(84*64))        # Beste Action bestimmen
         best_action_numpy = action_q_values.detach().cpu().numpy()
         action_idx = np.argmax(best_action_numpy)
         best_action = self.smart_actions[action_idx]
@@ -278,7 +279,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
 
 
         if self.get_memory_length() >= self.batch_size * self.patience:
-            self.list_loss_per_episode.append(self.loss.data[0])
+            self.list_loss_per_episode.append(self.loss.item())
         else:
             self.list_loss_per_episode.append(self.loss)
 
@@ -290,10 +291,10 @@ class Move2BeaconAgent(base_agent.BaseAgent):
             self.list_loss_mean.append(np.mean(self.list_loss_per_episode))
 
             # score observation per episode from pysc2 is appended
-            self.list_pysc2_reward_per_episode.append(obs[7])
+            self.list_pysc2_reward_per_episode.append(obs[6])
 
             # cumulative pysc2 reward
-            self.pysc2_reward_cumulative += obs[7]
+            self.pysc2_reward_cumulative += obs[6]
             self.list_pysc2_reward_cumulative.append(self.pysc2_reward_cumulative)
 
 
@@ -336,18 +337,25 @@ class Move2BeaconAgent(base_agent.BaseAgent):
                              [self.action_idx],
                              self.reward,
                              [self.next_state])
-
+        # print(self.DQN.memory[-1])
+        # print(self.state)
+        # print("marine: {}\t| beacon {}\t action {}\t| reward {}\t| pysc reward: {}\t|".format(self.marine_center,
+        #                                                                     self.beacon_center,
+        #                                                                     self.action_idx,
+        #                                                                     self.reward,
+        #                                                                     next_obs[7]))
+        # time.sleep(0.2)
         # print(80 * "-")
         # print("Size of state: {} | {} | {}".format(self.state.nbytes, type(self.state), self.state.shape))
         # print("Size of action_idx: {} | {}".format(self.action_idx.nbytes, type(self.action_idx)))
         # print("Size of reward: {} | {}".format(self.reward.nbytes, type(self.reward)))
         # print("Size of next_state: {} | {}".format(self.next_state.nbytes, type(self.next_state)))
-
+        #
         # for i in range(0,len(self.DQN.memory[0])):
         #     # print(self.DQN.memory[0][i])
         #     print("Size of memory: {}".format(getsizeof(self.DQN.memory[0][i])))
         #     print(80 * "-")
-
+        #
         # exit()
     # ##########################################################################
     # DQN module wrappers
@@ -398,9 +406,9 @@ class Move2BeaconAgent(base_agent.BaseAgent):
     def save_model(self, exp_path, emergency=False):
         if emergency:
             print("KeyboardInterrupt detected, saving last model!")
-            save_path = exp_path + "/model/emergency_model.pt"
+            save_path = exp_path + "/model/emergency_model_{}.pt".format(self.episodes)
         else:
-            save_path = exp_path + "/model/model.pt"
+            save_path = exp_path + "/model/model_{}.pt".format(self.episodes)
 
         # Path((self.exp_path + "/model")).mkdir(parents=True, exist_ok=True)
         self.DQN.save(save_path)

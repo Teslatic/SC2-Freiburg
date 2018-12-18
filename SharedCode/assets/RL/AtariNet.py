@@ -35,17 +35,17 @@ class ExtendedDQN(nn.Module):
         self.map_dimensions = (84, 64)
         self.history_length = history_length
 
-        # FC Layer properties
-        KERNEL_1 = 3
-        STRIDE_1 = 2
+        # CNN Layer properties
+        KERNEL_1 = 13
+        STRIDE_1 = 1
         PADDING_1 = 0
 
-        KERNEL_2 = 3
+        KERNEL_2 = 5
         STRIDE_2 = 2
         PADDING_2 = 0
 
         KERNEL_3 = 3
-        STRIDE_3 = 2
+        STRIDE_3 = 1
         PADDING_3 = 0
 
         POOL_PAD = 0
@@ -85,22 +85,22 @@ class ExtendedDQN(nn.Module):
         self.tmp_w = self._get_filter_dimension(self.tmp_w, POOL_KRL,POOL_PAD,POOL_STR)
         self.tmp_w = self._get_filter_dimension(self.tmp_w, KERNEL_2, PADDING_2, STRIDE_2)
         self.tmp_w = self._get_filter_dimension(self.tmp_w, POOL_KRL,POOL_PAD,POOL_STR)
-        # self.tmp_w = self._get_filter_dimension(self.tmp_w, KERNEL_3, PADDING_3, STRIDE_3)
-        # self.tmp_w = self._get_filter_dimension(self.tmp_w, POOL_KRL,POOL_PAD,POOL_STR)
+        self.tmp_w = self._get_filter_dimension(self.tmp_w, KERNEL_3, PADDING_3, STRIDE_3)
+        self.tmp_w = self._get_filter_dimension(self.tmp_w, POOL_KRL,POOL_PAD,POOL_STR)
 
         self.tmp_h = self._get_filter_dimension(84 , KERNEL_1, PADDING_1, STRIDE_1)
         self.tmp_h = self._get_filter_dimension(self.tmp_h, POOL_KRL,   POOL_PAD, POOL_STR)
         self.tmp_h = self._get_filter_dimension(self.tmp_h, KERNEL_2, PADDING_2, STRIDE_2)
         self.tmp_h = self._get_filter_dimension(self.tmp_h, POOL_KRL,   POOL_PAD, POOL_STR)
-        # self.tmp_h = self._get_filter_dimension(self.tmp_h, KERNEL_3, PADDING_3, STRIDE_3)
-        # self.tmp_h = self._get_filter_dimension(self.tmp_h, POOL_KRL,   POOL_PAD, POOL_STR)
+        self.tmp_h = self._get_filter_dimension(self.tmp_h, KERNEL_3, PADDING_3, STRIDE_3)
+        self.tmp_h = self._get_filter_dimension(self.tmp_h, POOL_KRL,   POOL_PAD, POOL_STR)
 
 
-        self.screen_fc1 = nn.Linear(32*self.tmp_w*self.tmp_h, 128)
+        self.screen_fc1 = nn.Linear(64*self.tmp_w*self.tmp_h, 128)
         self.screen_fc2 = nn.Linear(128, 256)
         self.screen_fc3 = nn.Linear(256, self.num_actions)
 
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=1)
 
     def _get_filter_dimension(self, w, f, p, s):
         '''
@@ -119,7 +119,7 @@ class ExtendedDQN(nn.Module):
     def forward(self, screen):
         screen = self.pool(F.relu(self.bn1(self.screen_conv1(screen))))
         screen = self.pool(F.relu(self.bn2(self.screen_conv2(screen))))
-        # screen = self.pool(F.relu(self.bn3(self.screen_conv3(screen))))
+        screen = self.pool(F.relu(self.bn3(self.screen_conv3(screen))))
         # screen = self.screen_fc1(screen.view(screen.size(0),-1))
         screen = screen.view(-1, self.num_flat_features(screen))
         screen = self.dropout(F.relu(self.screen_fc1(screen)))
@@ -127,7 +127,8 @@ class ExtendedDQN(nn.Module):
         action_q_values =  F.relu(self.screen_fc3(screen))
         # print(action_q_values)
         # action_q_values = F.relu(self.head(screen))
-        return self.softmax(action_q_values)
+        output = self.softmax(action_q_values)
+        return output
 
 class DQN(nn.Module):
 

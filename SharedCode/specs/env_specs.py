@@ -1,17 +1,17 @@
-ACTION_TYPE = 'grid'  # compass, grid, original
+ACTION_TYPE = 'compass'  # compass, grid, original
 
 # GRID_DIM_X x GRID_DIM_Y
-GRID_DIM_X = 84
-GRID_DIM_Y = 64
+GRID_DIM_X = 15
+GRID_DIM_Y = 15
 
-REWARD_TYPE = 'distance'  # diff, distance, sparse
+REWARD_TYPE = 'diff'  # diff, distance, sparse
 
-EPISODES = 5000
+EPISODES = 2000
 TEST_EPISODES = 10
 GAMESTEPS = 0  # 0 = unlimited game time, None = map default
 REPLAY_DIR = None
 SAVE_REPLAY = False
-STEP_MUL = 32  # 16 = 1s game time, None = map default
+STEP_MUL = 4   # 16 = 1s game time, None = map default
 
 LOGGING = False  # Logs information in files for tmux sessions
 SILENTMODE = False  # True: Just a minimum of console output

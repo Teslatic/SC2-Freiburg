@@ -22,6 +22,7 @@ def main(argv):
     fm = FileManager()
     try:
         spec_summary = fm.load_spec_summary(FLAGS.specs)
+        print(spec_summary)
         fm.change_cwd(spec_summary["ROOT_DIR"])
     except:
         print("Loading specs/model failed. Have you selected the right path?")
