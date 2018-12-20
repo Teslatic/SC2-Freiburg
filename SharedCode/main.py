@@ -57,6 +57,7 @@ def main(argv):
                 break
     except KeyboardInterrupt:
         agent.save_model(fm.get_cwd(), emergency=True)
+        exit()
 
 if __name__ == "__main__":
     # No flags for arg parsing defined yet.

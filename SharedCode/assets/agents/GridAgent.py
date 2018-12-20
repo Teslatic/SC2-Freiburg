@@ -1,5 +1,7 @@
 # python imports
 import numpy as np
+import random
+import time
 
 # custom imports
 from assets.RL.DQN_module import DQN_module
@@ -29,6 +31,10 @@ class GridAgent(Move2BeaconAgent):
         Refer to Move2BeaconAgent.
         """
         super(GridAgent, self).__init__(agent_specs)
+
+        self.NOISE_BOUND = 1
+
+
 
     def setup_dqn(self):
         """
@@ -62,6 +68,22 @@ class GridAgent(Move2BeaconAgent):
     # Action Selection
     # ##########################################################################
 
+    def inject_noise(self, closest_pair):
+        """
+        Injects noise on the supervised actions to make them sub optimal.
+        """
+
+        noise_scalar = random.randint(-self.NOISE_BOUND, self.NOISE_BOUND)
+        noise_factor = random.randint(-self.NOISE_BOUND, self.NOISE_BOUND)
+        noise_x = noise_scalar
+        noise_y = noise_scalar + noise_factor * random.choice(
+                                                            [-self.grid_dim_x,
+                                                             +self.grid_dim_x])
+        which_noise = random.choice([noise_x, noise_y])
+        # -1 for boundary case
+        return max(0, min(len(self._xy_pairs) - 1, closest_pair + which_noise))
+
+
     def supervised_action(self):
         """
         This method selects a grid point which is the closest to the beacon.
@@ -73,6 +95,7 @@ class GridAgent(Move2BeaconAgent):
 
         # TODO: Check if correct
         closest_pair = np.argmin(distances)
-        action_idx = closest_pair
+
+        action_idx = self.inject_noise(closest_pair)
         action = action_idx
         return action, action_idx

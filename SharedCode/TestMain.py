@@ -41,7 +41,7 @@ def main(argv):
     while(True):
         # Action selection
         action = agent.policy(obs, reward, done, info)
-        print(action)
+        # print(action)
 
         if (action is 'reset'):  # Resetting the environment
             obs, reward, done, info = env.reset()

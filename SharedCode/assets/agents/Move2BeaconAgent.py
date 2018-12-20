@@ -226,23 +226,17 @@ class Move2BeaconAgent(base_agent.BaseAgent):
             - Mean loss per episode
             - epsilon progression per episode
         """
-        try:
 
-            if self.mode != 'testing':
-                # Saving the episode data. Pushing the information onto the memory.
-                self.store_transition(obs, reward)
+        if self.mode != 'testing':
+            # Saving the episode data. Pushing the information onto the memory.
+            self.store_transition(obs, reward)
 
-                # Optimize the agent
-                self.optimize()
+            # Optimize the agent
+            self.optimize()
 
+        # collect reward, loss and epsilon information as dictionary
+        agent_report = self.collect_report(obs, reward, done)
 
-
-
-            # collect reward, loss and epsilon information as dictionary
-            agent_report = self.collect_report(obs, reward, done)
-
-        except KeyboardInterrupt:
-            self.save_model(emergency=True)
         return agent_report
 
     def set_learning_mode(self):
