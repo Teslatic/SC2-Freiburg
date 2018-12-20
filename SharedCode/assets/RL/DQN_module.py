@@ -68,7 +68,7 @@ class DQN_module():
             state_tensor = torch.tensor([state],
                                         device=self.device,
                                         dtype=torch.float,
-                                        requires_grad=False).unsqueeze(1)
+                                        requires_grad=False)
             return self.net(state_tensor)
 
     # ##########################################################################
@@ -127,6 +127,9 @@ class DQN_module():
                                             device=self.device,
                                             dtype=torch.float)
 
+
+        self.state_batch = self.state_batch.squeeze(1)
+        self.next_state_batch = self.next_state_batch.squeeze(1)
     def calculate_q_values(self):
         """
         """

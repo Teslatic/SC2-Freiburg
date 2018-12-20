@@ -331,8 +331,9 @@ class Move2BeaconAgent(base_agent.BaseAgent):
                              [self.action_idx],
                              self.reward,
                              [self.next_state])
+
         # print(self.DQN.memory[-1])
-        # print(self.state)
+        print(self.state)
         # print("marine: {}\t| beacon {}\t action {}\t| reward {}\t| pysc reward: {}\t|".format(self.marine_center,
         #                                                                     self.beacon_center,
         #                                                                     self.action_idx,
@@ -345,12 +346,12 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         # print("Size of reward: {} | {}".format(self.reward.nbytes, type(self.reward)))
         # print("Size of next_state: {} | {}".format(self.next_state.nbytes, type(self.next_state)))
         #
-        # for i in range(0,len(self.DQN.memory[0])):
-        #     # print(self.DQN.memory[0][i])
-        #     print("Size of memory: {}".format(getsizeof(self.DQN.memory[0][i])))
-        #     print(80 * "-")
-        #
-        # exit()
+        for i in range(0,len(self.DQN.memory[0])):
+            # print(self.DQN.memory[0][i])
+            print("Size of memory: {}".format(getsizeof(self.DQN.memory[0][i])))
+            print(80 * "-")
+
+        exit()
     # ##########################################################################
     # DQN module wrappers
     # ##########################################################################
