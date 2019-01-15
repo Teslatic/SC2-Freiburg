@@ -334,7 +334,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         #     print('Move2BeaconAgent {} | environment {}'.format(self.reward, self.env.dummy_reward))
         # except:
         #     pass
-        # 
+        #
         # print("action index {} ".format(self.action_idx))
         # print("state {}".format(self.state))
         # print(100 * '-')
@@ -426,6 +426,3 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         load_path = self.exp_path + "/model/emergency_model.pt"
 
         self.DQN.load(load_path)
-
-    def get_env(self, env):
-        self.env = env

@@ -6,7 +6,7 @@ import time
 
 # gym imports
 import gym
-import gym_ghost
+import gym_sc2
 
 # custom imports
 from specs.agent_specs import agent_specs
@@ -35,9 +35,7 @@ def main(argv):
         agent.set_supervised_mode()
 
         # setup environment in learning mode
-        env = gym.make("sc2-v0")
-
-        agent.get_env(env)
+        env = gym.make("gym-sc2-m2b-v0")
 
         obs, reward, done, info = env.setup(mv2beacon_specs, "learning")
 

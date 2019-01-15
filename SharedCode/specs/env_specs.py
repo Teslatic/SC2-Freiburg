@@ -1,22 +1,23 @@
-ACTION_TYPE = 'compass'  # compass, grid, original
+ACTION_TYPE = 'grid'  # compass, grid, original
+MODE = 'supervised'
 
 # GRID_DIM_X x GRID_DIM_Y
-GRID_DIM_X = 15
-GRID_DIM_Y = 15
+GRID_DIM_X = 20
+GRID_DIM_Y = 20
 
-REWARD_TYPE = 'diff'  # diff, distance, sparse
+REWARD_TYPE = 'distance'  # diff, distance, sparse
 
-EPISODES = 2000
-TEST_EPISODES = 10
+EPISODES = 50000
+TEST_EPISODES = 50
 GAMESTEPS = 0  # 0 = unlimited game time, None = map default
 REPLAY_DIR = None
 SAVE_REPLAY = False
-STEP_MUL = 4   # 16 = 1s game time, None = map default
+STEP_MUL = 8  # 16 = 1s game time, None = map default
 
 LOGGING = False  # Logs information in files for tmux sessions
 SILENTMODE = False  # True: Just a minimum of console output
-VISUALIZE = False
-TEST_VISUALIZE = True
+VISUALIZE = True
+TEST_VISUALIZE = False
 
 mv2beacon_specs = {
     'ACTION_TYPE': ACTION_TYPE,
@@ -30,6 +31,7 @@ mv2beacon_specs = {
     'REPLAY_DIR': REPLAY_DIR,
     'SAVE_REPLAY': SAVE_REPLAY,
     'STEP_MUL': STEP_MUL,  # Standard 16 = 1s/action
+    'MODE': MODE,
     'TEST_EPISODES': TEST_EPISODES,
 
     'LOGGING': LOGGING,
