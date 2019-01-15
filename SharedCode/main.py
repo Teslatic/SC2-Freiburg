@@ -36,6 +36,9 @@ def main(argv):
 
         # setup environment in learning mode
         env = gym.make("sc2-v0")
+
+        agent.get_env(env)
+
         obs, reward, done, info = env.setup(mv2beacon_specs, "learning")
 
         while(True):

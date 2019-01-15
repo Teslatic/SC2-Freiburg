@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 from collections import namedtuple
 
-from assets.RL.AtariNet import DQN
+from assets.RL.AtariNet import DQN, ExtendedDQN
 from assets.memory.ReplayBuffer import ReplayBuffer
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 
@@ -43,8 +43,8 @@ class DQN_module():
         """
         Initializing 2 networks and an Adam optimizer.
         """
-        net = DQN(self.history_length, self.dim_actions).to(self.device)
-        target_net = DQN(self.history_length, self.dim_actions).to(self.device)
+        net = ExtendedDQN(self.history_length, self.dim_actions).to(self.device)
+        target_net = ExtendedDQN(self.history_length, self.dim_actions).to(self.device)
         optimizer = optim.Adam(net.parameters(), lr=self.optim_learning_rate)
         return net, target_net, optimizer
 

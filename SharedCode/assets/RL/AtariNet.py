@@ -53,7 +53,7 @@ class ExtendedDQN(nn.Module):
         POOL_KRL = 2
 
         # screen conv layers
-        self.screen_conv1 = nn.Conv2d(in_channels=17,
+        self.screen_conv1 = nn.Conv2d(in_channels=1,
                                       out_channels=32,
                                       kernel_size=KERNEL_1,
                                       padding=PADDING_1,

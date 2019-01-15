@@ -105,6 +105,8 @@ class Move2BeaconAgent(base_agent.BaseAgent):
 
         self.exp_name = agent_specs['EXP_NAME']
 
+        self.NOISE_BOUND = agent_specs['NOISE_BOUND']
+
     # ##########################################################################
     # Action Selection
     # ##########################################################################
@@ -327,13 +329,25 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         self.next_state = np.array(next_obs[0], dtype=np.uint8)
         # self.state = self.state.astype(np.uint8)
         # self.next_state = self.next_state.astype(np.uint8)
+
+        # try:
+        #     print('Move2BeaconAgent {} | environment {}'.format(self.reward, self.env.dummy_reward))
+        # except:
+        #     pass
+        # 
+        # print("action index {} ".format(self.action_idx))
+        # print("state {}".format(self.state))
+        # print(100 * '-')
+        # print("next state {}".format(self.next_state))
+        # print(next_obs[-1], reward)
+        # time.sleep(0.2)
         self.DQN.memory.push([self.state],
                              [self.action_idx],
                              self.reward,
                              [self.next_state])
 
         # print(self.DQN.memory[-1])
-        print(self.state)
+        # print(self.state)
         # print("marine: {}\t| beacon {}\t action {}\t| reward {}\t| pysc reward: {}\t|".format(self.marine_center,
         #                                                                     self.beacon_center,
         #                                                                     self.action_idx,
@@ -346,12 +360,12 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         # print("Size of reward: {} | {}".format(self.reward.nbytes, type(self.reward)))
         # print("Size of next_state: {} | {}".format(self.next_state.nbytes, type(self.next_state)))
         #
-        for i in range(0,len(self.DQN.memory[0])):
-            # print(self.DQN.memory[0][i])
-            print("Size of memory: {}".format(getsizeof(self.DQN.memory[0][i])))
-            print(80 * "-")
-
-        exit()
+        # for i in range(0,len(self.DQN.memory[0])):
+        #     # print(self.DQN.memory[0][i])
+        #     print("Size of memory: {}".format(getsizeof(self.DQN.memory[0][i])))
+        #     print(80 * "-")
+        #
+        # exit()
     # ##########################################################################
     # DQN module wrappers
     # ##########################################################################
@@ -412,3 +426,6 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         load_path = self.exp_path + "/model/emergency_model.pt"
 
         self.DQN.load(load_path)
+
+    def get_env(self, env):
+        self.env = env

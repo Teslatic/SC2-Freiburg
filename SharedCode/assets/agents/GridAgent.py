@@ -32,9 +32,6 @@ class GridAgent(Move2BeaconAgent):
         """
         super(GridAgent, self).__init__(agent_specs)
 
-        self.NOISE_BOUND = 1
-
-
 
     def setup_dqn(self):
         """
