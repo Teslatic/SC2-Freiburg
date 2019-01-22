@@ -35,7 +35,10 @@ def main(argv):
         agent.set_supervised_mode()
 
         # setup environment in learning mode
-        env = gym.make("gym-sc2-m2b-v0")
+
+        # env = gym.make("gym-sc2-m2b-v0")
+        # env = gym.make("gym-sc2-mineralshards-v0")
+        env = gym.make("gym-sc2-defeatroaches-v0")
 
         obs, reward, done, info = env.setup(mv2beacon_specs, "learning")
 

@@ -1,18 +1,18 @@
 ACTION_TYPE = 'grid'  # compass, grid, original
-MODE = 'supervised'
+MODE = 'learning'
 
 # GRID_DIM_X x GRID_DIM_Y
-GRID_DIM_X = 20
-GRID_DIM_Y = 20
+GRID_DIM_X = 84
+GRID_DIM_Y = 64
 
-REWARD_TYPE = 'distance'  # diff, distance, sparse
+REWARD_TYPE = 'sparse'  # diff, distance, sparse, original(collectmineralshards)
 
-EPISODES = 50000
-TEST_EPISODES = 50
+EPISODES = 500000
+TEST_EPISODES = 5
 GAMESTEPS = 0  # 0 = unlimited game time, None = map default
 REPLAY_DIR = None
 SAVE_REPLAY = False
-STEP_MUL = 8  # 16 = 1s game time, None = map default
+STEP_MUL = 32  # 16 = 1s game time, None = map default
 
 LOGGING = False  # Logs information in files for tmux sessions
 SILENTMODE = False  # True: Just a minimum of console output

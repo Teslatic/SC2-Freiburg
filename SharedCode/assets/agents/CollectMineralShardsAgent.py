@@ -13,7 +13,7 @@ from assets.helperFunctions.timestamps import print_timestamp as print_ts
 np.set_printoptions(suppress=True, linewidth=np.nan, threshold=np.nan)
 
 
-class Move2BeaconAgent(base_agent.BaseAgent):
+class CollectMineralShardsAgent(base_agent.BaseAgent):
     """
     This is a simple agent that uses an PyTorch DQN_module as Q value
     approximator. Current implemented features of the agent:
@@ -34,7 +34,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         loss:       Action loss
         hist:       The history buffer for more complex minigames.
         """
-        super(Move2BeaconAgent, self).__init__()
+        super(CollectMineralShardsAgent, self).__init__()
         self.unzip_hyperparameter_file(agent_specs)
         self.episodes = 1
         self.choice = None  # Choice of epsilon greedy
@@ -61,7 +61,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         self.list_pysc2_reward_cumulative = []
 
     def setup_dqn(self):
-        print_ts("Setup DQN of Move2BeaconAgent")
+        print_ts("Setup DQN of CollectMineralShardsAgent")
         self.DQN = DQN_module(self.batch_size,
                               self.gamma,
                               self.history_length,
@@ -103,6 +103,8 @@ class Move2BeaconAgent(base_agent.BaseAgent):
 
         self.NOISE_BOUND = agent_specs['NOISE_BOUND']
 
+    
+
     # ##########################################################################
     # Action Selection
     # ##########################################################################
@@ -118,7 +120,7 @@ class Move2BeaconAgent(base_agent.BaseAgent):
         # Current episode
         self.timesteps += 1
         self.episode_reward_env += reward
-        # TODO(vloeth): extend observation to full pysc2 observation
+
         # self.available_actions = obs.observation.available_actions
 
         # Unzip the observation tuple
@@ -155,8 +157,6 @@ class Move2BeaconAgent(base_agent.BaseAgent):
                 self.action, self.action_idx = self.epsilon_greedy_action()
             if self.mode == 'testing':
                 self.action, self.action_idx = self.pick_action()
-            else:
-                self.action, self.action_idx = 'no action', 'no action_idx'
 
 
         if self.last:  # End episode in last step
