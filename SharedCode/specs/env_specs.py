@@ -2,8 +2,8 @@ ACTION_TYPE = 'grid'  # compass, grid, original
 MODE = 'learning'
 
 # GRID_DIM_X x GRID_DIM_Y
-GRID_DIM_X = 84
-GRID_DIM_Y = 64
+GRID_DIM_X = 3
+GRID_DIM_Y = 3
 
 REWARD_TYPE = 'sparse'  # diff, distance, sparse, original(collectmineralshards)
 

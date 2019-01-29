@@ -36,9 +36,9 @@ def main(argv):
 
         # setup environment in learning mode
 
-        # env = gym.make("gym-sc2-m2b-v0")
+        env = gym.make("gym-sc2-m2b-v0")
         # env = gym.make("gym-sc2-mineralshards-v0")
-        env = gym.make("gym-sc2-defeatroaches-v0")
+        # env = gym.make("gym-sc2-defeatroaches-v0")
 
         obs, reward, done, info = env.setup(mv2beacon_specs, "learning")
 
@@ -49,7 +49,7 @@ def main(argv):
 
             if (action is 'reset'):  # Resetting the environment
                 obs, reward, done, info = env.reset()
-                if agent.episodes % agent_specs['MODEL_SAVE_PERIOD'] == 0:
+                if agent.episodes % agent.model_save_period == 0:
                     agent.save_model(fm.get_cwd())
             else:  # Peforming selected action
                 obs, reward, done, info = env.step(action)
