@@ -10,7 +10,7 @@ from assets.RL.DQN_module import DQN_module
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 from assets.agents.actionspacehelper.gridHelpers import discretize_xy_grid, inject_noise, supervised_action
 # from assets.helperFunctions.FileManager import create_experiment_at_main
-
+from assets.agents.smart_actions import SMART_ACTIONS_COMPASS
 np.set_printoptions(suppress=True, linewidth=np.nan, threshold=np.nan)
 
 
@@ -84,7 +84,7 @@ class DQNBaseAgent(base_agent.BaseAgent):
 
         self.gamma = float(agent_specs['GAMMA'])
         self.optim_learning_rate = float(agent_specs['OPTIM_LR'])
-        
+
         self.eps_start = float(agent_specs['EPS_START'])
         self.eps_decay = int(agent_specs['EPS_DECAY'])
         self.eps_end = float(agent_specs['EPS_END'])
@@ -110,7 +110,7 @@ class DQNBaseAgent(base_agent.BaseAgent):
         """
         if self.action_type == 'compass':
             self.action_space = SMART_ACTIONS_COMPASS
-            self.action_dim = len(self.action_space)
+            self.dim_actions = len(self.action_space)
         if self.action_type == 'grid':
             grid_dim_x = agent_specs['GRID_DIM_X']
             grid_dim_y = agent_specs['GRID_DIM_Y']

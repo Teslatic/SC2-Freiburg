@@ -14,12 +14,8 @@ np.set_printoptions(suppress=True, linewidth=np.nan, threshold=np.nan)
 
 class Move2BeaconAgent(DQNBaseAgent):
     """
-    This is a simple agent that uses an PyTorch DQN_module as Q value
-    approximator. Current implemented features of the agent:
-    - Simple initializing with the help of an agent_specs.
-    - Policy switch between imitation and epsilon greedy learning session.
-    - Storage of experience into simple Experience Replay Buffer
-    - Intermediate saving of model weights
+    This agent is specialized on solving the Move2Beacon task from the
+    PYSC2 framework.
     """
     # ##########################################################################
     # Initializing the agent
@@ -27,15 +23,11 @@ class Move2BeaconAgent(DQNBaseAgent):
 
     def __init__(self, agent_specs):
         """
-        steps_done: Total timesteps done in the agents lifetime.
-        timesteps:  Timesteps performed in the current episode.
-        choice:     Choice of epsilon greedy method (None if supervised)
-        loss:       Action loss
-        hist:       The history buffer for more complex minigames.
+        Using the constructor of the base class.
         """
         super(Move2BeaconAgent, self).__init__(agent_specs)
-     
-  
+
+
 
     # ##########################################################################
     # Action Selection
@@ -59,4 +51,3 @@ class Move2BeaconAgent(DQNBaseAgent):
         Further improvements are possible.
         """
         raise NotImplementedError
-

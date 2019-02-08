@@ -25,4 +25,4 @@ class StudentNetwork(DQN_module):
         Calculating the TD-target for given q-values.
         gamma has to be multiplied according to to taken steps.
         """
-        return (q_values_best_next * self.gamma**k) + self.reward_batch
+		return (q_values_best_next * self.gamma**k) + self.reward_batch

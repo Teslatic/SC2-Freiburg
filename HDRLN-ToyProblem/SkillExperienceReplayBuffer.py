@@ -1,5 +1,5 @@
 from assets.memory.ReplayBuffer import ReplayBuffer
-
+from collections import namedtuple
 # SER needs the skill length as additional information to calculate the TD-target
 Transition = namedtuple('Transition',
                         ('state', 'action', 'reward', 'next_state', 'horizon'))

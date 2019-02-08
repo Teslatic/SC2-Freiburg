@@ -4,8 +4,8 @@ from SkillExperienceReplayBuffer import SERB
 from StudentNetwork	import StudentNetwork
 
 
-class HDRLN():
-	""" 
+class HDRLNAgent():
+	"""
 	HDRLN framework as described in the long life learning with minecraft
 	paper """
 	def __init__(self):
@@ -14,6 +14,12 @@ class HDRLN():
 		self.DSN = DeepSkillNetwork()
 		self.SERB = SERB()
 		self.Student = StudentNetwork()
+
+	def add_skill_list(self, skill_specs_list):
+		"""
+		"""
+		for skill in skill_specs_list:
+			self.add_skill(skill)
 
 	def add_skill(self, skill):
 		"""
@@ -41,24 +47,23 @@ class HDRLN():
 		"""
 		pass
 
-    def store_transition(self, next_obs, reward):
-        """
-        Save the actual information in the history. As soon as there has been
-        enough data, the experience is sampled from the replay buffer.
-        TODO: Maybe using uint8 for storing into ReplayBuffer
-        """
-        # Don't store transition if first or last step
-        if self.last:
-            return
+	def store_transition(self, next_obs, reward):
+		"""
+		Save the actual information in the history. As soon as there has been
+		enough data, the experience is sampled from the replay buffer.
+		TODO: Maybe using uint8 for storing into ReplayBuffer
+		"""
+		# Don't store transition if first or last step
+		if self.last:
+			return
 
-        self.reward = reward
-        self.next_state = np.array(next_obs[0], dtype=np.uint8)
+		self.reward = reward
+		self.next_state = np.array(next_obs[0], dtype=np.uint8)
 
-        self.DQN.memory.push([self.state],
+		self.DQN.memory.push([self.state],
                              [self.action_idx],
                              self.reward,
                              [self.next_state])
 
 	def forward(self, idx, state):
 		self.DeepSkillNetwork.forward(idx, state)
-

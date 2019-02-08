@@ -151,3 +151,17 @@ class FileManager():
         while path.isfile(exp_directory + '%s' % file_index + '.csv'):
             file_index += 1
         return exp_name + '{}'.format(file_index)
+
+    def extract_skill_specs(self, skill_name_list):
+        """
+        Import learned agent networks
+        """
+        skill_list = []
+        for skill_name in skill_name_list:
+            skill_specs_path = self.main_dir + "/assets/skills/" + skill_name + "/specs.csv"
+            skill_model_path = self.main_dir + "/assets/skills/" + skill_name + "/model.pt"
+            skill_specs = self.load_spec_summary(skill_specs_path)
+            # model =
+            print(skill_specs)
+            skill_list.append(skill_specs)
+        return skill_list
