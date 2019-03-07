@@ -14,8 +14,7 @@ class DQN_module():
     """
     A wrapper class that augments the AtariNet.DQN class by optmizing methods.
     """
-    def __init__(self, batch_size, gamma, history_length, size_replaybuffer,
-                 optim_learning_rate, dim_actions):
+    def __init__(self, module_specs):
         """
         update_cnt: Target network update counter.
         net:        The q-value network.
@@ -23,19 +22,23 @@ class DQN_module():
         optimizer:  The optimizer used to update the q-value network.
         memory:     The memory class for the replay buffer
         """
-        self.device = self._setup_torch()
-        self.batch_size = batch_size
-        self.gamma = gamma
-        self.history_length = history_length
-        self.dim_actions = dim_actions
-        self.size_replaybuffer = size_replaybuffer
-        self.optim_learning_rate = optim_learning_rate
-        self.loss = 0
-        self.update_cnt = 0  # Target network update_counter
-
+        self.unzip_module_specs(module_specs)
+        self.device = self._setup_torch("cuda:1")
         self.net, self.target_net, self.optimizer = self._build_model()
         self.print_architecture()
         self.memory = ReplayBuffer(self.size_replaybuffer)
+
+    def unzip_module_specs(self, module_specs):
+        """
+        """
+        self.batch_size = module_specs["BATCH_SIZE"]
+        self.gamma = module_specs["GAMMA"]
+        self.history_length = module_specs["HISTORY_LENGTH"]
+        self.dim_actions = module_specs["DIM_ACTIONS"]
+        self.size_replaybuffer = module_specs["SIZE_REPLAYBUFFER"]
+        self.optim_learning_rate = module_specs["OPTIM_LR"]
+        self.loss = 0
+        self.update_cnt = 0  # Target network update_counter
 
     def _build_model(self):
         """
@@ -53,17 +56,24 @@ class DQN_module():
         print_ts("Optimizer: \n{}".format(self.optimizer))
         print_ts("Target Network: \n{}".format(self.target_net))
 
-    def _setup_torch(self):
+    def _setup_torch(self, GPU):
         """
         Setting GPU if available. Else, use the CPU.
         """
         # Initalizing
-        device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+        device = torch.device(GPU if torch.cuda.is_available() else "cpu")
         torch.set_printoptions(linewidth=750, profile="full")
         print_ts("Performing calculations on {}".format(device))
         return device
 
+    # ##########################################################################
+    # Network methods for single state
+    # ##########################################################################
+
     def predict_q_values(self, state):
+        """
+        Predict the Q-values for the given state
+        """
         with torch.no_grad():
             state_tensor = torch.tensor([state],
                                         device=self.device,
@@ -71,6 +81,14 @@ class DQN_module():
                                         requires_grad=False)
             return self.net(state_tensor)
 
+    def pick_best(self, state):
+        """
+        Returns best action and action idx for given state
+        """
+        action_q_values = self.predict_q_values(state)
+        action_q_values_np = action_q_values.detach().cpu().numpy()
+        action_idx = np.argmax(action_q_values_np)
+        return action_idx
     # ##########################################################################
     # Optimizing the network
     # ##########################################################################
@@ -130,6 +148,7 @@ class DQN_module():
 
         self.state_batch = self.state_batch.squeeze(1)
         self.next_state_batch = self.next_state_batch.squeeze(1)
+
     def calculate_q_values(self):
         """
         """

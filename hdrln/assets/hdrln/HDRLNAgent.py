@@ -2,10 +2,11 @@
 import numpy as np
 
 # custom imports
+from assets.actionspace.utils import setup_action_space
 from assets.agents.DQNBaseAgent import DQNBaseAgent
 from assets.hdrln.HDRLN_module import HDRLN_module
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
-from assets.actionspace.utils import setup_action_space
+
 
 class HDRLNAgent(DQNBaseAgent):
 	"""

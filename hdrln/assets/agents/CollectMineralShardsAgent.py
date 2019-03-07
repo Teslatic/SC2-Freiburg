@@ -23,9 +23,9 @@ class CollectMineralShardsAgent(DQNBaseAgent):
         """
         super(CollectMineralShardsAgent, self).__init__(agent_specs)
 
-    def setup_dqn(self):
+    def setup_dqn(self, module_specs):
         print_ts("Setup DQN of CollectMineralShardsAgent")
-        super(CollectMineralShardsAgent, self).setup_dqn()
+        super(CollectMineralShardsAgent, self).setup_dqn(module_specs)
 
     def supervised_action(self):
         """

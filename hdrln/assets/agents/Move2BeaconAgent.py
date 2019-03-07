@@ -27,9 +27,9 @@ class Move2BeaconAgent(DQNBaseAgent):
         """
         super(Move2BeaconAgent, self).__init__(agent_specs)
 
-    def setup_dqn(self):
+    def setup_dqn(self, module_specs):
         print_ts("Setup DQN of Move2BeaconAgent")
-        super(Move2BeaconAgent, self).setup_dqn()
+        super(Move2BeaconAgent, self).setup_dqn(module_specs)
 
 
     # ##########################################################################

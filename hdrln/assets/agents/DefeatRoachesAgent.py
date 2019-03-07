@@ -20,12 +20,12 @@ class DefeatRoachesAgent(DQNBaseAgent):
         super(DefeatRoachesAgent, self).__init__(agent_specs)
 
 
-    def setup_dqn(self):
+    def setup_dqn(self, module_specs):
         """
         Using the constructor of the base class.
         """
         print_ts("Setup DQN of DefeatRoachesAgent")
-        super(DefeatRoachesAgent, self).setup_dqn()
+        super(DefeatRoachesAgent, self).setup_dqn(module_specs)
 
     def supervised_action(self):
         """

@@ -1,3 +1,7 @@
+ENV_ID = 'gym-sc2-m2b-v0'
+# ENV_ID = 'gym-sc2-mineralshards-v0'
+# ENV_ID = 'gym-sc2-defeatroaches-v0'
+
 ACTION_TYPE = 'grid'  # compass, grid, pysc2
 MODE = 'learning'
 
@@ -20,6 +24,7 @@ VISUALIZE = True
 TEST_VISUALIZE = False
 
 env_specs = {
+    'ENV_ID': ENV_ID,
     'ACTION_TYPE': ACTION_TYPE,
     'GRID_DIM_X': GRID_DIM_X,
     'GRID_DIM_Y': GRID_DIM_Y,
