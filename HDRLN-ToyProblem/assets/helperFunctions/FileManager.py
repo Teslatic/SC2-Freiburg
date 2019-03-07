@@ -58,6 +58,11 @@ class FileManager():
         """
         return self.cwd
 
+    def get_main_dir(self):
+        """
+        """
+        return self.main_dir
+
     def create_folders(self, exp_path):
         """
         """

@@ -18,7 +18,7 @@ def setup_agent(agent_specs):
     if agent_type == 'move2beacon':
         return Move2BeaconAgent(agent_specs)
     if agent_type == 'hdrl':
-        return HDRLNAgent(agent_specs)
+        return HDRLNAgent(agent_specs, 2)
 
     else:
         print_ts("The agent type {} is not known".format(agent_type))

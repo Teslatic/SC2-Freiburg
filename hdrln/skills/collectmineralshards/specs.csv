@@ -1,5 +1,6 @@
+ENV_ID,gym-sc2-mineralshards-v0
 ROOT_DIR,/home/ottn/SC2-Freiburg/HDRLN-ToyProblem/experiments/grid_coding_test_18
-AGENT_TYPE,move2beacon
+AGENT_TYPE,collectmineralshards
 ACTION_TYPE,grid
 EXP_NAME,grid_coding_test_
 GAMMA,0.99

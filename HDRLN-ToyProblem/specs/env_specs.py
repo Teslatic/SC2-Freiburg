@@ -1,9 +1,9 @@
-ACTION_TYPE = 'grid'  # compass, grid, original
+ACTION_TYPE = 'grid'  # compass, grid, pysc2
 MODE = 'learning'
 
 # GRID_DIM_X x GRID_DIM_Y
-GRID_DIM_X = 3
-GRID_DIM_Y = 3
+GRID_DIM_X = 20
+GRID_DIM_Y = 20
 
 REWARD_TYPE = 'sparse'  # diff, distance, sparse, original(collectmineralshards)
 
@@ -19,7 +19,7 @@ SILENTMODE = False  # True: Just a minimum of console output
 VISUALIZE = True
 TEST_VISUALIZE = False
 
-mv2beacon_specs = {
+env_specs = {
     'ACTION_TYPE': ACTION_TYPE,
     'GRID_DIM_X': GRID_DIM_X,
     'GRID_DIM_Y': GRID_DIM_Y,

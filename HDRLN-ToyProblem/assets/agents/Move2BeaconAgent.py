@@ -27,6 +27,9 @@ class Move2BeaconAgent(DQNBaseAgent):
         """
         super(Move2BeaconAgent, self).__init__(agent_specs)
 
+    def setup_dqn(self):
+        print_ts("Setup DQN of Move2BeaconAgent")
+        super(Move2BeaconAgent, self).setup_dqn()
 
 
     # ##########################################################################
@@ -38,7 +41,7 @@ class Move2BeaconAgent(DQNBaseAgent):
         timesteps:
         """
         super(Move2BeaconAgent, self).prepare_timestep(obs, reward, done, info)
-
+        # obs for supervised learning
         self.distance = obs[6]
         self.marine_center = obs[7]
         self.beacon_center = obs[8]

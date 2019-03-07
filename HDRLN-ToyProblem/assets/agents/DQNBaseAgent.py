@@ -9,8 +9,7 @@ import time
 from assets.RL.DQN_module import DQN_module
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 from assets.agents.actionspacehelper.gridHelpers import discretize_xy_grid, inject_noise, supervised_action
-# from assets.helperFunctions.FileManager import create_experiment_at_main
-from assets.agents.smart_actions import SMART_ACTIONS_COMPASS
+from assets.agents.smart_actions import SMART_ACTIONS_COMPASS, SMART_ACTIONS_GRID, ALL_ACTIONS_PYSC2, ALL_ACTIONS_PYSC2_IDX, PYSC2_to_Qvalueindex
 np.set_printoptions(suppress=True, linewidth=np.nan, threshold=np.nan)
 
 
@@ -33,7 +32,7 @@ class DQNBaseAgent(base_agent.BaseAgent):
         timesteps:  Timesteps performed in the current episode.
         choice:     Choice of epsilon greedy method (None if supervised)
         loss:       Action loss
-        hist:       The history buffer for more complex minigames.
+
         """
         super(DQNBaseAgent, self).__init__()
         self.unzip_hyperparameter_file(agent_specs)
@@ -62,6 +61,11 @@ class DQNBaseAgent(base_agent.BaseAgent):
         self.list_pysc2_reward_per_episode = []
         self.list_pysc2_reward_cumulative = []
 
+        # Initial mode switch
+        if (self.episodes > self.supervised_episodes) and \
+                    (not self.mode == 'testing'):
+                    self.set_learning_mode()
+
 
     def setup_dqn(self):
         # TODO(vloet): what to do with history length? unecessary imho.
@@ -78,6 +82,11 @@ class DQNBaseAgent(base_agent.BaseAgent):
     def unzip_hyperparameter_file(self, agent_specs):
         """
         Unzipping and writing the hyperparameter file into member variables.
+        exp_name: Name of create_experiment
+        action_type: Used action type for the environment
+        gamma: Discount factor for target calculation
+        optim_learning_rate: Learning rate of the optimizer
+
         """
         self.exp_name = agent_specs['EXP_NAME']
         self.action_type = agent_specs['ACTION_TYPE']
@@ -99,11 +108,6 @@ class DQNBaseAgent(base_agent.BaseAgent):
 
         self.model_save_period = agent_specs['MODEL_SAVE_PERIOD']
 
-    # ##########################################################################
-    # Action Space Definition
-    # GridAgent / CompassAgent
-    # ##########################################################################
-
     def setup_action_space(self, agent_specs):
         """
         Returns action space and action dimensionality
@@ -115,6 +119,11 @@ class DQNBaseAgent(base_agent.BaseAgent):
             grid_dim_x = agent_specs['GRID_DIM_X']
             grid_dim_y = agent_specs['GRID_DIM_Y']
             self.xy_space, self.dim_actions, self.action_space = discretize_xy_grid(grid_dim_x, grid_dim_y)
+
+        if self.action_type == 'pysc2':
+            self.action_space = ALL_ACTIONS_PYSC2
+            # self.action_space = SMART_ACTIONS_GRID
+            self.dim_actions = len(self.action_space)
         if self.action_type == 'minigame':
             raise("This action space type has not been implemeted yet.")
             exit()
@@ -122,59 +131,61 @@ class DQNBaseAgent(base_agent.BaseAgent):
             raise("This action space type has not been implemeted yet.")
             exit()
 
-
-
     # ##########################################################################
     # Action Selection
     # ##########################################################################
 
     def prepare_timestep(self, obs, reward, done, info):
         """
-        timesteps:
+        Prepares the timestep:
+        1. Incrementing counters
+        2. Setting flags
+        3. Retrieving information from the observation
+        4. Calculating addtional information
         """
-        # from PYSC2 base class
-        self.steps += 1
-        self.reward += reward
+        # 1. Incrementing counters
+        self.steps += 1 # from PYSC2 base class
+        self.reward += reward # from PYSC2 base class
 
         # Current episode
         self.timesteps += 1
         self.episode_reward_env += reward
-        # self.available_actions = obs.observation.available_actions
 
-        # Unzip the observation tuple
-        self.state = np.array(obs[0], dtype=np.uint8)
+        # 2. Setting flags
+        # No flags
+
+        # 3. Retrieving information from the observation
+        self.state = np.array(obs[0], dtype=np.uint8) # use uint8 to reduce memory space
         self.first = obs[1]
         self.last = obs[2]
+        # obs[3] unused
+        # obs[4] unused
         self.available_actions = obs[5]
-        self.distance = obs[6]
-        self.marine_center = obs[7]
-        self.beacon_center = obs[8]
-
-
-        # mode switch
-        if (self.episodes > self.supervised_episodes) and \
-            (not self.mode == 'testing'):
-            self.set_learning_mode()
-
+        # 4. Calculating addtional information
+        # Setting up the index action space
+        # self.available_Q_idx = []
+        # for x in self.available_actions:
+        #     self.available_Q_idx.append(PYSC2_to_Qvalueindex[x])
+        # # print("Available Q indices are: " + str(self.available_Q_idx))
 
     def policy(self, obs, reward, done, info):
         """
-        Choosing an action
+        Choosing an action according to the agent mode.
         """
         # Set all variables at the start of a new timestep
         self.prepare_timestep(obs, reward, done, info)
-
         # Action selection for regular step
         if not self.last:
             if self.mode == 'supervised':
                 # For the first n episodes learn on forced actions.
                 self.action, self.action_idx = self.supervised_action()
-            if self.mode == 'learning':
+            elif self.mode == 'learning':
                 # Choose an action according to the policy
                 self.action, self.action_idx = self.epsilon_greedy_action()
-            if self.mode == 'testing':
+            elif self.mode == 'testing':
                 self.action, self.action_idx = self.pick_action()
             else:
+                print("no action selected")
                 self.action, self.action_idx = 'no action', 'no action_idx'
 
         if self.last:  # End episode in last step
@@ -188,18 +199,15 @@ class DQNBaseAgent(base_agent.BaseAgent):
     def supervised_action(self):
         """
         This method selects an action which will force the marine in the
-        direction of the beacon.
-        Further improvements are possible.
+        direction of the beacon. Further improvements are possible.
         """
         raise NotImplementedError
 
     def pick_action(self):
         action_q_values = self.DQN.predict_q_values(self.state)
-        action_q_values_numpy = action_q_values.detach().cpu().numpy()
-        print(action_q_values_numpy)
-        print(self.available_actions)
-        avail_actions = action_q_values_numpy.T[self.available_actions]
-        action_idx = np.argmax(avail_actions)
+        # print(max(action_q_values[0]), 1/(84*64))        # Beste Action bestimmen
+        best_action_numpy = action_q_values.detach().cpu().numpy()
+        action_idx = np.argmax(best_action_numpy)
         best_action = self.action_space[action_idx]
         chosen_action = best_action
         return chosen_action, action_idx
@@ -215,12 +223,61 @@ class DQNBaseAgent(base_agent.BaseAgent):
         self.choice = self.epsilon_greedy()
 
         if self.choice == 'random':
-            avail_action_idx = np.random.randint(self.available_actions)
-            action_idx = avail_action_idx
+            action_idx = np.random.randint(self.dim_actions)
             chosen_action = self.action_space[action_idx]
         else:
             chosen_action, action_idx = self.pick_action()
         return chosen_action, action_idx
+    #
+    # def pick_action(self):
+    #     """
+    #     The agent picks the best available action. The pipeline acts as follows:
+    #     1. Predict the Q-values for the whole action space
+    #     2. Find the maximum of the available actions
+    #     3. Return the action/action index of the full action space
+    #     """
+    #     # 1. Predict the Q-values for the whole action space
+    #     action_q_values = self.DQN.predict_q_values(self.state)
+    #     action_q_values_numpy = action_q_values.detach().cpu().numpy()
+    #
+    #     # 2. Find the maximum of the available actions
+    #     print("Picking action from: " + str(self.available_actions))
+    #     Q_avail_actions = action_q_values_numpy.T[self.available_Q_idx]
+    #     # print("Action values for available actions: " + str(Q_avail_actions))
+    #     Q_max_avail_action_idx = np.argmax(Q_avail_actions)
+    #     # print("Action index of max action: " + str(action_idx))
+    #
+    #     # 3. Return the action/action index of the full action space
+    #     action_idx = self.available_Q_idx[Q_max_avail_action_idx]
+    #     # print("Best index of action space: "+str(best_action_idx_original))
+    #     # PYSC2_action_idx = ALL_ACTIONS_PYSC2_IDX[best_action_idx_original]
+    #     # print(PYSC2_action_idx)
+    #     best_action = self.action_space[action_idx]
+    #
+    #     print("The best available action is : " + str(action_idx))
+    #     chosen_action = best_action
+    #     return chosen_action, action_idx
+    #
+    # def epsilon_greedy_action(self):
+    #     """
+    #     Chooses an action according to an epsilon-greedy policy
+    #
+    #     returns the chosen action id with x,y coordinates and the index of the
+    #     action with respect to the SMART_ACTIONS constant. The additional index
+    #     is used for the catergorical labeling of the actions as an
+    #     "intermediate" solution for a restricted action space.
+    #     """
+    #     self.choice = self.epsilon_greedy()
+    #     if self.choice == 'random':
+    #         n_actions = len(self.available_actions)
+    #         avail_action_idx = np.random.randint(n_actions)
+    #         action_idx = self.available_actions[avail_action_idx]
+    #         print("Chosen action idx: " + str(action_idx))
+    #         action_idx = PYSC2_to_Qvalueindex[action_idx]
+    #         chosen_action = self.action_space[action_idx]
+    #     else:
+    #         chosen_action, action_idx = self.pick_action()
+    #     return chosen_action, action_idx
 
     def epsilon_greedy(self):
         """
@@ -266,6 +323,7 @@ class DQNBaseAgent(base_agent.BaseAgent):
         Set the agent to learning mode. The agent will perform
         actions according to an epsilon-greedy policy.
         """
+        print_ts("Setting agent to learning mode")
         self.mode = "learning"
 
     def set_supervised_mode(self):
@@ -273,13 +331,15 @@ class DQNBaseAgent(base_agent.BaseAgent):
         Set the agent to supervised mode. The agent will perform
         actions which are generating valuable experience.
         """
+        print_ts("Setting agent to supervised mode")
         self.mode = "supervised"
 
     def set_testing_mode(self):
         """
         Set the agent to testing mode. The agent will perform only
-        aexploiting actions without any randomness.
+        exploiting actions without any randomness.
         """
+        print_ts("Setting agent to testing mode")
         self.mode = "testing"
 
     def collect_report(self, obs, reward, done):
@@ -333,8 +393,6 @@ class DQNBaseAgent(base_agent.BaseAgent):
                     self.get_memory_length()))
             return dict_agent_report
 
-
-
     def store_transition(self, next_obs, reward):
         """
         Save the actual information in the history. As soon as there has been
@@ -370,6 +428,9 @@ class DQNBaseAgent(base_agent.BaseAgent):
         if self.get_memory_length() >= self.batch_size:
             self.loss = self.DQN.optimize()
 
+    def extract_skill(self):
+        return self.DQN
+
     # ##########################################################################
     # Ending Episode
     # ##########################################################################
@@ -396,7 +457,7 @@ class DQNBaseAgent(base_agent.BaseAgent):
         self.list_loss_per_episode = []
 
     # ##########################################################################
-    # Print status information of timestep
+    # DQN module wrappers
     # ##########################################################################
 
     def save_model(self, exp_path, emergency=False):
@@ -409,7 +470,60 @@ class DQNBaseAgent(base_agent.BaseAgent):
         # Path((self.exp_path + "/model")).mkdir(parents=True, exist_ok=True)
         self.DQN.save(save_path)
 
-    def _load_model(self):
-        load_path = self.exp_path + "/model/emergency_model.pt"
+    def load_model(self, load_path):
+         self.DQN.load(load_path)
 
+    def _load_emergency_model(self):
+        load_path = self.exp_path + "/model/emergency_model.pt"
         self.DQN.load(load_path)
+
+
+    # def pick_action(self):
+    #     """
+    #     The agent picks the best available action. The pipeline acts as follows:
+    #     1. Predict the Q-values for the whole action space
+    #     2. Find the maximum of the available actions
+    #     3. Return the action/action index of the full action space
+    #     """
+    #     # 1. Predict the Q-values for the whole action space
+    #     action_q_values = self.DQN.predict_q_values(self.state)
+    #     action_q_values_numpy = action_q_values.detach().cpu().numpy()
+    #
+    #     # 2. Find the maximum of the available actions
+    #     print("Picking action from: " + str(self.available_actions))
+    #     Q_avail_actions = action_q_values_numpy.T[self.available_Q_idx]
+    #     # print("Action values for available actions: " + str(Q_avail_actions))
+    #     Q_max_avail_action_idx = np.argmax(Q_avail_actions)
+    #     # print("Action index of max action: " + str(action_idx))
+    #
+    #     # 3. Return the action/action index of the full action space
+    #     action_idx = self.available_Q_idx[Q_max_avail_action_idx]
+    #     # print("Best index of action space: "+str(best_action_idx_original))
+    #     # PYSC2_action_idx = ALL_ACTIONS_PYSC2_IDX[best_action_idx_original]
+    #     # print(PYSC2_action_idx)
+    #     best_action = self.action_space[action_idx]
+    #
+    #     print("The best available action is : " + str(action_idx))
+    #     chosen_action = best_action
+    #     return chosen_action, action_idx
+    #
+    # def epsilon_greedy_action(self):
+    #     """
+    #     Chooses an action according to an epsilon-greedy policy
+    #
+    #     returns the chosen action id with x,y coordinates and the index of the
+    #     action with respect to the SMART_ACTIONS constant. The additional index
+    #     is used for the catergorical labeling of the actions as an
+    #     "intermediate" solution for a restricted action space.
+    #     """
+    #     self.choice = self.epsilon_greedy()
+    #     if self.choice == 'random':
+    #         n_actions = len(self.available_actions)
+    #         avail_action_idx = np.random.randint(n_actions)
+    #         action_idx = self.available_actions[avail_action_idx]
+    #         print("Chosen action idx: " + str(action_idx))
+    #         action_idx = PYSC2_to_Qvalueindex[action_idx]
+    #         chosen_action = self.action_space[action_idx]
+    #     else:
+    #         chosen_action, action_idx = self.pick_action()
+    #     return chosen_action, action_idx

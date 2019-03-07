@@ -1,13 +1,13 @@
-AGENT_TYPE = 'move2beacon'
-ACTION_TYPE = 'grid'
+AGENT_TYPE = 'hdrl'
+ACTION_TYPE = 'grid'  # compass/grid/original
 
-EXP_NAME = 'long_boi'
+EXP_NAME = 'grid_coding_test_'
 
 GAMMA = 0.99
 OPTIM_LR = 0.0001
 
 
-EPS_START = 0.01
+EPS_START = 1
 EPS_END = 0.1
 EPS_DECAY = 2.5e08 # larger number -> slower decay
 
@@ -23,9 +23,9 @@ MODEL_SAVE_PERIOD = 1000
 
 
 # GRID_DIM_X x GRID_DIM_Y
-GRID_DIM_X = 3
-GRID_DIM_Y = 3
-NOISE_BOUND = 3
+GRID_DIM_X = 20
+GRID_DIM_Y = 20
+NOISE_BOUND = 0
 
 agent_specs = {
     'AGENT_TYPE': AGENT_TYPE,

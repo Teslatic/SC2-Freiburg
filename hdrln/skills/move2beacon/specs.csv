@@ -1,3 +1,4 @@
+ENV_ID,gym-sc2-m2b-v0
 ROOT_DIR,/home/ottn/SC2-Freiburg/HDRLN-ToyProblem/experiments/grid_coding_test_18
 AGENT_TYPE,move2beacon
 ACTION_TYPE,grid

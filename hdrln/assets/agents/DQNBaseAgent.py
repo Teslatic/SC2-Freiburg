@@ -108,29 +108,6 @@ class DQNBaseAgent(base_agent.BaseAgent):
 
         self.model_save_period = agent_specs['MODEL_SAVE_PERIOD']
 
-    def setup_action_space(self, agent_specs):
-        """
-        Returns action space and action dimensionality
-        """
-        if self.action_type == 'compass':
-            self.action_space = SMART_ACTIONS_COMPASS
-            self.dim_actions = len(self.action_space)
-        if self.action_type == 'grid':
-            grid_dim_x = agent_specs['GRID_DIM_X']
-            grid_dim_y = agent_specs['GRID_DIM_Y']
-            self.xy_space, self.dim_actions, self.action_space = discretize_xy_grid(grid_dim_x, grid_dim_y)
-
-        if self.action_type == 'pysc2':
-            self.action_space = ALL_ACTIONS_PYSC2
-            # self.action_space = SMART_ACTIONS_GRID
-            self.dim_actions = len(self.action_space)
-        if self.action_type == 'minigame':
-            raise("This action space type has not been implemeted yet.")
-            exit()
-        if self.action_type == 'original':
-            raise("This action space type has not been implemeted yet.")
-            exit()
-
     # ##########################################################################
     # Action Selection
     # ##########################################################################

@@ -5,15 +5,25 @@ class StudentNetwork(DQN_module):
 
 	# Student Network should not have Softmax output ???
 	# Probably not an issue
-	def __init__(self, architecture_file, N_skills):
+	# def __init__(self, architecture_file, N_skills):
+	# 	self.N_skills = N_skills
+	# 	batch_size = architecture_file.batch_size
+	# 	gamma = architecture_file.gamma
+	# 	history_length = architecture_file.history_length
+	# 	size_replaybuffer = architecture_file.size_replaybuffer
+	# 	optim_learning_rate = architecture_file.optim_learning_rate
+	# 	# Output dimension is N_primitive = N_skills
+	# 	dim_actions = architecture_file.dim_actions
+
+	def __init__(self, N_skills):
 		self.N_skills = N_skills
-		batch_size = architecture_file.batch_size
-		gamma = architecture_file.gamma
-		history_length = architecture_file.history_length
-		size_replaybuffer = architecture_file.size_replaybuffer
-		optim_learning_rate = architecture_file.optim_learning_rate
+		batch_size = 32
+		gamma = 0.9
+		history_length = 1
+		size_replaybuffer = 1000
+		optim_learning_rate = 0.001
 		# Output dimension is N_primitive = N_skills
-		dim_actions = architecture_file.dim_actions
+		dim_actions = 400
 
 		super(StudentNetwork, self).__init__(batch_size, gamma, history_length, size_replaybuffer,
                  optim_learning_rate, dim_actions)

@@ -3,17 +3,23 @@ from DeepSkillNetwork import DeepSkillNetwork
 from SkillExperienceReplayBuffer import SERB
 from StudentNetwork	import StudentNetwork
 
+from assets.helperFunctions.timestamps import print_timestamp as print_ts
 
 class HDRLNAgent():
 	"""
 	HDRLN framework as described in the long life learning with minecraft
-	paper """
-	def __init__(self):
-
-		self.Controller = Controller()
+	paper. The framework consists of 4 different parts:
+	1. A DeepSkillNetwork which holds the networks for the teacher skills.
+	2. A controller that can select between skills and primitive actions.
+	3. A student network that learns from the teacher skills.
+	4. A SkillExperienceReplayBuffer that is a modified version of a normal
+	experience replay buffer.
+	"""
+	def __init__(self, agent_specs, N_skills):
 		self.DSN = DeepSkillNetwork()
-		self.SERB = SERB()
-		self.Student = StudentNetwork()
+		self.Controller = Controller()
+		self.SERB = SERB(1000)
+		self.Student = StudentNetwork(N_skills)
 
 	def add_skill_list(self, skill_specs_list):
 		"""
