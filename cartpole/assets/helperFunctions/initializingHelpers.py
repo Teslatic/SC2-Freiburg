@@ -7,7 +7,7 @@ def setup_agent(agent_specs):
     Initializing right agent and agent_interface for the environment.
     """
     agent_type = agent_specs["AGENT_TYPE"]
-    if agent_type == 'pendulum':
+    if agent_type == 'cartpole':
         return PendulumAgent(agent_specs)
     else:
         print_ts("The agent type {} is not known".format(agent_type))

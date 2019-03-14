@@ -2,84 +2,89 @@
 
 # python imports
 from absl import app
-import time
+from itertools import count
 
 # gym imports
 import gym
-import gym_sc2
+import gym_toyproblems
 
 # custom imports
+# from assets.helperFunctions.screen_extraction import get_screen
+from assets.agents.ToyAgent import ToyAgent
+from assets.plotting.plotter import Plotter
 from specs.agent_specs import agent_specs
-from specs.env_specs import mv2beacon_specs # env specs
-from assets.helperFunctions.initializingHelpers import setup_agent, setup_multiple_agents
-from assets.helperFunctions.FileManager import FileManager
+from specs.env_specs import cartpole_specs
 from assets.splash.squidward import print_squidward
-# ...
-
-# Import architecture files
-# architecture_file = ...
-# import assets.skills.move2beacon.specs as mv2b_specs
-# from assets.skills.collectmineralshards.specs.spec_summary import cMS_specs
-#
-# from assets.skills.move2beacon.model import mv2b_model
-# from assets.skills.collectmineralshards.model import cMS_model
+from assets.helperFunctions.FileManager import FileManager
 
 def main(argv):
+	# print_squidward()
+
+	# FileManager: Save specs and create experiment
+	fm = FileManager()
 	try:
-		# FileManager: Save specs and create experiment
-		fm = FileManager()
-		try:
-			fm.create_experiment(agent_specs["EXP_NAME"])  # Automatic cwd switch
-			fm.save_specs(agent_specs, mv2beacon_specs)
-		except:
-			print("Creating experiment or saving specs failed.")
-			exit()
-		fm.create_train_file()
-
-		# Create HDRL agent
-		agent = setup_agent(agent_specs)
-
-		# Extract skills
-		skill_name_list = ['move2beacon','collectmineralshards']
-
-		skill_specs_list = fm.extract_skill_specs(skill_name_list)
-
-		agent_list = setup_multiple_agents(skill_specs_list)
-		move2beacon_agent = agent_list[0]
-		collectmineralshards_agent = agent_list[1]
-		move2beacon_agent.DQN.load(fm.main_dir + '/assets/skills/' + skill_name_list[0] + '/model.pt') # Load model into agent
-		collectmineralshards_agent.DQN.load(fm.main_dir + '/assets/skills/' + skill_name_list[1] + '/model.pt') # Load model into agent
-		move2beacon_skill = move2beacon_agent.DQN # Extract DQN skill network
-		collectmineralshards_skill = collectmineralshards_agent.DQN
-		agent.add_skill_list([move2beacon_skill, collectmineralshards_skill])
-		print_ts("Code ran through")
+		fm.create_experiment(agent_specs["EXP_NAME"])  # Automatic cwd switch
+		fm.save_specs(agent_specs, cartpole_specs)
+	except:
+		print("Creating eperiment or saving specs failed.")
 		exit()
+	fm.create_train_file()
 
-		# Create environment
-		env = gym.make("gym-sc2-m2b-v0")
-		obs, reward, done, info = env.setup(mv2beacon_specs, "learning")
+	# show_extracted_screen(get_screen(env))
+	plotter = Plotter()
 
-		while(True):
-        	# Action selection
-			action = agent.policy(obs, reward, done, info)
+	# No FileManager yet
+	agent = ToyAgent(agent_specs)
+	agent.set_learning_mode()
 
+	# env = gym.make('gym-toy-pendulum-v0').unwrapped
+	env = gym.make(agent.gym_string).unwrapped
 
-			if (action is 'reset'):  # Resetting the environment
-				obs, reward, done, info = env.reset()
-				if agent.episodes % agent.model_save_period == 0:
-					agent.save_model(fm.get_cwd())
-			else:  # Peforming selected action
-				obs, reward, done, info = env.step(action)
-				dict_agent_report = agent.evaluate(obs, reward, done, info)
-				fm.log_training_reports(dict_agent_report)
+	num_episodes = cartpole_specs["EPISODES"]
+	for e in range(num_episodes):
+		# Initialize the environment and state
+		episode_reward = 0
+		reward = 0
+		done = False
+		info = None
+		state = env.reset()
+		if e%50==0 and e!=0:
+			agent.save_model(fm.get_cwd())
 
-			if env.finished:
-				print("Finished learning.")
+		for t in count():
+			# Select and perform an action
+			action = agent.policy(state, reward, done, info)
+			next_state, reward, done, info = env.step(action)
+			episode_reward += reward
+			# env.render()
+			if not done:
+				pass
+			else:
+				next_state = None
+				agent.episodes += 1
+
+				print(e, t, episode_reward, action, len(agent.DQN.memory), agent.epsilon, done)
+			# print(agent.DQN.state_q_values)
+			# Store the transition in memory
+			train_report = agent.evaluate(next_state, reward, done, info)
+			fm.log_training_reports(train_report)
+
+			# Move to the next state
+			state = next_state
+
+			if done:
+				plotter.episode_durations.append(episode_reward)
+				plotter.plot_durations()
 				break
-	except KeyboardInterrupt:
-		agent.save_model(fm.get_cwd(), emergency=True)
-		exit()
+
+
+		agent.update_target_network()
+
+	agent.save_model(fm.get_cwd())
+	print('Training complete')
+	env.close()
+	plotter.close()
 
 if __name__ == "__main__":
-    # No flags for arg parsing defined yet.
-    app.run(main)
+	# No flags for arg parsing defined yet.
+	app.run(main)

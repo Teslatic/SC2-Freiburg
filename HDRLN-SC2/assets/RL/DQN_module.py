@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 from collections import namedtuple
 
-from assets.RL.AtariNet import DQN
+from assets.RL.AtariNet import DQN, ExtendedDQN
 from assets.memory.ReplayBuffer import ReplayBuffer
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 
@@ -15,7 +15,7 @@ class DQN_module():
     A wrapper class that augments the AtariNet.DQN class by optmizing methods.
     """
     def __init__(self, batch_size, gamma, history_length, size_replaybuffer,
-                 optim_learning_rate, input_dim):
+                 optim_learning_rate, dim_actions):
         """
         update_cnt: Target network update counter.
         net:        The q-value network.
@@ -27,13 +27,11 @@ class DQN_module():
         self.batch_size = batch_size
         self.gamma = gamma
         self.history_length = history_length
-        self.input_dim = input_dim
+        self.dim_actions = dim_actions
         self.size_replaybuffer = size_replaybuffer
         self.optim_learning_rate = optim_learning_rate
         self.loss = 0
         self.update_cnt = 0  # Target network update_counter
-
-        self.state_q_values = 0
 
         self.net, self.target_net, self.optimizer = self._build_model()
         self.print_architecture()
@@ -43,8 +41,10 @@ class DQN_module():
         """
         Initializing 2 networks and an Adam optimizer.
         """
-        net = DQN(self.input_dim).to(self.device)
-        target_net = DQN(self.input_dim).to(self.device)
+        net = ExtendedDQN(self.history_length, self.dim_actions).to(self.device)
+        target_net = ExtendedDQN(self.history_length, self.dim_actions).to(self.device)
+        target_net.load_state_dict(net.state_dict())
+        target_net.eval() # set to evaluation mode
         optimizer = optim.Adam(net.parameters(), lr=self.optim_learning_rate)
         return net, target_net, optimizer
 
@@ -65,20 +65,11 @@ class DQN_module():
 
     def predict_q_values(self, state):
         with torch.no_grad():
-            # print('[state]',[state])
             state_tensor = torch.tensor([state],
                                         device=self.device,
                                         dtype=torch.float,
                                         requires_grad=False)
             return self.net(state_tensor)
-
-    def resize(self):
-        """
-        From original DQN pendulum tutorial with PyTorch
-        """
-        return T.Compose([T.ToPILImage(),
-                            T.Resize(40, interpolation=Image.CUBIC),
-                            T.ToTensor()])
 
     # ##########################################################################
     # Optimizing the network
@@ -100,15 +91,12 @@ class DQN_module():
         # calculate td targets of the actions, x&y coordinates
         self.td_target = self.calculate_td_target(self.next_state_q_max)
 
-        # print("td target", self.td_target)
-
         # Compute the loss
         self.compute_loss()
 
         # optimize model
         self.optimize_model()
 
-        # print("Optimization finished")
         return self.loss
 
     def sample_batch(self):
@@ -125,65 +113,35 @@ class DQN_module():
         Get the batches from the transition tuple
         np.concatenate concatenate all the batch data into a single ndarray
         """
-        # print(batch.state, len(batch.state))
-        self.non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-            batch.next_state)), device=self.device, dtype=torch.uint8)
-        # print('non final mask', self.non_final_mask)
-        # print("batch state {} {}".format(batch.state, len(batch.state)))
-        # print("batch next state {} {}".format(batch.next_state, len(batch.next_state)))
-
-        # tensor_next_state = [torch.as_tensor(s, device=self.device, dtype=torch.float) for s in batch.next_state if s is not None]
-        tensor_next_state = []
-        for idx,s in enumerate(batch.next_state):
-            if s is not None:
-                tensor_next_state.append(torch.as_tensor(s, device=self.device, dtype=torch.float))
-
-
-        # self.non_final_next_states = torch.cat(tensor_next_state, dim=-1)
-        self.non_final_next_states = torch.stack(tensor_next_state, dim =0)
-        # print("non final next states {} {}".format(self.non_final_next_states, self.non_final_next_states.shape))
-        # self.non_final_mask = torch.stack(tensor_next_state, dim=0)
-        # print("tensor next state {}".format(torch.stack(tensor_next_state, dim=0)))
-        # print(self.non_final_mask.shape)
-
-        self.state_batch = torch.as_tensor(batch.state,
+        self.state_batch = torch.as_tensor(np.concatenate([batch.state]),
                                            device=self.device,
                                            dtype=torch.float)
-        # print("state batch {}{}".format(self.state_batch, self.state_batch.shape))
         self.action_batch = torch.tensor(batch.action,
                                          device=self.device,
                                          dtype=torch.long)
         self.reward_batch = torch.as_tensor(batch.reward,
                                             device=self.device,
                                             dtype=torch.float)
+        self.next_state_batch = torch.as_tensor(
+                                            np.concatenate([batch.next_state]),
+                                            device=self.device,
+                                            dtype=torch.float)
 
 
+        self.state_batch = self.state_batch.squeeze(1)
+        self.next_state_batch = self.next_state_batch.squeeze(1)
     def calculate_q_values(self):
         """
         """
         # forward pass
         self.state_q_values = self.net(self.state_batch)
-        # print("state q values:",  self.state_q_values)
-        # print(self.state_q_values)
 
         # gather action values with respect to the chosen action
         self.state_q_values = self.state_q_values.gather(1, self.action_batch)
 
-
         # compute action values of the next state over all actions and take max
-        self.next_state_q_max = torch.zeros(self.batch_size, device=self.device)
-        # print("non final mask", self.non_final_mask)
-        # print("next state q max", self.next_state_q_max)
-
-        target_prediction = self.target_net(self.non_final_next_states)
-        target_prediction_max = target_prediction.max(1)[0]
-        # print("target prediction", target_prediction)
-        # print("target prediction max", target_prediction_max)
-
-        self.next_state_q_max[self.non_final_mask] = target_prediction_max.detach()
-        # print("next state q max 2", self.next_state_q_max)
-        # self.next_state_q_values = self.target_net(self.next_state_batch)
-        # self.next_state_q_max = self.next_state_q_values.max(1)[0].detach()
+        self.next_state_q_values = self.target_net(self.next_state_batch)
+        self.next_state_q_max = self.next_state_q_values.max(1)[0].detach()
 
     def calculate_td_target(self, q_values_best_next):
         """
@@ -219,7 +177,6 @@ class DQN_module():
         """
         self.loss = F.mse_loss(self.state_q_values,
                                self.td_target.unsqueeze(1))
-        # print("loss",self.loss)
 
     def optimize_model(self):
         """

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 # torch imports
 import torch
 import torch.nn as nn
@@ -27,80 +28,27 @@ and the agent.
 '''
 
 
-class ExtendedDQN(nn.Module):
+class DQN(nn.Module):
 
-    def __init__(self, history_length, dim_actions):
-        super(ExtendedDQN, self).__init__()
-        self.num_actions = dim_actions
-        self.map_dimensions = (84, 64)
-        self.history_length = history_length
+    def __init__(self, input_dim):
+        super(DQN, self).__init__()
+        self.num_actions = 3
+        self.input_dim = input_dim
 
-        # CNN Layer properties
-        KERNEL_1 = 13
-        STRIDE_1 = 1
-        PADDING_1 = 0
+        self.fc1 = nn.Linear(self.input_dim, 256)
+        self.fc2 = nn.Linear(256, 512)
+        self.fc3 = nn.Linear(512, self.num_actions)
 
-        KERNEL_2 = 5
-        STRIDE_2 = 2
-        PADDING_2 = 0
-
-        KERNEL_3 = 3
-        STRIDE_3 = 1
-        PADDING_3 = 0
-
-        POOL_PAD = 0
-        POOL_STR = 2
-        POOL_KRL = 2
-
-        # screen conv layers
-        self.screen_conv1 = nn.Conv2d(in_channels=1,
-                                      out_channels=32,
-                                      kernel_size=KERNEL_1,
-                                      padding=PADDING_1,
-                                      stride=STRIDE_1)
-
-        self.bn1 = nn.BatchNorm2d(32)
-
-        self.screen_conv2 = nn.Conv2d(in_channels=32,
-                                      out_channels=64,
-                                      kernel_size=KERNEL_2,
-                                      padding=PADDING_2,
-                                      stride=STRIDE_2)
-
-        self.bn2 = nn.BatchNorm2d(64)
-
-        self.screen_conv3 = nn.Conv2d(in_channels=64,
-                                        out_channels=128,
-                                        kernel_size=KERNEL_3,
-                                        padding=PADDING_3,
-                                        stride=STRIDE_3)
-        self.bn3 = nn.BatchNorm2d(128)
-
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
+        self.fc4 = nn.Linear(512, self.num_actions)
+        self.fc5 = nn.Linear(128, 32)
+        self.fc6 = nn.Linear(32, self.num_actions)
 
         self.dropout = nn.Dropout(p=0.5)
 
-        # fully connected layers
-        self.tmp_w = self._get_filter_dimension(84, KERNEL_1, PADDING_1, STRIDE_1)
-        self.tmp_w = self._get_filter_dimension(self.tmp_w, POOL_KRL,POOL_PAD,POOL_STR)
-        self.tmp_w = self._get_filter_dimension(self.tmp_w, KERNEL_2, PADDING_2, STRIDE_2)
-        self.tmp_w = self._get_filter_dimension(self.tmp_w, POOL_KRL,POOL_PAD,POOL_STR)
-        self.tmp_w = self._get_filter_dimension(self.tmp_w, KERNEL_3, PADDING_3, STRIDE_3)
-        self.tmp_w = self._get_filter_dimension(self.tmp_w, POOL_KRL,POOL_PAD,POOL_STR)
-
-        self.tmp_h = self._get_filter_dimension(84 , KERNEL_1, PADDING_1, STRIDE_1)
-        self.tmp_h = self._get_filter_dimension(self.tmp_h, POOL_KRL,   POOL_PAD, POOL_STR)
-        self.tmp_h = self._get_filter_dimension(self.tmp_h, KERNEL_2, PADDING_2, STRIDE_2)
-        self.tmp_h = self._get_filter_dimension(self.tmp_h, POOL_KRL,   POOL_PAD, POOL_STR)
-        self.tmp_h = self._get_filter_dimension(self.tmp_h, KERNEL_3, PADDING_3, STRIDE_3)
-        self.tmp_h = self._get_filter_dimension(self.tmp_h, POOL_KRL,   POOL_PAD, POOL_STR)
+        self.ln1 = nn.LayerNorm(32)
 
 
-        self.screen_fc1 = nn.Linear(128*self.tmp_w*self.tmp_h, 256)
-        self.screen_fc2 = nn.Linear(256, 512)
-        self.screen_fc3 = nn.Linear(512, self.num_actions)
-
-        self.softmax = nn.Softmax(dim=1)
+        self.softmax = nn.Softmax(dim=-1)
 
     def _get_filter_dimension(self, w, f, p, s):
         '''
@@ -116,120 +64,18 @@ class ExtendedDQN(nn.Module):
             num_features *= s
         return num_features
 
-    def forward(self, screen):
-        screen = self.pool(F.relu(self.bn1(self.screen_conv1(screen))))
-        screen = self.pool(F.relu(self.bn2(self.screen_conv2(screen))))
-        screen = self.pool(F.relu(self.bn3(self.screen_conv3(screen))))
-        # screen = self.screen_fc1(screen.view(screen.size(0),-1))
-        screen = screen.view(-1, self.num_flat_features(screen))
-        screen = self.dropout(F.relu(self.screen_fc1(screen)))
-        screen = self.dropout(F.relu(self.screen_fc2(screen)))
-        action_q_values =  F.relu(self.screen_fc3(screen))
-        # print(action_q_values)
-        # action_q_values = F.relu(self.head(screen))
-        output = self.softmax(action_q_values)
+    def forward(self, x):
+        # x = x.view(-1, self.num_flat_features(x))
+        # print('x.shape', x.shape)
+        # exit()
+        x = F.relu(self.fc1(x))
+        x = self.dropout(F.relu(self.fc2(x)))
+        output = self.fc3(x)
+
+        # x = F.relu(self.fc4(x))
+        # x = self.dropout(F.relu(self.fc5(x)))
+        # x = self.fc6(x)
+        output = self.softmax(output)
+        # print("output {}".format(output))
+
         return output
-
-class DQN(nn.Module):
-
-    def __init__(self, history_length, dim_actions):
-        super(DQN, self).__init__()
-        self.num_actions = dim_actions
-        self.map_dimensions = (84, 64)
-        self.history_length = history_length
-
-        # screen conv layers
-        self.screen_conv1 = nn.Conv2d(in_channels=1,
-                                      out_channels=16,
-                                      kernel_size=5,
-                                      padding=0,
-                                      stride=4)
-        self.screen_conv2 = nn.Conv2d(in_channels=16,
-                                      out_channels=32,
-                                      kernel_size=3,
-                                      padding=0,
-                                      stride=1)
-        # self.screen_conv3 = nn.Conv2d(in_channels=32
-        #                                 out_channels=64,
-        #                                 kernel_size=3,
-        #                                 stride=1)
-
-        # fully connected layers
-        self.tmp_w = self._get_filter_dimension(84, 5, 0, 4)
-        self.tmp_w = self._get_filter_dimension(self.tmp_w, 3, 0, 1)
-        # self.tmp_w = self._get_filter_dimension(self.tmp_w, 3, 0, 1)
-        self.screen_fc1 = nn.Linear(32*self.tmp_w*self.tmp_w, 512)
-        self.action_fc1 = nn.Linear(512, self.num_actions)
-
-    def _get_filter_dimension(self, w, f, p, s):
-        '''
-        calculates filter dimension according to following formula:
-        (filter - width + 2*padding) / stride + 1
-        '''
-        return int((w - f + 2*p) / s + 1)
-
-    def forward(self, screen):
-        screen = F.relu(self.screen_conv1(screen))
-        screen = F.relu(self.screen_conv2(screen))
-        # screen = F.relu(self.screen_conv3(screen))
-        screen = screen.view(-1, 32*self.tmp_w*self.tmp_w)
-        screen = F.relu(self.screen_fc1(screen))
-        action_q_values = self.action_fc1(screen)
-        return action_q_values
-
-
-class SingleDQN(nn.Module):
-
-    def __init__(self, history_length, num_outputs):
-        super(SingleDQN, self).__init__()
-        self.num_outputs = num_outputs
-        self.map_dimensions = (84, 64)
-        self.history_length = history_length
-
-        # screen conv layers
-        self.screen_conv1 = nn.Conv2d(in_channels=1,
-                                      out_channels=16,
-                                      kernel_size=5,
-                                      padding=0,
-                                      stride=4)
-        self.screen_conv2 = nn.Conv2d(in_channels=16,
-                                      out_channels=32,
-                                      kernel_size=3,
-                                      padding=0,
-                                      stride=1)
-        # self.screen_conv3 = nn.Conv2d(in_channels=32
-        #                                 out_channels=64,
-        #                                 kernel_size=3,
-        #                                 stride=1)
-
-        # fully connected layers
-        self.tmp_w = self._get_filter_dimension(84, 8, 0, 4)
-        self.tmp_w = self._get_filter_dimension(self.tmp_w, 4, 0, 2)
-        self.tmp_w = self._get_filter_dimension(self.tmp_w, 3, 0, 1)
-
-        self.screen_fc1 = nn.Linear(64*self.tmp_w*self.tmp_w, 512)
-
-        # action policy output
-        self.out_fc1 = nn.Linear(512, self.num_outputs)
-
-    def _get_filter_dimension(self, w, f, p, s):
-        '''
-        calculates filter dimension according to following formula:
-        (filter - width + 2*padding) / stride + 1
-        '''
-        return int((w - f + 2*p) / s + 1)
-
-    def forward(self, screen):
-        screen = F.relu(self.screen_conv1(screen))
-        screen = F.relu(self.screen_conv2(screen))
-        screen = F.relu(self.screen_conv3(screen))
-        screen = screen.view(-1, 64*self.tmp_w*self.tmp_w)
-        screen = F.relu(self.screen_fc1(screen))
-
-        # estimated action q values
-        out_q_values = self.out_fc1(screen)
-
-        return out_q_values
-
-# if __name__ == '__main__':
-#     AtariNet = AtariNet()
