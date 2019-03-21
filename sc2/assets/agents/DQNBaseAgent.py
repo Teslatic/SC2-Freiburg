@@ -9,6 +9,7 @@ import time
 from assets.RL.DQN_module import DQN_module
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 from assets.agents.actionspacehelper.gridHelpers import discretize_xy_grid, inject_noise, supervised_action
+from assets.agents.smart_actions import SMART_ACTIONS_COMPASS
 # from assets.helperFunctions.FileManager import create_experiment_at_main
 
 np.set_printoptions(suppress=True, linewidth=np.nan, threshold=np.nan)
@@ -73,7 +74,7 @@ class DQNBaseAgent(base_agent.BaseAgent):
                               self.optim_learning_rate,
                               self.dim_actions)
         self.device = self.DQN.device
-        print_ts("DQN module has been initalized")
+        print_ts("DQN module initalized. Output layer size: {}".format(self.dim_actions))
 
     def unzip_hyperparameter_file(self, agent_specs):
         """
@@ -84,7 +85,7 @@ class DQNBaseAgent(base_agent.BaseAgent):
 
         self.gamma = float(agent_specs['GAMMA'])
         self.optim_learning_rate = float(agent_specs['OPTIM_LR'])
-        
+
         self.eps_start = float(agent_specs['EPS_START'])
         self.eps_decay = int(agent_specs['EPS_DECAY'])
         self.eps_end = float(agent_specs['EPS_END'])
@@ -110,7 +111,7 @@ class DQNBaseAgent(base_agent.BaseAgent):
         """
         if self.action_type == 'compass':
             self.action_space = SMART_ACTIONS_COMPASS
-            self.action_dim = len(self.action_space)
+            self.dim_actions = len(self.action_space)
         if self.action_type == 'grid':
             grid_dim_x = agent_specs['GRID_DIM_X']
             grid_dim_y = agent_specs['GRID_DIM_Y']
@@ -163,16 +164,15 @@ class DQNBaseAgent(base_agent.BaseAgent):
         """
         # Set all variables at the start of a new timestep
         self.prepare_timestep(obs, reward, done, info)
-
         # Action selection for regular step
         if not self.last:
-            if self.mode == 'supervised':
+            if self.mode is 'supervised':
                 # For the first n episodes learn on forced actions.
                 self.action, self.action_idx = self.supervised_action()
-            if self.mode == 'learning':
+            elif self.mode is 'learning':
                 # Choose an action according to the policy
                 self.action, self.action_idx = self.epsilon_greedy_action()
-            if self.mode == 'testing':
+            elif self.mode is 'testing':
                 self.action, self.action_idx = self.pick_action()
             else:
                 self.action, self.action_idx = 'no action', 'no action_idx'
@@ -193,16 +193,45 @@ class DQNBaseAgent(base_agent.BaseAgent):
         """
         raise NotImplementedError
 
+    # def pick_action(self):
+    #     action_q_values = self.DQN.predict_q_values(self.state)
+    #     action_q_values_numpy = action_q_values.detach().cpu().numpy()
+    #     print(action_q_values_numpy)
+    #     print(self.available_actions)
+    #     avail_actions = action_q_values_numpy.T[self.available_actions]
+    #     action_idx = np.argmax(avail_actions)
+    #     best_action = self.action_space[action_idx]
+    #     chosen_action = best_action
+    #     return chosen_action, action_idx
+
     def pick_action(self):
         action_q_values = self.DQN.predict_q_values(self.state)
         action_q_values_numpy = action_q_values.detach().cpu().numpy()
         print(action_q_values_numpy)
-        print(self.available_actions)
-        avail_actions = action_q_values_numpy.T[self.available_actions]
-        action_idx = np.argmax(avail_actions)
+        # print(self.available_actions)
+        # avail_actions = action_q_values_numpy.T[self.available_actions]
+        action_idx = np.argmax(action_q_values_numpy)
         best_action = self.action_space[action_idx]
         chosen_action = best_action
         return chosen_action, action_idx
+
+    # def epsilon_greedy_action(self):
+    #     """
+    #     chooses an action according to the current policy
+    #     returns the chosen action id with x,y coordinates and the index of the
+    #     action with respect to the SMART_ACTIONS constant. The additional index
+    #     is used for the catergorical labeling of the actions as an
+    #     "intermediate" solution for a restricted action space.
+    #     """
+    #     self.choice = self.epsilon_greedy()
+    #
+    #     if self.choice == 'random':
+    #         avail_action_idx = np.random.randint(self.available_actions)
+    #         action_idx = avail_action_idx
+    #         chosen_action = self.action_space[action_idx]
+    #     else:
+    #         chosen_action, action_idx = self.pick_action()
+    #     return chosen_action, action_idx
 
     def epsilon_greedy_action(self):
         """
@@ -215,8 +244,9 @@ class DQNBaseAgent(base_agent.BaseAgent):
         self.choice = self.epsilon_greedy()
 
         if self.choice == 'random':
-            avail_action_idx = np.random.randint(self.available_actions)
-            action_idx = avail_action_idx
+            # avail_action_idx = np.random.randint(self.available_actions)
+            # action_idx = avail_action_idx
+            action_idx = np.random.randint(len(self.action_space))
             chosen_action = self.action_space[action_idx]
         else:
             chosen_action, action_idx = self.pick_action()
@@ -332,8 +362,6 @@ class DQNBaseAgent(base_agent.BaseAgent):
                     self.list_epsilon_progression[-1],
                     self.get_memory_length()))
             return dict_agent_report
-
-
 
     def store_transition(self, next_obs, reward):
         """

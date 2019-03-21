@@ -23,7 +23,7 @@ class DQN_module():
         memory:     The memory class for the replay buffer
         """
         self.unzip_module_specs(module_specs)
-        self.device = self._setup_torch("cuda:1")
+        self.device = self._setup_torch('cuda:1')
         self.net, self.target_net, self.optimizer = self._build_model()
         self.print_architecture()
         self.memory = ReplayBuffer(self.size_replaybuffer)

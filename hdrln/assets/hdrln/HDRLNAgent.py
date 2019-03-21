@@ -33,6 +33,9 @@ class HDRLNAgent(DQNBaseAgent):
 		super(HDRLNAgent, self)._setup_framework_parameters()
 
 		self.action_space, self.dim_actions = setup_action_space(agent_specs)
+		self.module_specs = super(HDRLNAgent, self).zip_module_specs()
+		# Maybe setup DQN module here as primitive actions?
+
 		self._setup_hdrln()
 
 
@@ -40,10 +43,7 @@ class HDRLNAgent(DQNBaseAgent):
 		"""
 		Setting up the HDRLN module.
 		"""
-		self.HDRLN = HDRLN_module(batch_size=self.batch_size,
-							gamma=self.gamma,
-							size_replaybuffer=self.size_replaybuffer,
-							optim_learning_rate=self.optim_learning_rate)
+		self.HDRLN = HDRLN_module(self.module_specs)
 		print_ts("HDRLN module has been initalized")
 
 	def add_skills(self, skill_dir, skill_name_list, agent_list):
@@ -60,6 +60,16 @@ class HDRLNAgent(DQNBaseAgent):
 	###########################################################################
     # Policy
     ###########################################################################
+
+	def prepare_timestep(self, obs, reward, done, info):
+		"""
+        Prepares the timestep:
+        1. Incrementing counters
+        2. Setting flags
+        3. Retrieving information from the observation
+        4. Calculating addtional information
+		"""
+		super(HDRLNAgent, self).prepare_timestep(obs, reward, done, info)
 
 	def policy(self, obs, reward, done, info):
 		"""
@@ -85,13 +95,6 @@ class HDRLNAgent(DQNBaseAgent):
 				self.HDRLN.update_student_network() #
 				self.reset()
 		return self.action
-
-	def prepare_timestep(self, obs, reward, done, info):
-		"""
-		Prepares the timestep:
-		1. Extracting obs and reward information as from DQNBaseAgent
-		"""
-		super(HDRLNAgent, self).prepare_timestep(obs, reward, done, info)
 
 	def reset(self):
 		"""
@@ -123,6 +126,31 @@ class HDRLNAgent(DQNBaseAgent):
 		"""
 		if self.get_memory_length() >= self.batch_size:
 			self.loss = self.HDRLN.optimize()
+
+    # ##########################################################################
+    # Evaluate a timestep
+    # ##########################################################################
+
+	def evaluate(self, obs, reward, done, info):
+		"""
+		A generic wrapper, that contains all agent operations which are used
+		after finishing a timestep.
+
+		Retuns a dictionary with the following information:
+		    - Shaped reward per episode
+		    - Shaped reward cumulative
+		    - Mean loss per episode
+		    - epsilon progression per episode
+		"""
+		if self.mode != 'testing':
+			# Saving the episode data. Pushing the information onto the memory.
+			self.store_transition(obs, reward)
+			# Optimize the agent
+			self.optimize()
+		# collect reward, loss and epsilon information as dictionary
+		agent_report = self.collect_report(obs, reward, done)
+
+		return agent_report
 
 	def get_memory_length(self):
 		"""

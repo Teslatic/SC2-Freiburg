@@ -1,4 +1,4 @@
-ACTION_TYPE = 'grid'  # compass, grid, original
+ACTION_TYPE = 'compass'  # compass, grid, original
 MODE = 'learning'
 
 # GRID_DIM_X x GRID_DIM_Y
@@ -12,11 +12,11 @@ TEST_EPISODES = 5
 GAMESTEPS = 0  # 0 = unlimited game time, None = map default
 REPLAY_DIR = None
 SAVE_REPLAY = False
-STEP_MUL = 32  # 16 = 1s game time, None = map default
+STEP_MUL = 2  # 16 = 1s game time, None = map default
 
 LOGGING = False  # Logs information in files for tmux sessions
 SILENTMODE = False  # True: Just a minimum of console output
-VISUALIZE = True
+VISUALIZE = False
 TEST_VISUALIZE = False
 
 mv2beacon_specs = {

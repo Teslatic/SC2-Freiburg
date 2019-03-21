@@ -1,5 +1,5 @@
 AGENT_TYPE = 'move2beacon'
-ACTION_TYPE = 'grid'
+ACTION_TYPE = 'compass'
 
 EXP_NAME = 'long_boi'
 
