@@ -33,7 +33,7 @@ def main(argv):
     plotter = Plotter()
 
     # No FileManager yet
-    agent = ToyAgent(agent_specs)
+    agent = ToyAgent(spec_summary)
     agent.DQN.load(FLAGS.model)
     agent.set_testing_mode()
 
@@ -60,7 +60,9 @@ def main(argv):
             # Select and perform an action
             action = agent.policy(state, reward, done, info)
             next_state, reward, done, info = env.step(action)
-            # env.render()
+
+            # if spec_summary['VISUALIZE']=="True":
+            env.render()
             reward_cnt += reward
             if not done:
                 pass
@@ -68,7 +70,7 @@ def main(argv):
                 next_state = None
                 agent.episodes += 1
                 plotter.episode_durations.append(reward_cnt)
-                plotter.plot_durations()
+                # plotter.plot_durations()
 
             # Store the transition in memory
             test_report = agent.evaluate(next_state, reward, done, info)
