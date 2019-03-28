@@ -1,4 +1,4 @@
-ENV_ID = 'gym-sc2-m2b-v0'
+ENV_ID = 'collectmineralshards'
 # ENV_ID = 'gym-sc2-mineralshards-v0'
 # ENV_ID = 'gym-sc2-defeatroaches-v0'
 
@@ -11,17 +11,17 @@ GRID_DIM_Y = 20
 
 REWARD_TYPE = 'sparse'  # diff, distance, sparse, original(collectmineralshards)
 
-EPISODES = 500000
+EPISODES = 40000
 TEST_EPISODES = 5
 GAMESTEPS = 0  # 0 = unlimited game time, None = map default
 REPLAY_DIR = None
 SAVE_REPLAY = False
-STEP_MUL = 32  # 16 = 1s game time, None = map default
+STEP_MUL = 16  # 16 = 1s game time, None = map default
 
 LOGGING = False  # Logs information in files for tmux sessions
 SILENTMODE = False  # True: Just a minimum of console output
-VISUALIZE = True
-TEST_VISUALIZE = False
+VISUALIZE = False
+TEST_VISUALIZE = True
 
 env_specs = {
     'ENV_ID': ENV_ID,

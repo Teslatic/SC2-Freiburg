@@ -29,15 +29,12 @@ class HDRLNAgent(DQNBaseAgent):
 		3. Setup DSN, Controller, SERB and Student Network
 		"""
 		super(HDRLNAgent, self)._setup_base_agent()
-		super(HDRLNAgent, self).unzip_agent_specs(agent_specs)
+		super(HDRLNAgent, self)._unzip_agent_specs(agent_specs)
 		super(HDRLNAgent, self)._setup_framework_parameters()
 
 		self.action_space, self.dim_actions = setup_action_space(agent_specs)
 		self.module_specs = super(HDRLNAgent, self).zip_module_specs()
-		# Maybe setup DQN module here as primitive actions?
-
 		self._setup_hdrln()
-
 
 	def _setup_hdrln(self):
 		"""
@@ -52,10 +49,23 @@ class HDRLNAgent(DQNBaseAgent):
 		"""
 		self.N_skills = self.HDRLN.add(skill_dir, skill_name_list, agent_list)
 
-	def seal_skill_space(self):
+	# def zip_HDRLNmodule_specs(self):
+	# 	"""
+	# 	"""
+    #     HDRLN_module_specs = {
+    #         'BATCH_SIZE': self.batch_size,
+    #         'GAMMA': self.gamma,
+    #         'HISTORY_LENGTH': self.history_length,
+    #         'SIZE_REPLAYBUFFER': self.size_replaybuffer,
+    #         'OPTIM_LR': self.optim_learning_rate,
+    #         'DIM_ACTIONS': self.dim_actions
+    #         }
+    #     return module_specs
+
+	def seal_skill_policy(self):
 		"""
 		"""
-		self.HDRLN.seal_skill_space()
+		self.HDRLN.seal_skill_policy()
 
 	###########################################################################
     # Policy
@@ -86,7 +96,7 @@ class HDRLNAgent(DQNBaseAgent):
 			self.action_idx = self.HDRLN.policy(state=self.state,
 									   available_actions=self.available_actions,
 									   mode=self.mode)
-			# Select action from actoin space with action_idx
+			# Select action from action space with action_idx
 			self.action = self.action_space[self.action_idx]
 
 		if self.last:

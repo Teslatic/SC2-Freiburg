@@ -32,7 +32,7 @@ class DQNBaseAgent(base_agent.BaseAgent):
         5. Setup the DQN-module
         """
         self._setup_base_agent()
-        self.unzip_agent_specs(agent_specs)
+        self._unzip_agent_specs(agent_specs)
         self._setup_framework_parameters()
 
         self.action_space, self.dim_actions = setup_action_space(agent_specs)
@@ -50,7 +50,7 @@ class DQNBaseAgent(base_agent.BaseAgent):
         """
         super(DQNBaseAgent, self).__init__()
 
-    def unzip_agent_specs(self, agent_specs):
+    def _unzip_agent_specs(self, agent_specs):
         """
         Unzipping and writing the hyperparameter file into member variables.
         exp_name: Name of create_experiment
@@ -191,13 +191,6 @@ class DQNBaseAgent(base_agent.BaseAgent):
 
         return self.action
 
-    def supervised_action(self):
-        """
-        This method selects an action which will force the marine in the
-        direction of the beacon. Further improvements are possible.
-        """
-        raise NotImplementedError
-
     def pick_action(self):
         action_idx = self.DQN.pick_best(self.state)
         best_action = self.action_space[action_idx]
@@ -231,6 +224,13 @@ class DQNBaseAgent(base_agent.BaseAgent):
         self.steps_done += 1
         return np.random.choice(['random', 'greedy'],
                                 p=[self.epsilon, 1-self.epsilon])
+
+    def supervised_action(self):
+        """
+        This method selects an action which will force the marine in the
+        direction of the beacon. Further improvements are possible.
+        """
+        raise NotImplementedError
 
     # ##########################################################################
     # Evaluate a timestep

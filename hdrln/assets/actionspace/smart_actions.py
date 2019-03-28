@@ -25,7 +25,6 @@ SMART_ACTIONS_COMPASS = [
           'up',
           'right',
           'down',
-          actions.FUNCTIONS.select_army.id # 7
         ]
 
 # Action sets as documented in reaver:

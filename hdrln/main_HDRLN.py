@@ -9,10 +9,11 @@ import gym
 import gym_sc2
 
 # custom imports
-from specs.agent_specs import agent_specs
+from specs.agent_specs_HDRLN import agent_specs
 from specs.env_specs import env_specs # env specs
 
-from assets.helperFunctions.initializingHelpers import setup_agent, setup_multiple_agents, setup_env
+from assets.helperFunctions.initializingHelpers import setup_agent, setup_multiple_agents
+from assets.helperFunctions.initializingHelpers import setup_env, setup_fm
 from assets.helperFunctions.HDRLNFileManager import HDRLNFileManager
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 # ...
@@ -32,16 +33,7 @@ def main(argv):
 		#######################################################################
 
 		# FileManager: Save specs and create experiment #######################
-		fm = HDRLNFileManager()
-		try:
-			fm.create_experiment(agent_specs["EXP_NAME"])  # Auto cwd switch
-			fm.save_specs(agent_specs, env_specs)
-		except:
-			print("Creating experiment or saving specs failed.")
-			exit()
-
-		fm.create_train_file()
-
+		fm = setup_fm(agent_specs, env_specs)
 
 		# Setup HDRL agent ####################################################
 		agent = setup_agent(agent_specs)
@@ -58,7 +50,7 @@ def main(argv):
 		agent_list = setup_multiple_agents(skill_specs_list)
 		# ... and add skills to the HDRLN agent
 		agent.add_skills(skill_dir, skill_name_list, agent_list)
-		agent.seal_skill_space()
+		agent.seal_skill_policy()
 
 		# Setup environment ###################################################
 		env, obs, reward, done, info  = setup_env(env_specs)
@@ -72,7 +64,7 @@ def main(argv):
 			action = agent.policy(obs, reward, done, info)
 
 			# Performing action ###############################################
-			if action is not 'reset':    # Peforming selected action
+			if not (action is 'reset'):    # Peforming selected action
 				obs, reward, done, info = env.step(action)
 				dict_agent_report = agent.evaluate(obs, reward, done, info)
 				fm.log_training_reports(dict_agent_report)

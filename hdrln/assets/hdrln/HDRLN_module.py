@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from assets.hdrln.Controller import Controller
 from assets.hdrln.DeepSkillNetwork import DeepSkillNetwork
 from assets.hdrln.SkillExperienceReplayBuffer import SERB
-from assets.hdrln.StudentNetwork	import StudentNetwork
+from assets.hdrln.StudentNetwork import StudentNetwork
 
 from collections import namedtuple
 
@@ -30,11 +30,10 @@ class HDRLN_module():
         - StudentNetwork (distilled Neural Network)
         """
         # TODO (NOT): ACTION SPACE DEFINED A PRIORI--> Primitive action skill module???
-        self.DSN_type = 'array'
+        self.DSN_mode = 'array'
         self.device = self._setup_torch('cuda:0')
 
         self.unzip_module_specs(module_specs)
-
         self.DSN = DeepSkillNetwork()
         self.Controller = Controller()
         self.memory = SERB(1000)
@@ -69,6 +68,14 @@ class HDRLN_module():
         """
         self.N_skills = self.DSN.add(skill_dir, skill_name_list, agent_list)
 
+    def seal_skill_policy(self):
+        """
+        Seals the number of skills for the skill policy and creates the skill
+        policy neural network.
+        """
+        self.seal_skill_space()
+        self.Controller.create_skill_policy()
+
     def seal_skill_space(self):
         self.N_skills = self.DSN.seal()
         self.Controller.seal_skills(self.N_skills)
@@ -79,11 +86,17 @@ class HDRLN_module():
 
     def policy(self, state, available_actions, mode):
         """
+        The HDRLN policy consists of two stages:
+        1. Skill policy: Selects the skill or primitive DQN module
+        2. Action policy: Selects the Q-value of the selected skill
         """
         self.mode = mode
         self.Controller.set_available_actions(available_actions)
-        self.skill_idx = self.skill_policy(state) # Choose a skill
+
+        # Stage 1: Choose a skill
+        self.skill_idx = self.skill_policy(state)
         print("skill index:" + str(self.skill_idx))
+        # Stage 2: Choose an action
         return self.action_policy(state, self.skill_idx)
 
     def skill_policy(self, state):
@@ -102,9 +115,9 @@ class HDRLN_module():
     def action_policy(self, state, skill_idx):
         """
         """
-        if self.DSN_type is 'array':
+        if self.DSN_mode is 'array':
             self.action_idx = self.DSN.pick(state, skill_idx)
-        elif self.DSN_type is 'distilled':
+        elif self.DSN_mode is 'distilled':
             self.action_idx = self.Student.pick(state)
         return self.action_idx
 

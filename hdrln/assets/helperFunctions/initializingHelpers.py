@@ -2,7 +2,7 @@ from assets.agents.CollectMineralShardsAgent import CollectMineralShardsAgent
 from assets.agents.DefeatRoachesAgent import DefeatRoachesAgent
 from assets.agents.Move2BeaconAgent import Move2BeaconAgent
 from assets.hdrln.HDRLNAgent import HDRLNAgent
-
+from assets.helperFunctions.FileManager import FileManager
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 
 # gym imports
@@ -37,13 +37,22 @@ def setup_multiple_agents(specs_list):
         agent_list.append(agent)
     return agent_list
 
-def setup_env(env_specs):
+def setup_env(env_specs, mode='learning'):
     """
     Initializing right agent and agent_interface for the environment.
     """
-    env_id = env_specs["ENV_ID"]
-    env = gym.make(env_id)
-    obs, reward, done, info = env.setup(env_specs)
+    env_id = str(env_specs["ENV_ID"])
+    if  env_id == 'move2beacon':
+        env = gym.make("gym-sc2-m2b-v0") # Move2Beacon
+    elif env_id == 'collectmineralshards':
+        env = gym.make("gym-sc2-mineralshards-v0")
+    elif env_id == 'defeatroaches':
+        env = gym.make("gym-sc2-defeatroaches-v0")
+    else:
+        print_ts("Define a valid environment id in the agent specs!")
+        exit()
+    # mode = env_specs["MODE"]
+    obs, reward, done, info = env.setup(env_specs, mode)
     return env, obs, reward, done, info
 
 
@@ -56,3 +65,17 @@ def setup_multiple_envs(specs_list):
         env = setup_env(specs)
         env_list.append(env)
     return env_list
+
+def setup_fm(agent_specs, env_specs):
+    """
+    Initializes the FileManager which is responsible for storing data.
+    """
+    fm = FileManager()
+    try:
+        fm.create_experiment(agent_specs["EXP_NAME"])  # Automatic cwd switch
+        fm.save_specs(agent_specs, env_specs)
+    except:
+        print("Creating eperiment or saving specs failed.")
+        exit()
+    fm.create_train_file()
+    return fm

@@ -5,6 +5,8 @@ import torch.nn.functional as F
 
 from collections import namedtuple
 
+from assets.RL.DQN_module import DQN_module
+
 from assets.helperFunctions.timestamps import print_timestamp as print_ts
 
 class Controller():
@@ -37,6 +39,12 @@ class Controller():
         """
         print_ts("Controller skills are sealed!")
         self.N_skills = N_skills
+
+    def create_skill_policy(self, module_specs):
+        """
+        Creates the DQN module responsible for the skill policy.
+        """
+        self.net = DQN_module(module_specs)
 
     def set_available_actions(self, available_actions):
         """

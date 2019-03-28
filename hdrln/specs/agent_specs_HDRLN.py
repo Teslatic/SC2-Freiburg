@@ -1,7 +1,7 @@
-AGENT_TYPE = 'collectmineralshards' # move2beacon/collectmineralshards/defeatroaches
+AGENT_TYPE = 'hdrl'
 ACTION_TYPE = 'grid'  # compass/grid/original
 
-EXP_NAME = 'delete_'
+EXP_NAME = 'Collectminearlshards_test'
 
 GAMMA = 0.99
 OPTIM_LR = 0.0001
@@ -19,7 +19,7 @@ MODE = 'learning'
 SUPERVISED_EPISODES = 0
 
 
-MODEL_SAVE_PERIOD = 1000
+MODEL_SAVE_PERIOD = 10
 
 
 # GRID_DIM_X x GRID_DIM_Y
