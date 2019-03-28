@@ -152,7 +152,7 @@ class DQNBaseAgent(base_agent.BaseAgent):
         self.state = np.array(obs[0], dtype=np.uint8)  # to reduce memory space
         self.first = obs[1]
         self.last = obs[2]
-        # obs[3] unused
+        self.PYSC2_score = obs[3]
         # obs[4] unused
         self.available_actions = obs[5]
 
@@ -283,10 +283,10 @@ class DQNBaseAgent(base_agent.BaseAgent):
             self.list_loss_mean.append(np.mean(self.list_loss_per_episode))
 
             # score observation per episode from pysc2 is appended
-            self.list_pysc2_reward_per_episode.append(obs[6])
+            self.list_pysc2_reward_per_episode.append(self.PYSC2_score )
 
             # cumulative pysc2 reward
-            self.pysc2_reward_cumulative += obs[6]
+            self.pysc2_reward_cumulative += self.PYSC2_score 
             self.list_pysc2_reward_cumulative.append(self.pysc2_reward_cumulative)
 
             # if self.episodes > self.supervised_episodes:
