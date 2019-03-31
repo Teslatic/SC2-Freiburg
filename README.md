@@ -1,6 +1,12 @@
 # Star-Craft-2-Project-Freiburg
 This is a project supervised by the chair of neurorobotics at the University of Freiburg. We want to do a project with the Deepmind PYSC2 environment and intend to replicate and to improve the agent's performance by implementing our own ideas into the framework.
 
+To use this framework, the following gym environments have to be installed as well:
+
+For the gym wrapper for PYSC2: https://github.com/Teslatic/gym-sc2
+
+For gym toyproblem examination: https://github.com/Teslatic/gym-toyproblems
+
 
 ## Roadmap
 - [x] Read & Understand the paper
