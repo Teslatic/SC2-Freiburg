@@ -1,4 +1,7 @@
 # Star-Craft-2-Project-Freiburg
+
+Attention: the Project at the University of Freiburg was completed 2020. It is archived (Read-Only) to preserve it's state as it was in 2020 at the end of the project.
+
 This is a project supervised by the chair of neurorobotics at the University of Freiburg. We want to do a project with the Deepmind PYSC2 environment and intend to replicate and to improve the agent's performance by implementing our own ideas into the framework.
 
 To use this framework, the following gym environments have to be installed as well:
